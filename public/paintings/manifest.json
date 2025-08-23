@@ -1,0 +1,106 @@
+{
+  "items": [
+    {
+      "src": "/paintings/SnowyCabin.JPG",
+      "title": "Snowy Cabin",
+      "description": "A tranquil winter landscape where a cozy cabin rests beside a frozen lake, its warm glow reflecting against the snow as the sun sets over distant mountains.",
+      "year": 2018
+    },
+    {
+      "src": "/paintings/Bird.JPG",
+      "title": "Golden Songbird",
+      "description": "A delicate bird perched on a branch, its feathers glowing in soft yellow and green tones, capturing a moment of stillness and quiet beauty.",
+      "year": 2018
+    },
+    {
+      "src": "/paintings/CountryPath.JPG",
+      "title": "Country Path",
+      "description": "A winding path leads through tall grasses toward the golden fields and distant hills, evoking the peace of a quiet countryside morning.",
+      "year": 2019
+    },
+    {
+      "src": "/paintings/ForestCottage.JPG",
+      "title": "Forest Cottage",
+      "description": "A stone path winds through dappled sunlight and lush greenery to a hidden cottage nestled in the woods, radiating a sense of solitude and charm.",
+      "year": 2019
+    },
+    {
+      "src": "/paintings/HillsideHouse.JPG",
+      "title": "Hillside House",
+      "description": "A secluded house peeks through the trees overlooking a meadow of wildflowers, framed by soft rolling hills under a hazy sky.",
+      "year": 2019
+    },
+    {
+      "src": "/paintings/RiverBend.JPG",
+      "title": "River Bend",
+      "description": "Calm blue waters curve gently around sunlit banks, where golden trees stand in harmony with the serene sky and distant hills.",
+      "year": 2019
+    },
+    {
+      "src": "/paintings/AutumnLake.JPG",
+      "title": "Autumn Lake",
+      "description": "Flaming autumn leaves reflect across a still lake, creating a glowing tapestry of reds, oranges, and golds against the cool blue horizon.",
+      "year": 2020
+    },
+    {
+      "src": "/paintings/LoneBoat.JPG",
+      "title": "Lone Boat",
+      "description": "A quiet boat rests along the shore beneath a tree, surrounded by calm waters and rolling meadows in the distance.",
+      "year": 2020
+    },
+    {
+      "src": "/paintings/Snowboarder.JPG",
+      "title": "Snowboarding",
+      "description": "A snowboarder carves through fresh powder at sunset, fiery skies and mountain silhouettes framing the thrill of speed and freedom.",
+      "year": 2025
+    },
+    {
+      "src": "/paintings/SeaTurtle.JPG",
+      "title": "Snorkeling Hawaii",
+      "description": "A sea turtle glides gracefully through a coral reef alive with color and light, accompanied by fish and a diver exploring the vibrant depths.",
+      "year": 2024
+    },
+    {
+      "src": "/paintings/StillLifeToys.JPG",
+      "title": "Childhood Toys",
+      "description": "A playful still life arrangement of everyday objects—soccer ball, game controller, chess pieces, and toys—capturing the essence of childhood energy and imagination.",
+      "year": 2024
+    },
+    {
+      "src": "/paintings/TajMahal.JPG",
+      "title": "Taj Mahal",
+      "description": "At sunset, a camel and its keeper rest by the riverbank, while the Taj Mahal glows in the golden light of the fading day.",
+      "year": 2024
+    },
+    {
+      "src": "/paintings/SafariKid.JPG",
+      "title": "Safari Kid",
+      "description": "Giraffes and an elephant graze peacefully near a winding stream, as books and a backpack hint at a traveler observing the wild.",
+      "year": 2023
+    },
+    {
+      "src": "/paintings/PenaltyKick.JPG",
+      "title": "Soccer Penalty",
+      "description": "A decisive moment as a player takes a penalty shot, the ball aimed for the net while the goalkeeper dives in a stadium filled with anticipation.",
+      "year": 2022
+    },
+    {
+      "src": "/paintings/RedDeadRedemption.JPG",
+      "title": "Red Dead Redemption",
+      "description": "A lone rider guides his horse through a shimmering mountain stream, surrounded by tall pines and morning mist.",
+      "year": 2025
+    },
+    {
+      "src": "/paintings/Covid.JPG",
+      "title": "Covid",
+      "description": "A figure stands in the warm glow of a lit window, framed by night shadows and branches reaching toward the light.",
+      "year": 2024
+    },
+    {
+      "src": "/paintings/Inhaler.JPG",
+      "title": "Asthma",
+      "description": "An inhaler encased in an ethereal glass dome, surrounded by swirling clouds of violet and white, symbolizing fragility and resilience.",
+      "year": 2024
+    }
+  ]
+}
