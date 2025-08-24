@@ -370,6 +370,9 @@ function GridLayout({ paintings, onOpen }: { paintings: PaintingItem[]; onOpen: 
   )
 }
 
+// Replace the PaintingLightbox component in your paintings/page.tsx with this version
+// Compact layout that fits without scrolling
+
 function PaintingLightbox({
   painting,
   onClose,
@@ -395,12 +398,9 @@ function PaintingLightbox({
 
   return (
     <Dialog open={!!painting} onOpenChange={onClose}>
-      <DialogContent className="h-[90vh] w-[90vw] max-h-[90vh] max-w-[90vw] overflow-hidden border-0 bg-black/95 p-0 backdrop-blur-2xl">
-        <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="relative flex h-full w-full"
-        >
+      <DialogContent className="flex h-screen w-screen max-w-full border-0 bg-black/95 p-0 backdrop-blur-2xl overflow-hidden">
+        {/* Full screen container - no scroll */}
+        <div className="relative flex h-full w-full flex-col">
           {/* Animated background */}
           <div className="absolute inset-0 -z-10">
             <div className="absolute inset-0 bg-gradient-to-br from-violet-950/20 via-black to-purple-950/20" />
@@ -421,212 +421,132 @@ function PaintingLightbox({
             </svg>
           </motion.button>
 
-          {/* Main content - flex layout */}
-          <div className="flex h-full w-full">
-            {/* Left side - Image (flex-1 but with max-width) */}
-            <div className="relative flex flex-1 items-center justify-center p-6" style={{ maxWidth: 'calc(100% - 420px)' }}>
-              {/* Navigation buttons */}
-              <motion.button
-                initial={{ x: -50, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                transition={{ delay: 0.2 }}
-                onClick={onPrev}
-                className="absolute left-4 top-1/2 -translate-y-1/2 z-40 group rounded-full bg-white/10 p-3 backdrop-blur-md transition-all hover:bg-white/20 hover:scale-110"
-              >
-                <ChevronLeft className="h-6 w-6 text-white transition-transform group-hover:-translate-x-1" />
-              </motion.button>
-              
-              <motion.button
-                initial={{ x: 50, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                transition={{ delay: 0.2 }}
-                onClick={onNext}
-                className="absolute right-4 top-1/2 -translate-y-1/2 z-40 group rounded-full bg-white/10 p-3 backdrop-blur-md transition-all hover:bg-white/20 hover:scale-110"
-              >
-                <ChevronRight className="h-6 w-6 text-white transition-transform group-hover:translate-x-1" />
-              </motion.button>
+          {/* Navigation buttons */}
+          <motion.button
+            initial={{ x: -50, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ delay: 0.2 }}
+            onClick={onPrev}
+            className="absolute left-4 top-1/2 -translate-y-1/2 z-40 group rounded-full bg-white/10 p-3 backdrop-blur-md transition-all hover:bg-white/20 hover:scale-110"
+          >
+            <ChevronLeft className="h-6 w-6 text-white transition-transform group-hover:-translate-x-1" />
+          </motion.button>
+          
+          <motion.button
+            initial={{ x: 50, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ delay: 0.2 }}
+            onClick={onNext}
+            className="absolute right-4 top-1/2 -translate-y-1/2 z-40 group rounded-full bg-white/10 p-3 backdrop-blur-md transition-all hover:bg-white/20 hover:scale-110"
+          >
+            <ChevronRight className="h-6 w-6 text-white transition-transform group-hover:translate-x-1" />
+          </motion.button>
 
-              {/* Image container */}
-              <motion.div
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ type: "spring", stiffness: 100, damping: 20 }}
-                className="flex h-full w-full items-center justify-center"
-              >
-                {/* Loading state */}
-                {!imageLoaded && (
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="h-16 w-16 animate-spin rounded-full border-4 border-violet-600/20 border-t-violet-600" />
-                  </div>
-                )}
+          {/* Image Section - Takes most space */}
+          <div className="relative flex flex-1 items-center justify-center pb-2 px-4 pt-4">
+            {/* Loading state */}
+            {!imageLoaded && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="h-16 w-16 animate-spin rounded-full border-4 border-violet-600/20 border-t-violet-600" />
+              </div>
+            )}
 
-                {/* Glow effect */}
-                <div className="absolute inset-0 -z-10 flex items-center justify-center">
-                  <div className="h-96 w-96 animate-pulse rounded-full bg-gradient-to-r from-violet-600/20 via-purple-600/20 to-violet-600/20 blur-3xl" />
-                </div>
-
-                {/* Image with frame */}
-                <motion.div
-                  animate={{ scale: isZoomed ? 1.15 : 1 }}
-                  transition={{ type: "spring", stiffness: 200 }}
-                  className="relative cursor-zoom-in"
-                  onClick={() => setIsZoomed(!isZoomed)}
-                  style={{ maxWidth: '100%', maxHeight: '100%' }}
-                >
-                  <div className="rounded-xl bg-gradient-to-br from-neutral-800 to-neutral-900 p-1 shadow-[0_20px_60px_rgba(139,92,246,0.2)]">
-                    <div className="rounded-lg bg-gradient-to-br from-neutral-900 to-black p-3">
-                      <div className="relative overflow-hidden rounded-md">
-                        <img
-                          src={painting.src}
-                          alt={painting.title}
-                          onLoad={() => setImageLoaded(true)}
-                          className={classNames(
-                            "block h-auto w-auto rounded-md object-contain transition-all duration-500",
-                            imageLoaded ? "opacity-100 blur-0" : "opacity-0 blur-sm"
-                          )}
-                          style={{ 
-                            maxHeight: 'calc(90vh - 8rem)',
-                            maxWidth: 'calc(90vw - 520px)'
-                          }}
-                        />
-                        
-                        {/* Animated shine */}
-                        <motion.div
-                          initial={{ x: "-100%" }}
-                          animate={{ x: "200%" }}
-                          transition={{ duration: 3, repeat: Infinity, repeatDelay: 3 }}
-                          className="absolute inset-0 -skew-x-12 bg-gradient-to-r from-transparent via-white/10 to-transparent"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-
-                {/* Zoom indicator */}
-                <AnimatePresence>
-                  {imageLoaded && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 10 }}
-                      className="absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-black/50 px-4 py-2 backdrop-blur-sm"
-                    >
-                      <p className="text-xs text-white/70">Click to {isZoomed ? 'zoom out' : 'zoom in'}</p>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </motion.div>
+            {/* Glow effect */}
+            <div className="absolute inset-0 -z-10 flex items-center justify-center">
+              <div className="h-96 w-96 animate-pulse rounded-full bg-gradient-to-r from-violet-600/20 via-purple-600/20 to-violet-600/20 blur-3xl" />
             </div>
 
-            {/* Right side - Information panel (fixed width) */}
-            <div className="relative flex w-[420px] flex-shrink-0 flex-col justify-center overflow-y-auto border-l border-white/10 bg-gradient-to-br from-neutral-900/50 to-black/50 p-8 backdrop-blur-xl">
-              {/* Keep all the content from the right panel as is */}
-              {/* Decorative elements */}
-              <div className="absolute left-0 top-0 h-32 w-32 opacity-10">
-                <div className="absolute left-0 top-0 h-24 w-24 border-l-2 border-t-2 border-violet-400 rounded-tl-3xl" />
+            {/* Image */}
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: isZoomed ? 1.2 : 1, opacity: 1 }}
+              transition={{ type: "spring", stiffness: 100, damping: 20 }}
+              className="relative cursor-zoom-in"
+              onClick={() => setIsZoomed(!isZoomed)}
+            >
+              <div className="rounded-xl bg-gradient-to-br from-neutral-800 to-neutral-900 p-1 shadow-[0_20px_60px_rgba(139,92,246,0.2)]">
+                <div className="rounded-lg bg-gradient-to-br from-neutral-900 to-black p-3">
+                  <div className="relative overflow-hidden rounded-md">
+                    <img
+                      src={painting.src}
+                      alt={painting.title}
+                      onLoad={() => setImageLoaded(true)}
+                      className={classNames(
+                        "block h-auto max-h-[calc(100vh-180px)] w-auto max-w-[calc(100vw-80px)] rounded-md object-contain transition-all duration-500",
+                        imageLoaded ? "opacity-100 blur-0" : "opacity-0 blur-sm"
+                      )}
+                    />
+                  </div>
+                </div>
               </div>
-              <div className="absolute bottom-0 right-0 h-32 w-32 opacity-10">
-                <div className="absolute bottom-0 right-0 h-24 w-24 border-b-2 border-r-2 border-violet-400 rounded-br-3xl" />
-              </div>
+            </motion.div>
+          </div>
 
-              <motion.div
-                initial={{ x: 30, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                transition={{ delay: 0.3 }}
-                className="relative z-10"
-              >
-                {/* Category badge */}
-                <motion.div
-                  initial={{ y: -10, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 0.4 }}
-                  className="mb-6 inline-block"
-                >
-                  <div className="rounded-full bg-gradient-to-r from-violet-600/20 to-purple-600/20 px-4 py-1.5 backdrop-blur-sm">
-                    <span className="text-xs font-medium uppercase tracking-wider text-violet-400">
-                      {painting.wallPosition === "portfolio" ? "Portfolio Piece" : "Early Work"}
+          {/* Compact Info Section */}
+          <div className="w-full border-t border-white/10 bg-black/50 px-6 py-3">
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.4 }}
+              className="mx-auto max-w-7xl"
+            >
+              {/* Single row layout */}
+              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                {/* Left side - Title and badge */}
+                <div className="flex flex-col lg:flex-row lg:items-center gap-3">
+                  <div className="inline-flex w-fit items-center gap-2 rounded-full bg-gradient-to-r from-violet-600/20 to-purple-600/20 px-3 py-1 backdrop-blur-sm">
+                    <div className="h-1.5 w-1.5 animate-pulse rounded-full bg-violet-400" />
+                    <span className="text-xs font-medium text-violet-300">
+                      {painting.wallPosition === "portfolio" ? "Portfolio" : "Early Work"}
                     </span>
                   </div>
-                </motion.div>
+                  
+                  <div>
+                    <h2 className="text-2xl font-bold text-white">
+                      {painting.title}
+                    </h2>
+                    {painting.year && (
+                      <span className="text-sm text-white/50">({painting.year})</span>
+                    )}
+                  </div>
+                </div>
 
-                {/* Title */}
-                <motion.h2
-                  initial={{ y: 10, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 0.5 }}
-                  className="mb-6 bg-gradient-to-r from-white to-white/80 bg-clip-text text-4xl font-bold leading-tight text-transparent lg:text-5xl"
-                >
-                  {painting.title}
-                </motion.h2>
-
-                {/* Description */}
+                {/* Center - Description (if exists) */}
                 {painting.description && (
-                  <motion.p
-                    initial={{ y: 10, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{ delay: 0.6 }}
-                    className="mb-8 text-lg leading-relaxed text-white/60"
-                  >
-                    {painting.description}
-                  </motion.p>
+                  <div className="flex-1 max-w-2xl">
+                    <p className="text-sm text-white/60 line-clamp-2">
+                      {painting.description}
+                    </p>
+                  </div>
                 )}
 
-                {/* Metadata */}
-                <motion.div
-                  initial={{ y: 10, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 0.7 }}
-                  className="space-y-4"
-                >
-                  {painting.year && (
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-violet-600/10">
-                        <Calendar className="h-5 w-5 text-violet-400" />
-                      </div>
-                      <div>
-                        <p className="text-xs text-white/40">Year Created</p>
-                        <p className="text-lg font-semibold text-white">{painting.year}</p>
-                      </div>
-                    </div>
-                  )}
-                  
-                  {painting.medium && (
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-600/10">
-                        <Palette className="h-5 w-5 text-purple-400" />
-                      </div>
-                      <div>
-                        <p className="text-xs text-white/40">Medium</p>
-                        <p className="text-lg font-semibold text-white">{painting.medium}</p>
-                      </div>
-                    </div>
-                  )}
-                </motion.div>
+                {/* Right side - Medium (if exists) */}
+                {painting.medium && (
+                  <div className="flex items-center gap-2">
+                    <Palette className="h-4 w-4 text-purple-400" />
+                    <span className="text-sm text-white/70">{painting.medium}</span>
+                  </div>
+                )}
+              </div>
 
-                {/* Action buttons */}
-                <motion.div
-                  initial={{ y: 10, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 0.8 }}
-                  className="mt-10 flex gap-3"
+              {/* Mobile navigation buttons */}
+              <div className="mt-4 flex gap-3 lg:hidden">
+                <button
+                  onClick={onPrev}
+                  className="flex-1 rounded-full border border-white/20 bg-white/5 py-2 text-sm font-medium text-white backdrop-blur-sm"
                 >
-                  <button
-                    onClick={onPrev}
-                    className="flex-1 rounded-full border border-white/20 bg-white/5 px-6 py-3 font-medium text-white backdrop-blur-sm transition-all hover:bg-white/10 hover:scale-105"
-                  >
-                    Previous
-                  </button>
-                  <button
-                    onClick={onNext}
-                    className="flex-1 rounded-full bg-gradient-to-r from-violet-600 to-purple-600 px-6 py-3 font-medium text-white shadow-lg shadow-violet-600/25 transition-all hover:scale-105 hover:shadow-violet-600/40"
-                  >
-                    Next
-                  </button>
-                </motion.div>
-              </motion.div>
-            </div>
+                  Previous
+                </button>
+                <button
+                  onClick={onNext}
+                  className="flex-1 rounded-full bg-gradient-to-r from-violet-600 to-purple-600 py-2 text-sm font-medium text-white"
+                >
+                  Next
+                </button>
+              </div>
+            </motion.div>
           </div>
-        </motion.div>
+        </div>
       </DialogContent>
     </Dialog>
   )
