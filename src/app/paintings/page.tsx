@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
-import { ChevronLeft, ChevronRight, Palette, Calendar, Maximize2 } from "lucide-react"
+import { ChevronLeft, ChevronRight, Palette, Calendar, Maximize2, X } from "lucide-react"
 
 // Types
 type PaintingItem = {
@@ -370,9 +370,6 @@ function GridLayout({ paintings, onOpen }: { paintings: PaintingItem[]; onOpen: 
   )
 }
 
-// Replace the PaintingLightbox component in your paintings/page.tsx with this version
-// Compact layout that fits without scrolling
-
 function PaintingLightbox({
   painting,
   onClose,
@@ -386,21 +383,35 @@ function PaintingLightbox({
 }) {
   const [imageLoaded, setImageLoaded] = useState(false)
   const [isZoomed, setIsZoomed] = useState(false)
+  const [imageDimensions, setImageDimensions] = useState({ width: 0, height: 0 })
+  const [isPortrait, setIsPortrait] = useState(false)
 
   useEffect(() => {
     if (painting) {
       setImageLoaded(false)
       setIsZoomed(false)
+      // Load image to get dimensions
+      const img = new Image()
+      img.onload = () => {
+        setImageDimensions({ width: img.width, height: img.height })
+        setIsPortrait(img.height > img.width)
+        setImageLoaded(true)
+      }
+      img.src = painting.src
     }
   }, [painting])
 
   if (!painting) return null
 
+  // Dynamic panel size based on orientation
+  const panelWidth = isPortrait ? "max-w-[40vw]" : "max-w-[60vw]"
+  const panelHeight = "max-h-[80vh]"
+
   return (
     <Dialog open={!!painting} onOpenChange={onClose}>
-      <DialogContent className="flex h-screen w-screen max-w-full border-0 bg-black/95 p-0 backdrop-blur-2xl overflow-hidden">
-        {/* Full screen container - no scroll */}
-        <div className="relative flex h-full w-full flex-col">
+      <DialogContent className="flex h-screen w-screen max-w-full border-0 bg-black/95 p-0 backdrop-blur-2xl">
+        {/* Full screen container with centered content */}
+        <div className="relative flex h-full w-full items-center justify-center">
           {/* Animated background */}
           <div className="absolute inset-0 -z-10">
             <div className="absolute inset-0 bg-gradient-to-br from-violet-950/20 via-black to-purple-950/20" />
@@ -414,138 +425,145 @@ function PaintingLightbox({
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.3 }}
             onClick={onClose}
-            className="absolute right-4 top-4 z-50 rounded-full bg-white/10 p-2 backdrop-blur-md transition-all hover:bg-white/20 hover:scale-110"
+            className="absolute right-6 top-6 z-50 rounded-full bg-white/10 p-3 backdrop-blur-md transition-all hover:bg-white/20 hover:scale-110"
+            aria-label="Close"
           >
-            <svg className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <X className="h-5 w-5 text-white" />
           </motion.button>
 
-          {/* Navigation buttons */}
+          {/* Navigation buttons - Desktop */}
           <motion.button
-            initial={{ x: -50, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            transition={{ delay: 0.2 }}
+            initial={{ opacity: 0, x: -50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.3 }}
             onClick={onPrev}
-            className="absolute left-4 top-1/2 -translate-y-1/2 z-40 group rounded-full bg-white/10 p-3 backdrop-blur-md transition-all hover:bg-white/20 hover:scale-110"
+            className="absolute left-6 top-1/2 z-40 hidden -translate-y-1/2 rounded-full bg-white/10 p-4 backdrop-blur-md transition-all hover:bg-white/20 hover:scale-110 lg:block"
+            aria-label="Previous"
           >
-            <ChevronLeft className="h-6 w-6 text-white transition-transform group-hover:-translate-x-1" />
+            <ChevronLeft className="h-6 w-6 text-white" />
           </motion.button>
-          
+
           <motion.button
-            initial={{ x: 50, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            transition={{ delay: 0.2 }}
+            initial={{ opacity: 0, x: 50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.3 }}
             onClick={onNext}
-            className="absolute right-4 top-1/2 -translate-y-1/2 z-40 group rounded-full bg-white/10 p-3 backdrop-blur-md transition-all hover:bg-white/20 hover:scale-110"
+            className="absolute right-6 top-1/2 z-40 hidden -translate-y-1/2 rounded-full bg-white/10 p-4 backdrop-blur-md transition-all hover:bg-white/20 hover:scale-110 lg:block"
+            aria-label="Next"
           >
-            <ChevronRight className="h-6 w-6 text-white transition-transform group-hover:translate-x-1" />
+            <ChevronRight className="h-6 w-6 text-white" />
           </motion.button>
 
-          {/* Image Section - Takes most space */}
-          <div className="relative flex flex-1 items-center justify-center pb-2 px-4 pt-4">
-            {/* Loading state */}
-            {!imageLoaded && (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="h-16 w-16 animate-spin rounded-full border-4 border-violet-600/20 border-t-violet-600" />
-              </div>
-            )}
+          {/* Main content panel - dynamically sized */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            transition={{ type: "spring", damping: 25 }}
+            className={`relative flex flex-col ${panelWidth} ${panelHeight} w-full`}
+          >
+            {/* Image container with proper aspect ratio */}
+            <div className="relative flex-1 flex items-center justify-center overflow-hidden rounded-2xl bg-black/50 backdrop-blur-sm">
+              {/* Loading shimmer */}
+              {!imageLoaded && (
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-shimmer" />
+              )}
 
-            {/* Glow effect */}
-            <div className="absolute inset-0 -z-10 flex items-center justify-center">
-              <div className="h-96 w-96 animate-pulse rounded-full bg-gradient-to-r from-violet-600/20 via-purple-600/20 to-violet-600/20 blur-3xl" />
+              {/* Main image - click to zoom */}
+              <motion.div
+                className={`relative cursor-zoom-in ${isZoomed ? 'fixed inset-0 z-[60] flex items-center justify-center bg-black/95' : ''}`}
+                onClick={() => setIsZoomed(!isZoomed)}
+                initial={false}
+                animate={{ scale: isZoomed ? 1 : 1 }}
+                transition={{ type: "spring", damping: 25 }}
+              >
+                <img
+                  src={painting.src}
+                  alt={painting.title}
+                  className={`
+                    ${isZoomed 
+                      ? 'max-h-[95vh] max-w-[95vw] object-contain cursor-zoom-out' 
+                      : 'max-h-full max-w-full object-contain'
+                    }
+                    ${imageLoaded ? 'opacity-100' : 'opacity-0'}
+                    transition-opacity duration-500
+                  `}
+                  onLoad={() => setImageLoaded(true)}
+                />
+
+                {/* Zoom hint */}
+                {!isZoomed && imageLoaded && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.5 }}
+                    className="absolute bottom-4 right-4 rounded-full bg-black/60 p-2 backdrop-blur-sm"
+                  >
+                    <Maximize2 className="h-4 w-4 text-white/70" />
+                  </motion.div>
+                )}
+              </motion.div>
             </div>
 
-            {/* Image */}
+            {/* Info panel */}
             <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: isZoomed ? 1.2 : 1, opacity: 1 }}
-              transition={{ type: "spring", stiffness: 100, damping: 20 }}
-              className="relative cursor-zoom-in"
-              onClick={() => setIsZoomed(!isZoomed)}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="mt-4 space-y-3 px-2"
             >
-              <div className="rounded-xl bg-gradient-to-br from-neutral-800 to-neutral-900 p-1 shadow-[0_20px_60px_rgba(139,92,246,0.2)]">
-                <div className="rounded-lg bg-gradient-to-br from-neutral-900 to-black p-3">
-                  <div className="relative overflow-hidden rounded-md">
-                    <img
-                      src={painting.src}
-                      alt={painting.title}
-                      onLoad={() => setImageLoaded(true)}
-                      className={classNames(
-                        "block h-auto max-h-[calc(100vh-180px)] w-auto max-w-[calc(100vw-80px)] rounded-md object-contain transition-all duration-500",
-                        imageLoaded ? "opacity-100 blur-0" : "opacity-0 blur-sm"
-                      )}
-                    />
-                  </div>
+              {/* Title and year */}
+              <div className="flex items-start justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold text-white">
+                    {painting.title}
+                  </h2>
+                  {painting.year && (
+                    <span className="text-sm text-white/60">({painting.year})</span>
+                  )}
                 </div>
+                
+                {/* Badge */}
+                <span className="rounded-full bg-gradient-to-r from-violet-600/20 to-purple-600/20 px-3 py-1 text-xs font-medium text-violet-300 backdrop-blur-sm">
+                  {painting.wallPosition === "portfolio" ? "Portfolio" : "Early Work"}
+                </span>
               </div>
-            </motion.div>
-          </div>
 
-          {/* Compact Info Section */}
-          <div className="w-full border-t border-white/10 bg-black/50 px-6 py-3">
-            <motion.div
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.4 }}
-              className="mx-auto max-w-7xl"
-            >
-              {/* Single row layout */}
-              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                {/* Left side - Title and badge */}
-                <div className="flex flex-col lg:flex-row lg:items-center gap-3">
-                  <div className="inline-flex w-fit items-center gap-2 rounded-full bg-gradient-to-r from-violet-600/20 to-purple-600/20 px-3 py-1 backdrop-blur-sm">
-                    <div className="h-1.5 w-1.5 animate-pulse rounded-full bg-violet-400" />
-                    <span className="text-xs font-medium text-violet-300">
-                      {painting.wallPosition === "portfolio" ? "Portfolio" : "Early Work"}
-                    </span>
-                  </div>
-                  
-                  <div>
-                    <h2 className="text-2xl font-bold text-white">
-                      {painting.title}
-                    </h2>
-                    {painting.year && (
-                      <span className="text-sm text-white/50">({painting.year})</span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Center - Description (if exists) */}
+              {/* Description and medium row */}
+              <div className="flex items-center justify-between gap-4">
+                {/* Description */}
                 {painting.description && (
-                  <div className="flex-1 max-w-2xl">
-                    <p className="text-sm text-white/60 line-clamp-2">
-                      {painting.description}
-                    </p>
-                  </div>
+                  <p className="flex-1 text-sm text-white/70 line-clamp-2">
+                    {painting.description}
+                  </p>
                 )}
 
-                {/* Right side - Medium (if exists) */}
+                {/* Medium */}
                 {painting.medium && (
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 text-sm text-white/60">
                     <Palette className="h-4 w-4 text-purple-400" />
-                    <span className="text-sm text-white/70">{painting.medium}</span>
+                    <span>{painting.medium}</span>
                   </div>
                 )}
               </div>
 
-              {/* Mobile navigation buttons */}
-              <div className="mt-4 flex gap-3 lg:hidden">
+              {/* Mobile navigation */}
+              <div className="flex gap-3 pt-2 lg:hidden">
                 <button
                   onClick={onPrev}
-                  className="flex-1 rounded-full border border-white/20 bg-white/5 py-2 text-sm font-medium text-white backdrop-blur-sm"
+                  className="flex-1 rounded-full border border-white/20 bg-white/5 py-2.5 text-sm font-medium text-white backdrop-blur-sm transition-all hover:bg-white/10"
                 >
                   Previous
                 </button>
                 <button
                   onClick={onNext}
-                  className="flex-1 rounded-full bg-gradient-to-r from-violet-600 to-purple-600 py-2 text-sm font-medium text-white"
+                  className="flex-1 rounded-full bg-gradient-to-r from-violet-600 to-purple-600 py-2.5 text-sm font-medium text-white transition-all hover:from-violet-500 hover:to-purple-500"
                 >
                   Next
                 </button>
               </div>
             </motion.div>
-          </div>
+          </motion.div>
         </div>
       </DialogContent>
     </Dialog>
