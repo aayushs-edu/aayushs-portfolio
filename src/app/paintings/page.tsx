@@ -51,16 +51,19 @@ function usePaintings(manifestUrl = "/paintings/manifest.json") {
 }
 
 // Components
+// Updated PaintingCard component
 function PaintingCard({ 
   painting, 
   onClick, 
   delay = 0,
-  isCenter = false
+  isCenter = false,
+  isLeftColumn = false  // New prop for left column paintings
 }: { 
   painting: PaintingItem
   onClick: () => void
   delay?: number
   isCenter?: boolean
+  isLeftColumn?: boolean  // New prop type
 }) {
   const [imageLoaded, setImageLoaded] = useState(false)
   const [isHovered, setIsHovered] = useState(false)
@@ -75,6 +78,13 @@ function PaintingCard({
     cardRef.current.style.setProperty('--mouse-y', `${y}%`)
   }
 
+  // Different scale values based on position
+  const getHoverScale = () => {
+    if (isLeftColumn) return 1.06  // Slightly less scale since they're already bigger
+    if (isCenter) return 1.08
+    return 1.05
+  }
+
   return (
     <motion.div
       ref={cardRef}
@@ -87,12 +97,12 @@ function PaintingCard({
         stiffness: 100
       }}
       whileHover={{ 
-        scale: isCenter ? 1.08 : 1.05,
+        scale: getHoverScale(),
         rotateY: 5,
         z: 50
       }}
       whileTap={{ scale: 0.98 }}
-      className="group relative cursor-pointer preserve-3d"
+      className={`group relative cursor-pointer preserve-3d ${isLeftColumn ? 'scale-110' : ''}`}  // Make left column cards 10% bigger
       onClick={onClick}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -126,8 +136,8 @@ function PaintingCard({
           {/* Outer frame */}
           <div className="absolute inset-0 rounded-2xl ring-1 ring-white/10 transition-all duration-300 group-hover:ring-2 group-hover:ring-violet-500/30" />
           
-          {/* Inner frame with gradient */}
-          <div className="border-[3px] border-transparent bg-gradient-to-br from-neutral-800 via-neutral-900 to-black p-3 transition-all duration-500 group-hover:from-violet-900/20 group-hover:via-neutral-900 group-hover:to-purple-900/20">
+          {/* Inner frame with gradient - thicker for left column */}
+          <div className={`border-[${isLeftColumn ? '4px' : '3px'}] border-transparent bg-gradient-to-br from-neutral-800 via-neutral-900 to-black p-${isLeftColumn ? '4' : '3'} transition-all duration-500 group-hover:from-violet-900/20 group-hover:via-neutral-900 group-hover:to-purple-900/20`}>
             <div className="relative overflow-hidden rounded-lg">
               <img
                 src={painting.src}
@@ -159,11 +169,11 @@ function PaintingCard({
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: isHovered ? 0 : 20, opacity: isHovered ? 1 : 0 }}
             transition={{ delay: 0.1 }}
-            className="w-full p-5"
+            className={`w-full p-${isLeftColumn ? '6' : '5'}`}  // More padding for left column
           >
-            <h3 className="text-lg font-bold text-white drop-shadow-lg">{painting.title}</h3>
+            <h3 className={`text-${isLeftColumn ? 'xl' : 'lg'} font-bold text-white drop-shadow-lg`}>{painting.title}</h3>
             {painting.year && (
-              <p className="mt-1 text-sm text-white/80">{painting.year}</p>
+              <p className={`mt-1 text-${isLeftColumn ? 'base' : 'sm'} text-white/80`}>{painting.year}</p>
             )}
             {painting.medium && (
               <p className="mt-2 text-xs text-violet-300">{painting.medium}</p>
@@ -180,8 +190,8 @@ function PaintingCard({
               exit={{ scale: 0, rotate: 180 }}
               className="absolute right-4 top-4"
             >
-              <div className="rounded-full bg-violet-600/90 p-3 shadow-lg backdrop-blur-sm transition-colors hover:bg-violet-500">
-                <Maximize2 className="h-5 w-5 text-white" />
+              <div className={`rounded-full bg-violet-600/90 p-${isLeftColumn ? '4' : '3'} shadow-lg backdrop-blur-sm transition-colors hover:bg-violet-500`}>
+                <Maximize2 className={`h-${isLeftColumn ? '6' : '5'} w-${isLeftColumn ? '6' : '5'} text-white`} />
               </div>
             </motion.div>
           )}
@@ -196,10 +206,17 @@ function PaintingCard({
         </div>
       </div>
 
-      {/* Center piece glow effect */}
+      {/* Special glow effects */}
       {isCenter && (
         <div className="absolute -inset-4 -z-10 opacity-50">
           <div className="h-full w-full animate-pulse rounded-3xl bg-gradient-to-r from-violet-600/20 via-purple-600/20 to-violet-600/20 blur-2xl" />
+        </div>
+      )}
+      
+      {/* Extra glow for left column paintings */}
+      {isLeftColumn && (
+        <div className="absolute -inset-3 -z-10 opacity-30">
+          <div className="h-full w-full animate-pulse rounded-3xl bg-gradient-to-r from-purple-600/20 via-violet-600/20 to-purple-600/20 blur-xl" />
         </div>
       )}
     </motion.div>
@@ -382,189 +399,165 @@ function PaintingLightbox({
   onNext: () => void
 }) {
   const [imageLoaded, setImageLoaded] = useState(false)
-  const [isZoomed, setIsZoomed] = useState(false)
-  const [imageDimensions, setImageDimensions] = useState({ width: 0, height: 0 })
-  const [isPortrait, setIsPortrait] = useState(false)
 
   useEffect(() => {
     if (painting) {
       setImageLoaded(false)
-      setIsZoomed(false)
-      // Load image to get dimensions
+      // Preload image
       const img = new Image()
       img.onload = () => {
-        setImageDimensions({ width: img.width, height: img.height })
-        setIsPortrait(img.height > img.width)
         setImageLoaded(true)
       }
       img.src = painting.src
     }
   }, [painting])
 
-  if (!painting) return null
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!painting) return;
+      
+      switch(e.key) {
+        case 'ArrowLeft':
+          e.preventDefault();
+          onPrev();
+          break;
+        case 'ArrowRight':
+          e.preventDefault();
+          onNext();
+          break;
+        case 'Escape':
+          e.preventDefault();
+          onClose();
+          break;
+      }
+    };
 
-  // Dynamic panel size based on orientation
-  const panelWidth = isPortrait ? "max-w-[40vw]" : "max-w-[60vw]"
-  const panelHeight = "max-h-[80vh]"
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [painting, onPrev, onNext, onClose]);
+
+  if (!painting) return null
 
   return (
     <Dialog open={!!painting} onOpenChange={onClose}>
-      <DialogContent className="flex h-screen w-screen max-w-full border-0 bg-black/95 p-0 backdrop-blur-2xl">
-        {/* Full screen container with centered content */}
-        <div className="relative flex h-full w-full items-center justify-center">
-          {/* Animated background */}
-          <div className="absolute inset-0 -z-10">
-            <div className="absolute inset-0 bg-gradient-to-br from-violet-950/20 via-black to-purple-950/20" />
-            <div className="absolute left-1/3 top-1/3 h-[400px] w-[400px] animate-pulse rounded-full bg-violet-600/5 blur-3xl" />
-            <div className="absolute bottom-1/3 right-1/3 h-[400px] w-[400px] animate-pulse rounded-full bg-purple-600/5 blur-3xl animation-delay-2000" />
-          </div>
-
-          {/* Close button */}
-          <motion.button
-            initial={{ opacity: 0, scale: 0 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.3 }}
-            onClick={onClose}
-            className="absolute right-6 top-6 z-50 rounded-full bg-white/10 p-3 backdrop-blur-md transition-all hover:bg-white/20 hover:scale-110"
-            aria-label="Close"
-          >
-            <X className="h-5 w-5 text-white" />
-          </motion.button>
-
-          {/* Navigation buttons - Desktop */}
-          <motion.button
-            initial={{ opacity: 0, x: -50 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.3 }}
-            onClick={onPrev}
-            className="absolute left-6 top-1/2 z-40 hidden -translate-y-1/2 rounded-full bg-white/10 p-4 backdrop-blur-md transition-all hover:bg-white/20 hover:scale-110 lg:block"
-            aria-label="Previous"
-          >
-            <ChevronLeft className="h-6 w-6 text-white" />
-          </motion.button>
-
-          <motion.button
-            initial={{ opacity: 0, x: 50 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.3 }}
-            onClick={onNext}
-            className="absolute right-6 top-1/2 z-40 hidden -translate-y-1/2 rounded-full bg-white/10 p-4 backdrop-blur-md transition-all hover:bg-white/20 hover:scale-110 lg:block"
-            aria-label="Next"
-          >
-            <ChevronRight className="h-6 w-6 text-white" />
-          </motion.button>
-
-          {/* Main content panel - dynamically sized */}
+      <DialogContent 
+        className="fixed inset-0 z-50 flex h-screen w-screen max-w-none items-center justify-center border-0 bg-black/95 p-0 data-[state=open]:animate-none translate-x-0 translate-y-0 left-0 top-0"
+        style={{
+          transform: 'none',
+          maxWidth: '100vw',
+          maxHeight: '100vh'
+        }}
+        showCloseButton={false}
+      >
+        {/* Custom close button */}
+        <button
+          onClick={onClose}
+          className="absolute right-6 top-6 z-50 rounded-full bg-white/10 p-3 backdrop-blur-md transition-all hover:bg-white/20 hover:scale-110 hover:rotate-90"
+          aria-label="Close lightbox"
+        >
+          <X className="h-6 w-6 text-white" />
+        </button>
+        
+        {/* Navigation buttons */}
+        <button
+          onClick={onPrev}
+          className="absolute left-6 top-1/2 z-50 -translate-y-1/2 rounded-full bg-white/10 p-3 backdrop-blur-md transition-all hover:bg-white/20 hover:scale-110"
+          aria-label="Previous painting"
+        >
+          <ChevronLeft className="h-6 w-6 text-white" />
+        </button>
+        
+        <button
+          onClick={onNext}
+          className="absolute right-6 top-1/2 z-50 -translate-y-1/2 rounded-full bg-white/10 p-3 backdrop-blur-md transition-all hover:bg-white/20 hover:scale-110"
+          aria-label="Next painting"
+        >
+          <ChevronRight className="h-6 w-6 text-white" />
+        </button>
+        
+        {/* Main image container with better centering */}
+        <div className="relative flex h-full w-full items-center justify-center p-12">
           <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            transition={{ type: "spring", damping: 25 }}
-            className={`relative flex flex-col ${panelWidth} ${panelHeight} w-full`}
+            key={painting.id}
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.8, opacity: 0 }}
+            transition={{ type: "spring", damping: 20, stiffness: 300 }}
+            className="relative flex h-full w-full items-center justify-center"
           >
-            {/* Image container with proper aspect ratio */}
-            <div className="relative flex-1 flex items-center justify-center overflow-hidden rounded-2xl bg-black/50 backdrop-blur-sm">
-              {/* Loading shimmer */}
-              {!imageLoaded && (
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-shimmer" />
-              )}
-
-              {/* Main image - click to zoom */}
-              <motion.div
-                className={`relative cursor-zoom-in ${isZoomed ? 'fixed inset-0 z-[60] flex items-center justify-center bg-black/95' : ''}`}
-                onClick={() => setIsZoomed(!isZoomed)}
-                initial={false}
-                animate={{ scale: isZoomed ? 1 : 1 }}
-                transition={{ type: "spring", damping: 25 }}
-              >
-                <img
-                  src={painting.src}
-                  alt={painting.title}
-                  className={`
-                    ${isZoomed 
-                      ? 'max-h-[95vh] max-w-[95vw] object-contain cursor-zoom-out' 
-                      : 'max-h-full max-w-full object-contain'
-                    }
-                    ${imageLoaded ? 'opacity-100' : 'opacity-0'}
-                    transition-opacity duration-500
-                  `}
-                  onLoad={() => setImageLoaded(true)}
-                />
-
-                {/* Zoom hint */}
-                {!isZoomed && imageLoaded && (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.5 }}
-                    className="absolute bottom-4 right-4 rounded-full bg-black/60 p-2 backdrop-blur-sm"
-                  >
-                    <Maximize2 className="h-4 w-4 text-white/70" />
-                  </motion.div>
-                )}
-              </motion.div>
-            </div>
-
-            {/* Info panel */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="mt-4 space-y-3 px-2"
-            >
-              {/* Title and year */}
-              <div className="flex items-start justify-between">
-                <div>
-                  <h2 className="text-2xl font-bold text-white">
-                    {painting.title}
-                  </h2>
-                  {painting.year && (
-                    <span className="text-sm text-white/60">({painting.year})</span>
-                  )}
-                </div>
-                
-                {/* Badge */}
-                <span className="rounded-full bg-gradient-to-r from-violet-600/20 to-purple-600/20 px-3 py-1 text-xs font-medium text-violet-300 backdrop-blur-sm">
-                  {painting.wallPosition === "portfolio" ? "Portfolio" : "Early Work"}
-                </span>
+            {/* Loading state */}
+            {!imageLoaded && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="h-20 w-20 animate-spin rounded-full border-4 border-violet-600/20 border-t-violet-600" />
               </div>
-
-              {/* Description and medium row */}
-              <div className="flex items-center justify-between gap-4">
-                {/* Description */}
-                {painting.description && (
-                  <p className="flex-1 text-sm text-white/70 line-clamp-2">
-                    {painting.description}
-                  </p>
-                )}
-
-                {/* Medium */}
-                {painting.medium && (
-                  <div className="flex items-center gap-2 text-sm text-white/60">
-                    <Palette className="h-4 w-4 text-purple-400" />
-                    <span>{painting.medium}</span>
-                  </div>
-                )}
+            )}
+            
+            {/* Image with proper constraints */}
+            <img
+              src={painting.src}
+              alt={painting.title}
+              className={`h-auto max-h-[85vh] w-auto max-w-[90vw] rounded-lg object-contain shadow-2xl transition-opacity duration-300 ${
+                imageLoaded ? 'opacity-100' : 'opacity-0'
+              }`}
+              style={{
+                filter: 'drop-shadow(0 25px 50px rgba(0, 0, 0, 0.5))'
+              }}
+            />
+            
+            {/* Year badge */}
+            {painting.year && (
+              <div className="absolute left-4 top-4">
+                <Badge className="bg-purple-500/20 text-purple-300 backdrop-blur-md">
+                  <Calendar className="mr-1 h-3 w-3" />
+                  {painting.year}
+                </Badge>
               </div>
-
-              {/* Mobile navigation */}
-              <div className="flex gap-3 pt-2 lg:hidden">
-                <button
-                  onClick={onPrev}
-                  className="flex-1 rounded-full border border-white/20 bg-white/5 py-2.5 text-sm font-medium text-white backdrop-blur-sm transition-all hover:bg-white/10"
-                >
-                  Previous
-                </button>
-                <button
-                  onClick={onNext}
-                  className="flex-1 rounded-full bg-gradient-to-r from-violet-600 to-purple-600 py-2.5 text-sm font-medium text-white transition-all hover:from-violet-500 hover:to-purple-500"
-                >
-                  Next
-                </button>
+            )}
+            
+            {/* Medium badge */}
+            {painting.medium && (
+              <div className="absolute right-4 top-4">
+                <Badge className="bg-violet-500/20 text-violet-300 backdrop-blur-md">
+                  <Palette className="mr-1 h-3 w-3" />
+                  {painting.medium}
+                </Badge>
               </div>
-            </motion.div>
+            )}
           </motion.div>
         </div>
+        
+        {/* Image info overlay at bottom */}
+        <motion.div 
+          initial={{ y: 100, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.2, type: "spring", damping: 20 }}
+          className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/80 to-transparent p-8"
+        >
+          <div className="mx-auto max-w-4xl text-center">
+            <h3 className="mb-2 text-3xl font-bold text-white">
+              {painting.title}
+            </h3>
+            {painting.description && (
+              <p className="mb-3 text-lg text-white/70">
+                {painting.description}
+              </p>
+            )}
+            <div className="flex items-center justify-center gap-4 text-white/60">
+              {painting.size && (
+                <span className="flex items-center gap-1">
+                  <span className="text-violet-400">•</span> {painting.size}
+                </span>
+              )}
+              <span className="flex items-center gap-1">
+                <span className="text-violet-400">•</span> {painting.wallPosition === "portfolio" ? "Portfolio" : "Early Work"}
+              </span>
+            </div>
+            <p className="mt-3 text-sm text-white/50">
+              Use arrow keys to navigate • Press ESC to close
+            </p>
+          </div>
+        </motion.div>
       </DialogContent>
     </Dialog>
   )

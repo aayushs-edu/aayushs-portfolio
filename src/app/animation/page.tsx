@@ -537,34 +537,97 @@ export default function AnimationPage() {
       <AnimatePresence>
         {selectedImage && (
           <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)}>
-            <DialogContent className="h-screen w-screen max-w-full border-0 bg-black/95 p-0">
-              {/* Close button */}
+            <DialogContent 
+              className="fixed inset-0 z-50 flex h-screen w-screen max-w-none items-center justify-center border-0 bg-black/95 p-0 data-[state=open]:animate-none translate-x-0 translate-y-0 left-0 top-0"
+              style={{
+                transform: 'none',
+                maxWidth: '100vw',
+                maxHeight: '100vh'
+              }}
+              showCloseButton={false}
+            >
+              {/* Custom close button */}
               <button
                 onClick={() => setSelectedImage(null)}
-                className="absolute right-4 top-4 z-50 rounded-full bg-white/10 p-2 backdrop-blur-md transition-all hover:bg-white/20 hover:scale-110"
+                className="absolute right-6 top-6 z-50 rounded-full bg-white/10 p-3 backdrop-blur-md transition-all hover:bg-white/20 hover:scale-110 hover:rotate-90"
+                aria-label="Close lightbox"
               >
-                <X className="h-5 w-5 text-white" />
+                <X className="h-6 w-6 text-white" />
               </button>
               
-              {/* Image container */}
-              <div className="flex h-full w-full items-center justify-center p-8">
-                <motion.img
+              {/* Navigation buttons */}
+              <button
+                onClick={() => {
+                  const currentIndex = sceneGallery.findIndex(img => img.id === selectedImage);
+                  const prevIndex = currentIndex > 0 ? currentIndex - 1 : sceneGallery.length - 1;
+                  setSelectedImage(sceneGallery[prevIndex].id);
+                }}
+                className="absolute left-6 top-1/2 z-50 -translate-y-1/2 rounded-full bg-white/10 p-3 backdrop-blur-md transition-all hover:bg-white/20 hover:scale-110"
+                aria-label="Previous image"
+              >
+                <ChevronLeft className="h-6 w-6 text-white" />
+              </button>
+              
+              <button
+                onClick={() => {
+                  const currentIndex = sceneGallery.findIndex(img => img.id === selectedImage);
+                  const nextIndex = currentIndex < sceneGallery.length - 1 ? currentIndex + 1 : 0;
+                  setSelectedImage(sceneGallery[nextIndex].id);
+                }}
+                className="absolute right-6 top-1/2 z-50 -translate-y-1/2 rounded-full bg-white/10 p-3 backdrop-blur-md transition-all hover:bg-white/20 hover:scale-110"
+                aria-label="Next image"
+              >
+                <ChevronRight className="h-6 w-6 text-white" />
+              </button>
+              
+              {/* Main image container with better centering */}
+              <div className="relative flex h-full w-full items-center justify-center p-12">
+                <motion.div
+                  key={selectedImage}
                   initial={{ scale: 0.8, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   exit={{ scale: 0.8, opacity: 0 }}
-                  transition={{ type: "spring", damping: 20 }}
-                  src={sceneGallery.find(img => img.id === selectedImage)?.src}
-                  alt={sceneGallery.find(img => img.id === selectedImage)?.title}
-                  className="h-auto max-h-full w-auto max-w-full rounded-lg object-contain"
-                />
+                  transition={{ type: "spring", damping: 20, stiffness: 300 }}
+                  className="relative flex h-full w-full items-center justify-center"
+                >
+                  {/* Image with proper constraints */}
+                  <img
+                    src={sceneGallery.find(img => img.id === selectedImage)?.src}
+                    alt={sceneGallery.find(img => img.id === selectedImage)?.title}
+                    className="h-auto max-h-[85vh] w-auto max-w-[90vw] rounded-lg object-contain shadow-2xl"
+                    style={{
+                      filter: 'drop-shadow(0 25px 50px rgba(0, 0, 0, 0.5))'
+                    }}
+                  />
+                  
+                  {/* Category badge */}
+                  <div className="absolute left-4 top-4">
+                    <Badge className="bg-purple-500/20 text-purple-300 backdrop-blur-md">
+                      {sceneGallery.find(img => img.id === selectedImage)?.category}
+                    </Badge>
+                  </div>
+                </motion.div>
               </div>
               
-              {/* Image info at bottom */}
-              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/80 to-transparent p-8 text-center">
-                <h3 className="text-2xl font-bold text-white">
-                  {sceneGallery.find(img => img.id === selectedImage)?.title}
-                </h3>
-              </div>
+              {/* Image info overlay at bottom */}
+              <motion.div 
+                initial={{ y: 100, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.2, type: "spring", damping: 20 }}
+                className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/80 to-transparent p-8"
+              >
+                <div className="mx-auto max-w-4xl text-center">
+                  <h3 className="mb-2 text-3xl font-bold text-white">
+                    {sceneGallery.find(img => img.id === selectedImage)?.title}
+                  </h3>
+                  <p className="text-white/60">
+                    {(() => {
+                      const currentIndex = sceneGallery.findIndex(img => img.id === selectedImage);
+                      return `${currentIndex + 1} / ${sceneGallery.length} • Use arrow keys to navigate`;
+                    })()}
+                  </p>
+                </div>
+              </motion.div>
             </DialogContent>
           </Dialog>
         )}
