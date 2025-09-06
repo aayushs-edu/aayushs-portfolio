@@ -18,7 +18,11 @@ import {
   Camera,
   Layers,
   Cpu,
-  Box
+  Box,
+  Eye,
+  RotateCcw,
+  Settings,
+  Zap
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -60,18 +64,254 @@ const sceneGallery = [
   { id: 6, src: "/images/view5.jpg", title: "Action Sequence", category: "Animation" },
   { id: 7, src: "/images/view6.jpg", title: "Cowboy Shot", category: "Framing" },
   { id: 8, src: "/images/view7.jpg", title: "Final Blow", category: "Character" },
-  // Add more images as needed
 ];
 
+// Sketchfab Embed Component Interface
+interface SketchfabEmbedProps {
+  modelId?: string;
+  width?: string;
+  height?: string;
+  autostart?: boolean;
+  transparent?: boolean;
+  showInfo?: boolean;
+  className?: string;
+}
+
+const SketchfabEmbed: React.FC<SketchfabEmbedProps> = ({
+  modelId = "dGUrytaktlEurUwk2Hfv6oGjQKH", // Default example model - replace with your model ID
+  width = "100%",
+  height = "600px",
+  autostart = true,
+  transparent = false,
+  showInfo = true,
+  className = ""
+}) => {
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Construct Sketchfab embed URL with proper parameters
+  const embedUrl = `https://sketchfab.com/models/${modelId}/embed?` + 
+    new URLSearchParams({
+      autostart: autostart ? '1' : '0',
+      transparent: transparent ? '1' : '0',
+      ui_controls: '1',
+      ui_infos: showInfo ? '1' : '0',
+      ui_stop: '0',
+      ui_inspector: '1',
+      ui_watermark: '1',
+      ui_help: '1',
+      ui_settings: '1',
+      ui_vr: '1',
+      ui_fullscreen: '1',
+      ui_annotations: '1'
+    }).toString();
+
+  const handleLoad = () => {
+    setIsLoading(false);
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6 }}
+      className={`w-full ${className}`}
+    >
+      <Card className="relative overflow-hidden border-white/10 bg-black/50 shadow-2xl backdrop-blur-xl">
+        {/* Header */}
+        <div className="border-b border-white/10 bg-black/60 p-4 backdrop-blur-sm">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-purple-500 to-violet-500">
+                <Box className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-white">3D Model Viewer</h3>
+                <p className="text-sm text-white/60">Interactive Character Model</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Badge className="bg-green-500/20 text-green-300">
+                <Zap className="mr-1 h-3 w-3" />
+                WebGL
+              </Badge>
+            </div>
+          </div>
+        </div>
+
+        {/* Model Container */}
+        <div className="relative" style={{ height }}>
+          {/* Loading State */}
+          {isLoading && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="absolute inset-0 z-10 flex items-center justify-center bg-black/80 backdrop-blur-sm"
+            >
+              <div className="text-center">
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                  className="mx-auto mb-4 h-12 w-12 rounded-full border-4 border-purple-500/30 border-t-purple-500"
+                />
+                <p className="text-white/80">Loading 3D Model...</p>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Sketchfab Iframe - THIS IS THE KEY PART */}
+          <iframe
+            src={embedUrl}
+            width={width}
+            height={height}
+            style={{ border: 0 }}
+            onLoad={handleLoad}
+            allow="accelerometer; camera; gyroscope; magnetometer; microphone; fullscreen; xr-spatial-tracking; gamepad"
+            allowFullScreen
+            className="absolute inset-0 h-full w-full"
+            title="3D Model Viewer"
+            loading="lazy"
+          />
+
+          {/* Overlay Controls */}
+          <div className="absolute bottom-4 left-4 flex gap-2">
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 1 }}
+              className="flex items-center gap-2 rounded-lg border border-white/10 bg-black/60 px-3 py-2 backdrop-blur-sm"
+            >
+              <Eye className="h-4 w-4 text-purple-400" />
+              <span className="text-sm text-white/80">Interactive View</span>
+            </motion.div>
+          </div>
+        </div>
+
+        {/* Model Info Footer */}
+        {showInfo && (
+          <div className="border-t border-white/10 bg-black/60 p-4 backdrop-blur-sm">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="space-y-1">
+                <p className="text-sm text-white/60">
+                  Use mouse to orbit • Scroll to zoom • Right-click to pan
+                </p>
+                <div className="flex items-center gap-4 text-xs text-white/40">
+                  <span className="flex items-center gap-1">
+                    <Layers className="h-3 w-3" />
+                    WebGL Renderer
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <RotateCcw className="h-3 w-3" />
+                    360° Rotation
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Settings className="h-3 w-3" />
+                    Real-time Lighting
+                  </span>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Badge className="bg-purple-500/20 text-purple-300">
+                  High Quality
+                </Badge>
+                <Badge className="bg-violet-500/20 text-violet-300">
+                  PBR Materials
+                </Badge>
+              </div>
+            </div>
+          </div>
+        )}
+      </Card>
+    </motion.div>
+  );
+};
 
 export default function AnimationPage() {
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
   const [selectedImage, setSelectedImage] = useState<number | null>(null);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   const currentVideo = videos[currentVideoIndex];
+
+  // Auto-play video when currentVideoIndex changes
+  useEffect(() => {
+    if (videoRef.current && isPlaying) {
+      videoRef.current.play();
+    }
+  }, [currentVideoIndex, isPlaying]);
+
+  // Auto-play first video on mount
+  useEffect(() => {
+    if (videoRef.current) {
+      setIsPlaying(true);
+      videoRef.current.play();
+    }
+  }, []);
+
+  const togglePlay = () => {
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.pause();
+      } else {
+        videoRef.current.play();
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
+
+  const toggleMute = () => {
+    if (videoRef.current) {
+      videoRef.current.muted = !isMuted;
+      setIsMuted(!isMuted);
+    }
+  };
+
+  const goToNextVideo = () => {
+    setCurrentVideoIndex((prev) => (prev + 1) % videos.length);
+    setIsPlaying(true);
+  };
+
+  const goToPreviousVideo = () => {
+    setCurrentVideoIndex((prev) => (prev - 1 + videos.length) % videos.length);
+    setIsPlaying(true);
+  };
+
+  // Update time and duration
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const updateTime = () => setCurrentTime(video.currentTime);
+    const updateDuration = () => setDuration(video.duration);
+
+    video.addEventListener('timeupdate', updateTime);
+    video.addEventListener('loadedmetadata', updateDuration);
+    video.addEventListener('durationchange', updateDuration);
+
+    return () => {
+      video.removeEventListener('timeupdate', updateTime);
+      video.removeEventListener('loadedmetadata', updateDuration);
+      video.removeEventListener('durationchange', updateDuration);
+    };
+  }, [currentVideoIndex]);
+
+  const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const time = parseFloat(e.target.value);
+    if (videoRef.current) {
+      videoRef.current.currentTime = time;
+      setCurrentTime(time);
+    }
+  };
+
+  // Helper function to format time
+  const formatTime = (time: number) => {
+    const minutes = Math.floor(time / 60);
+    const seconds = Math.floor(time % 60);
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  };
 
   // Add cinematic animations
   useEffect(() => {
@@ -136,80 +376,43 @@ export default function AnimationPage() {
             rgba(255, 255, 255, 0.03) 2px,
             rgba(255, 255, 255, 0.03) 4px
           );
-        animation: scanline 8s linear infinite;
+        animation: scanline 3s linear infinite;
       }
     `;
     document.head.appendChild(style);
     return () => { document.head.removeChild(style); };
   }, []);
 
-  const togglePlayPause = () => {
-    if (videoRef.current) {
-      if (isPlaying) {
-        videoRef.current.pause();
-      } else {
-        videoRef.current.play();
-      }
-      setIsPlaying(!isPlaying);
-    }
-  };
-
-  const toggleMute = () => {
-    if (videoRef.current) {
-      videoRef.current.muted = !isMuted;
-      setIsMuted(!isMuted);
-    }
-  };
-
-  const goToNextVideo = () => {
-    setIsPlaying(false);
-    setCurrentVideoIndex((prev) => (prev + 1) % videos.length);
-  };
-
-  const goToPreviousVideo = () => {
-    setIsPlaying(false);
-    setCurrentVideoIndex((prev) => (prev - 1 + videos.length) % videos.length);
-  };
-
-  // Reset playing state when video changes
-  useEffect(() => {
-    setIsPlaying(false);
-  }, [currentVideoIndex]);
-
   return (
-    <div className="min-h-screen bg-black overflow-x-hidden">
-      {/* Epic Cinematic Background */}
-      <div className="fixed inset-0">
-        {/* Base gradient */}
-        <div className="absolute inset-0 bg-gradient-to-br from-black via-neutral-950 to-purple-950/20" />
-        
-        {/* Animated cinematic lights */}
+    <div className="min-h-screen bg-gradient-to-br from-neutral-950 via-neutral-900 to-black overflow-x-hidden">
+      {/* Animated background with parallax effect */}
+      <div className="fixed inset-0 overflow-hidden">
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width='60' height='60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.02'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-30" />
+
+        {/* Animated gradient orbs */}
         <motion.div
           animate={{
             x: [0, 100, 0],
-            opacity: [0.3, 0.5, 0.3],
+            y: [0, -100, 0],
           }}
-          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute -left-20 top-20 h-[600px] w-[600px] rounded-full bg-purple-600/20 blur-3xl"
+          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+          className="absolute left-1/4 top-1/4 h-[500px] w-[500px] rounded-full bg-violet-600/10 blur-3xl"
         />
         <motion.div
           animate={{
             x: [0, -100, 0],
-            opacity: [0.3, 0.5, 0.3],
+            y: [0, 100, 0],
           }}
-          transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute -right-20 bottom-20 h-[600px] w-[600px] rounded-full bg-violet-600/20 blur-3xl"
+          transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+          className="absolute bottom-1/4 right-1/4 h-[500px] w-[500px] rounded-full bg-purple-600/10 blur-3xl"
         />
-        
-        {/* Film grain overlay */}
-        <div className="film-overlay" />
       </div>
 
-      <div className="relative z-10">
-        {/* Epic Header */}
+      <div className="relative z-10 px-4">
+        {/* Header with stunning typography */}
         <motion.div
-          initial={{ opacity: 0, y: -50 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0, y: 100 }}
+          animate={{ scale: 1, opacity: 1, y: 0 }}
           transition={{ duration: 1, ease: "easeOut" }}
           className="relative overflow-hidden border-b border-white/10 bg-gradient-to-b from-black/80 to-black/40 backdrop-blur-xl"
         >
@@ -300,104 +503,84 @@ export default function AnimationPage() {
                   initial={{ x: -20, opacity: 0 }}
                   animate={{ x: 0, opacity: 1 }}
                   onClick={goToPreviousVideo}
-                  className="absolute left-4 top-1/2 z-20 -translate-y-1/2 rounded-full bg-white/10 p-3 backdrop-blur-md transition-all hover:bg-white/20 hover:scale-110"
+                  className="absolute left-4 top-1/2 z-20 -translate-y-1/2 rounded-full bg-black/60 p-2 text-white backdrop-blur-sm transition-all hover:bg-black/80 hover:scale-110"
                 >
-                  <ChevronLeft className="h-6 w-6 text-white" />
+                  <ChevronLeft className="h-6 w-6" />
                 </motion.button>
 
                 <motion.button
                   initial={{ x: 20, opacity: 0 }}
                   animate={{ x: 0, opacity: 1 }}
                   onClick={goToNextVideo}
-                  className="absolute right-4 top-1/2 z-20 -translate-y-1/2 rounded-full bg-white/10 p-3 backdrop-blur-md transition-all hover:bg-white/20 hover:scale-110"
+                  className="absolute right-4 top-1/2 z-20 -translate-y-1/2 rounded-full bg-black/60 p-2 text-white backdrop-blur-sm transition-all hover:bg-black/80 hover:scale-110"
                 >
-                  <ChevronRight className="h-6 w-6 text-white" />
+                  <ChevronRight className="h-6 w-6" />
                 </motion.button>
 
-                {/* Video Container */}
-                <div className="cinematic-border relative aspect-video overflow-hidden bg-black">
-                  {/* Video Title and Year Overlay */}
-                  <div className="absolute left-6 top-6 z-10">
-                    <motion.div
-                      key={currentVideo.id}
-                      initial={{ x: -20, opacity: 0 }}
-                      animate={{ x: 0, opacity: 1 }}
-                      transition={{ duration: 0.5 }}
-                      className="rounded-lg bg-black/50 px-4 py-2 backdrop-blur-md"
-                    >
-                      <h3 className="text-lg font-bold text-white">{currentVideo.title}</h3>
-                      <p className="text-sm text-white/60">{currentVideo.year}</p>
-                    </motion.div>
-                  </div>
+                {/* Video Player */}
+                <div className="cinematic-border relative aspect-video">
+                  <video
+                    ref={videoRef}
+                    className="h-full w-full object-cover"
+                    src={currentVideo.src}
+                    poster={currentVideo.poster}
+                    muted={isMuted}
+                    loop
+                  />
+                  
+                  {/* Film overlay */}
+                  <div className="film-overlay" />
+                  
+                  {/* Video Controls Overlay */}
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-6">
+                    {/* Progress Bar */}
+                    <div className="mb-4 flex items-center gap-3">
+                      <span className="text-xs text-white/60 font-mono">
+                        {formatTime(currentTime)}
+                      </span>
+                      <div className="flex-1 relative">
+                        <input
+                          type="range"
+                          min="0"
+                          max={duration || 0}
+                          value={currentTime}
+                          onChange={handleSeek}
+                          className="w-full h-1 bg-white/20 rounded-lg appearance-none cursor-pointer
+                                   [&::-webkit-slider-thumb]:appearance-none 
+                                   [&::-webkit-slider-thumb]:w-3 
+                                   [&::-webkit-slider-thumb]:h-3 
+                                   [&::-webkit-slider-thumb]:rounded-full 
+                                   [&::-webkit-slider-thumb]:bg-purple-500 
+                                   [&::-webkit-slider-thumb]:cursor-pointer
+                                   [&::-webkit-slider-thumb]:shadow-lg
+                                   [&::-webkit-slider-thumb]:shadow-purple-500/50
+                                   [&::-moz-range-thumb]:w-3 
+                                   [&::-moz-range-thumb]:h-3 
+                                   [&::-moz-range-thumb]:rounded-full 
+                                   [&::-moz-range-thumb]:bg-purple-500 
+                                   [&::-moz-range-thumb]:cursor-pointer 
+                                   [&::-moz-range-thumb]:border-none"
+                          style={{
+                            background: `linear-gradient(to right, 
+                              rgb(147 51 234) 0%, 
+                              rgb(147 51 234) ${(currentTime / duration) * 100}%, 
+                              rgba(255,255,255,0.2) ${(currentTime / duration) * 100}%, 
+                              rgba(255,255,255,0.2) 100%)`
+                          }}
+                        />
+                      </div>
+                      <span className="text-xs text-white/60 font-mono">
+                        {formatTime(duration)}
+                      </span>
+                    </div>
 
-                  {/* Video Dots Indicator */}
-                  <div className="absolute bottom-20 left-1/2 z-10 flex -translate-x-1/2 gap-2">
-                    {videos.map((_, index) => (
-                      <button
-                        key={index}
-                        onClick={() => {
-                          setIsPlaying(false);
-                          setCurrentVideoIndex(index);
-                        }}
-                        className={`h-2 w-2 rounded-full transition-all ${
-                          index === currentVideoIndex 
-                            ? 'w-8 bg-white' 
-                            : 'bg-white/40 hover:bg-white/60'
-                        }`}
-                      />
-                    ))}
-                  </div>
-
-                  {/* Video Element */}
-                  <AnimatePresence mode="wait">
-                    <motion.video
-                      key={currentVideo.id}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: 0.5 }}
-                      ref={videoRef}
-                      className="h-full w-full object-cover"
-                      poster={currentVideo.poster}
-                      muted={isMuted}
-                      loop
-                      playsInline
-                    >
-                      <source src={currentVideo.src} type="video/mp4" />
-                      Your browser does not support the video tag.
-                    </motion.video>
-                  </AnimatePresence>
-
-                  {/* Play/Pause Overlay */}
-                  <AnimatePresence>
-                    {!isPlaying && (
-                      <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="absolute inset-0 flex items-center justify-center bg-black/30 backdrop-blur-sm"
-                      >
-                        <motion.button
-                          whileHover={{ scale: 1.1 }}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={togglePlayPause}
-                          className="rounded-full bg-white/10 p-8 backdrop-blur-md transition-all hover:bg-white/20"
-                          style={{ animation: "glow 2s ease-in-out infinite" }}
-                        >
-                          <Play className="h-12 w-12 text-white" fill="white" />
-                        </motion.button>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-
-                  {/* Video Controls Bar */}
-                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
+                    {/* Control Buttons */}
                     <div className="flex items-center justify-between">
-                      <div className="flex gap-2">
+                      <div className="flex items-center gap-4">
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={togglePlayPause}
+                          onClick={togglePlay}
                           className="text-white hover:bg-white/20"
                         >
                           {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
@@ -445,6 +628,211 @@ export default function AnimationPage() {
             </Card>
           </motion.div>
 
+        {/* 3D Models Section - NEW! */}
+        <div className="mx-auto max-w-7xl px-4 py-12">
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+          >
+            <div className="mb-8 text-center">
+              <motion.h2
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.7 }}
+                className="mb-4 text-4xl font-bold text-white"
+              >
+                Interactive 3D Models
+              </motion.h2>
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.8 }}
+                className="text-white/60"
+              >
+                Explore our character models in real-time 3D
+              </motion.p>
+            </div>
+            
+            {/* Single Container with Three Models */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.9 }}
+              className="w-full"
+            >
+              <Card className="relative overflow-hidden border-white/10 bg-black/50 shadow-2xl backdrop-blur-xl">
+                {/* Shared Header */}
+                <div className="border-b border-white/10 bg-black/60 p-4 backdrop-blur-sm">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-purple-500 to-violet-500">
+                        <Box className="h-5 w-5 text-white" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-white">3D Model Viewer</h3>
+                        <p className="text-sm text-white/60">Interactive Character Models</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge className="bg-green-500/20 text-green-300">
+                        <Zap className="mr-1 h-3 w-3" />
+                        WebGL
+                      </Badge>
+                      <Badge className="bg-blue-500/20 text-blue-300">
+                        Triple View
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Top Row - Two Side by Side Models */}
+                <div className="grid gap-0 lg:grid-cols-2 border-b border-white/10">
+                  {/* First Model */}
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 1.0 }}
+                    className="relative border-r border-white/10 lg:border-r"
+                  >
+                    <div className="relative h-[500px]">
+                      <iframe
+                        src={`https://sketchfab.com/models/507a4bf2b127455f8c06175cd7b97b75/embed?autostart=1&transparent=0&ui_controls=1&ui_infos=0&ui_stop=0&ui_inspector=1&ui_watermark=1&ui_help=1&ui_settings=1&ui_vr=1&ui_fullscreen=1&ui_annotations=1&autostart=1`}
+                        width="100%"
+                        height="500px"
+                        style={{ border: 0 }}
+                        allow="accelerometer; camera; gyroscope; magnetometer; microphone; fullscreen; xr-spatial-tracking; gamepad"
+                        allowFullScreen
+                        className="absolute inset-0 h-full w-full"
+                        title="3D Model Viewer - Model 1"
+                        loading="lazy"
+                      />
+                      
+                      {/* Model 1 Label */}
+                      <div className="absolute bottom-4 left-4">
+                        <motion.div
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 1.2 }}
+                          className="flex items-center gap-2 rounded-lg border border-white/10 bg-black/60 px-3 py-2 backdrop-blur-sm"
+                        >
+                          <Eye className="h-4 w-4 text-purple-400" />
+                          <span className="text-sm text-white/80">Main Character</span>
+                        </motion.div>
+                      </div>
+                    </div>
+                  </motion.div>
+                  
+                  {/* Second Model */}
+                  <motion.div
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 1.2 }}
+                    className="relative"
+                  >
+                    <div className="relative h-[500px]">
+                      <iframe
+                        src={`https://sketchfab.com/models/70655c32ae394827ae4c4a06bf492f63/embed?autostart=0&transparent=0&ui_controls=1&ui_infos=0&ui_stop=0&ui_inspector=1&ui_watermark=1&ui_help=1&ui_settings=1&ui_vr=1&ui_fullscreen=1&ui_annotations=1&autostart=1`}
+                        width="100%"
+                        height="500px"
+                        style={{ border: 0 }}
+                        allow="accelerometer; camera; gyroscope; magnetometer; microphone; fullscreen; xr-spatial-tracking; gamepad"
+                        allowFullScreen
+                        className="absolute inset-0 h-full w-full"
+                        title="3D Model Viewer - Model 2"
+                        loading="lazy"
+                      />
+                      
+                      {/* Model 2 Label */}
+                      <div className="absolute bottom-4 left-4">
+                        <motion.div
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 1.4 }}
+                          className="flex items-center gap-2 rounded-lg border border-white/10 bg-black/60 px-3 py-2 backdrop-blur-sm"
+                        >
+                          <Eye className="h-4 w-4 text-violet-400" />
+                          <span className="text-sm text-white/80">Banana Gun</span>
+                        </motion.div>
+                      </div>
+                    </div>
+                  </motion.div>
+                </div>
+
+                {/* Bottom Row - Full Width Model */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 1.4 }}
+                  className="relative"
+                >
+                  <div className="relative h-[600px]">
+                    <iframe
+                      src={`https://sketchfab.com/models/2c19629e61354d138b447e0095232331/embed?autostart=0&transparent=0&ui_controls=1&ui_infos=0&ui_stop=0&ui_inspector=1&ui_watermark=1&ui_help=1&ui_settings=1&ui_vr=1&ui_fullscreen=1&ui_annotations=1&autostart=1`}
+                      width="100%"
+                      height="600px"
+                      style={{ border: 0 }}
+                      allow="accelerometer; camera; gyroscope; magnetometer; microphone; fullscreen; xr-spatial-tracking; gamepad"
+                      allowFullScreen
+                      className="absolute inset-0 h-full w-full"
+                      title="3D Model Viewer - Model 3"
+                      loading="lazy"
+                    />
+                    
+                    {/* Model 3 Label */}
+                    <div className="absolute bottom-4 left-4">
+                      <motion.div
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 1.6 }}
+                        className="flex items-center gap-2 rounded-lg border border-white/10 bg-black/60 px-3 py-2 backdrop-blur-sm"
+                      >
+                        <Eye className="h-4 w-4 text-blue-400" />
+                        <span className="text-sm text-white/80">Saloon - Featured</span>
+                      </motion.div>
+                    </div>
+                  </div>
+                </motion.div>
+
+                {/* Shared Footer */}
+                <div className="border-t border-white/10 bg-black/60 p-4 backdrop-blur-sm">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="space-y-1">
+                      <p className="text-sm text-white/60">
+                        Use mouse to orbit • Scroll to zoom • Right-click to pan
+                      </p>
+                      <div className="flex items-center gap-4 text-xs text-white/40">
+                        <span className="flex items-center gap-1">
+                          <Layers className="h-3 w-3" />
+                          WebGL Renderer
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <RotateCcw className="h-3 w-3" />
+                          360° Rotation
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Settings className="h-3 w-3" />
+                          Real-time Lighting
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Badge className="bg-purple-500/20 text-purple-300">
+                        High Quality
+                      </Badge>
+                      <Badge className="bg-violet-500/20 text-violet-300">
+                        Arnold
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            </motion.div>
+          </motion.div>
+        </div>
+
+        
+
           {/* Scene Gallery Section */}
           <motion.div
             initial={{ opacity: 0, y: 40 }}
@@ -454,44 +842,38 @@ export default function AnimationPage() {
           >
             {/* Section Header */}
             <div className="mb-8 text-center">
-              <h2 className="mb-4 text-4xl font-bold">Scene Gallery</h2>
-              <p className="text-white/60">Behind the scenes and key frames from the animation</p>
+              <h2 className="mb-4 text-4xl font-bold text-white">Scene Gallery</h2>
+              <p className="text-white/60">Behind-the-scenes looks at key animation moments</p>
             </div>
 
-            {/* Image Grid */}
-            <motion.div 
-              layout
-              className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
+            {/* Gallery Grid */}
+            <motion.div
+              className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
             >
-              <AnimatePresence mode="popLayout">
+              <AnimatePresence>
                 {sceneGallery.map((image, index) => (
                   <motion.div
                     key={image.id}
-                    layout
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.8 }}
-                    transition={{ delay: index * 0.05 }}
-                    whileHover={{ scale: 1.05, zIndex: 10 }}
-                    className="group relative cursor-pointer overflow-hidden rounded-lg border border-white/10 bg-black/50"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    whileHover={{ scale: 1.05, y: -5 }}
                     onClick={() => setSelectedImage(image.id)}
+                    className="group cursor-pointer overflow-hidden rounded-lg border border-white/10 bg-black/20 backdrop-blur-sm transition-all hover:border-purple-500/50"
                   >
-                    {/* Image */}
                     <div className="relative aspect-video overflow-hidden">
-                      <img
+                      <motion.img
                         src={image.src}
                         alt={image.title}
-                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                        className="h-full w-full object-cover transition-transform group-hover:scale-110"
+                        whileHover={{ scale: 1.1 }}
                       />
-                      
-                      {/* Overlay gradient */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/0 to-black/0 opacity-0 transition-opacity group-hover:opacity-100" />
-                      
-                      {/* Hover play button */}
-                      <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity group-hover:opacity-100">
-                        <div className="rounded-full bg-white/20 p-3 backdrop-blur-sm">
-                          <Camera className="h-6 w-6 text-white" />
-                        </div>
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+                      <div className="absolute bottom-2 left-2 opacity-0 transition-opacity group-hover:opacity-100">
+                        <Badge className="bg-purple-500/80 text-white">
+                          <Camera className="mr-1 h-3 w-3" />
+                          {image.category}
+                        </Badge>
                       </div>
                     </div>
 
