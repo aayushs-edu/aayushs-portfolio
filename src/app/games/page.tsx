@@ -90,7 +90,7 @@ const games: Game[] = [
     technologies: ["Unity 2022.3 LTS", "C# Scripting", "Physics2D", "WebGL Build"],
     year: "2025",
     status: "Live",
-    cover: "/images/bounce-back-cover.png",
+    cover: "/images/bounce-back-cover.jpg",
     gallery: [
       "/images/bounce-back-cover.png",
       "/images/bounce-back-1.png",
