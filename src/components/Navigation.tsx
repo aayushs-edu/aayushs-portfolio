@@ -52,7 +52,7 @@ export default function Navigation() {
   return (
     <div className="sticky top-0 z-40 w-full">
       <div className="mx-auto max-w-7xl px-4">
-        <div className="mt-4 flex items-center justify-between rounded-2xl border border-white/10 bg-black/30 p-3 shadow-lg shadow-black/20 backdrop-blur">
+        <div className="mt-4 flex items-center justify-between rounded-2xl bg-black p-3">
           <Link href="/" className="flex items-center gap-2 text-lg font-semibold tracking-tight">
             <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white">
               AS

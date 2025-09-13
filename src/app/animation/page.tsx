@@ -431,7 +431,7 @@ export default function AnimationPage() {
                 className="mb-6 inline-flex items-center gap-2 rounded-full border border-purple-500/30 bg-purple-500/10 px-4 py-2 backdrop-blur-sm"
               >
                 <Film className="h-4 w-4 text-purple-400" />
-                <span className="text-sm font-medium text-purple-300">AUTODESK MAYA • PREMIERE PRO</span>
+                <span className="text-sm font-medium text-purple-300">AUTODESK MAYA • ARNOLD RENDERER • PREMIERE PRO</span>
               </motion.div>
 
               {/* Epic Title */}

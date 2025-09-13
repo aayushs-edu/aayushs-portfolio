@@ -19,6 +19,7 @@ import {
   Globe,
   Code,
   ChevronRight,
+  ChevronLeft,
   Github,
   Cpu,
   Rocket,
@@ -52,18 +53,23 @@ interface Game {
   technologies: string[];
   year: string;
   status: "Live" | "In Development" | "Beta";
-  image: string;
+  // Preferred display fields
+  cover: string; // card cover image
+  gallery?: string[]; // modal gallery images
+  // Legacy optional field kept for compatibility
+  image?: string;
   video?: string;
   itchUrl: string;
   githubUrl?: string;
-  category: "Platformer" | "Puzzle" | "Action" | "Strategy" | "Shooter";
+  category: "Platformer" | "Puzzle" | "Action" | "Strategy" | "Shooter" | "Stealth";
   playtime: string;
   difficulty: "Easy" | "Medium" | "Hard";
   multiplayer: boolean;
   awards?: string[];
   accent: string;
-  isFeatured?: boolean;
-  embedUrl?: string;
+  jam: string;
+  jamAchievement?: string;
+  dimension: "2D" | "3D";
 }
 
 // Real game data from your itch.io
@@ -71,61 +77,76 @@ const games: Game[] = [
   {
     id: "bounce-back",
     title: "BOUNCE BACK",
-    subtitle: "Master the art of temporal echoes",
-    description: "An innovative platformer where every jump creates an echo. Navigate through levels by building upon your past attempts, creating complex temporal chains.",
-    longDescription: "Bounce Back revolutionizes platforming with its unique temporal echo system. Each time you attempt a level, your previous path becomes a ghostly trail that can help or hinder your next attempt. Master the art of using your past selves to reach new heights and solve increasingly complex puzzles.",
+    subtitle: "Build around your past self",
+    description: "This is a puzzle platformer I made in 11 hours with a unique twist. Your past self brings your end. Any jumps you make leave a mark of danger but also give you platforms to rebuild the level around you to avoid your past marks. You can only move forward, avoiding the remnants of your past self.",
+    longDescription: "This is a puzzle platformer I made in 11 hours with a unique twist. Your past self brings your end. Any jumps you make leave a mark of danger but also give you platforms to rebuild the level around you to avoid your past marks. You can only move forward, avoiding the remnants of your past self.",
     features: [
-      "Temporal echo mechanics",
+      "Looping mechanic",
       "Progressive difficulty system", 
       "Minimalist aesthetic design",
-      "Intuitive one-button controls",
-      "Physics-based puzzle solving",
+      "Intuitive two-button controls",
       "Endless replayability"
     ],
-    technologies: ["Unity 2022.3 LTS", "C# Scripting", "Physics2D", "WebGL Build", "Custom Animation System"],
-    year: "2024",
+    technologies: ["Unity 2022.3 LTS", "C# Scripting", "Physics2D", "WebGL Build"],
+    year: "2025",
     status: "Live",
-    image: "/images/bounce-back-screenshot.jpg",
+    cover: "/images/bounce-back-cover.png",
+    gallery: [
+      "/images/bounce-back-cover.png",
+      "/images/bounce-back-1.png",
+      "/images/bounce-back-2.png",
+      "/images/bounce-back-3.png"
+    ],
     itchUrl: "https://aayushs-edu.itch.io/bounce-back",
     category: "Platformer",
-    playtime: "20-30 min",
+    playtime: "Endless",
     difficulty: "Medium",
     multiplayer: false,
     accent: "from-orange-400 via-red-500 to-pink-500",
-    isFeatured: true,
-    embedUrl: "https://aayushs-edu.itch.io/bounce-back/embed"
+    jam: "GMTK Game Jam",
+    jamAchievement: "Top 20% Submission",
+    dimension: "2D"
   },
   {
     id: "reign-or-ruin",
     title: "REIGN OR RUIN",
-    subtitle: "Medieval strategy meets modern warfare",
-    description: "Command armies through epic battles where tactical decisions determine the fate of kingdoms. Blend medieval strategy with innovative combat mechanics.",
-    longDescription: "Reign or Ruin combines classic medieval strategy with modern tactical gameplay. Lead diverse armies, manage resources, and make crucial decisions that will either establish your reign or lead to your ruin. Features dynamic weather systems that affect combat and strategic depth that rewards both planning and adaptation.",
+    subtitle: "Reign benevolently or get overthrown",
+    description: "You must rule over your village in this power management game -- but these aren't ordinary villagers! These AI-powered villagers understand what happens around them, and can make actionable decisions on them...even rebellion.",
+    longDescription: "You must defend your village against hoards of enemies while keeping your AI-powered villagers loyal. Hoard too much power and you might get overthrown .. distribute power evenly and it might be okay ... but it might not be the best strategy against enemies. Keeping villagers happy is expensive! And don't accidentally harm them, it's very easy to but could lead to dire consequences!",
     features: [
-      "Deep tactical combat system",
-      "Dynamic weather effects", 
-      "Multiple army compositions",
-      "Resource management mechanics",
-      "Branching campaign paths",
-      "Epic battle animations"
+      "Power management system",
+      "Dynamic villager relationships", 
+      "Epic combat mechanics",
+      "Night wave system",
+      "Progressive wave difficulty",
+      "Council decision-making"
     ],
-    technologies: ["Unity 2023.1", "Advanced AI Systems", "Custom Shaders", "Tilemap System", "Audio Manager"],
-    year: "2024",
+    technologies: ["Unity 6", "Player2 AI SDK", "LLM Integration", "Tilemap System", "Audio Manager", "Navmesh"],
+    year: "2025",
     status: "Live",
-    image: "/images/reign-or-ruin-screenshot.jpg",
+    cover: "/images/reign-or-ruin-cover.png",
+    gallery: [
+      "/images/reign-or-ruin-cover.png",
+      "/images/reign-or-ruin-1.png",
+      "/images/reign-or-ruin-2.png",
+      "/images/reign-or-ruin-3.png"
+    ],
     itchUrl: "https://aayushs-edu.itch.io/reign-or-ruin",
     category: "Strategy",
-    playtime: "45-60 min",
+    playtime: "30 min",
     difficulty: "Hard",
     multiplayer: false,
-    accent: "from-red-400 via-orange-500 to-yellow-500"
+    accent: "from-red-400 via-orange-500 to-yellow-500",
+    jam: "Player2 AI NPC Jam",
+    jamAchievement: "$50 Reward, Special Mention",
+    dimension: "2D"
   },
   {
     id: "biscuit-bandit",
     title: "BISCUIT BANDIT",
-    subtitle: "Stealth, strategy, and snacks",
-    description: "A charming stealth game where you play as a mischievous character on a mission to steal delicious biscuits without getting caught.",
-    longDescription: "Biscuit Bandit offers a delightful twist on stealth gameplay. Navigate through kitchens, avoid detection, and execute the perfect heist to claim your biscuity prizes. With charming pixel art and intuitive stealth mechanics, every level presents new challenges and opportunities for creative problem-solving.",
+    subtitle: "Don't get caught by your parents!",
+    description: "Risk it for the Biscuit -- you're literally risking it for the family biscuits, trying to get them all for yourself. But be careful, your parents are lurking, ready to catch you. You must use stealth and strategy to sneak your way to the biscuit and sneak your way back, night after night.",
+    longDescription: "Risk it for the Biscuit -- you're literally risking it for the family biscuits, trying to get them all for yourself. But be careful, your parents are lurking, ready to catch you. You must use stealth and strategy to sneak your way to the biscuit and sneak your way back, night after night.",
     features: [
       "Stealth-based gameplay",
       "Charming pixel art style", 
@@ -134,242 +155,309 @@ const games: Game[] = [
       "Progressive difficulty curve",
       "Collectible achievements"
     ],
-    technologies: ["Unity 2022.3", "2D Animation", "Stealth AI System", "Pixel Perfect Camera", "Sound Design"],
-    year: "2024",
+    technologies: ["Unity 2022.3", "2D Animation", "Stealth AI System", "Navmesh AI", "Sound Design"],
+    year: "2025",
     status: "Live",
-    image: "/images/biscuit-bandit-screenshot.jpg",
+    cover: "/images/biscuit-bandit-cover.png",
+    gallery: [
+      "/images/biscuit-bandit-cover.png",
+    ],
     itchUrl: "https://aayushs-edu.itch.io/biscuit-bandit",
-    category: "Action",
-    playtime: "25-35 min",
-    difficulty: "Easy",
+    category: "Stealth",
+    playtime: "10-15 min",
+    difficulty: "Medium",
     multiplayer: false,
-    accent: "from-amber-400 via-yellow-500 to-orange-500"
+    accent: "from-amber-400 via-yellow-500 to-orange-500",
+    jam: "Brackeys 2025.2 Jam",
+    dimension: "2D"
   },
   {
     id: "murphys-rocket",
     title: "MURPHY'S ROCKET",
     subtitle: "When everything that can go wrong, does",
-    description: "A physics-based space adventure where Murphy's Law reigns supreme. Navigate through increasingly chaotic scenarios where failure is part of the fun.",
-    longDescription: "Murphy's Rocket embraces the chaos of space exploration with a healthy dose of humor. Control a rocket through increasingly unpredictable scenarios where systems fail, physics goes haywire, and success comes from adapting to constant adversity. Every flight is a unique experience of controlled chaos.",
+    description: "Earth’s under a robot takeover, so humans must set foot on Mars. You are the only scientist left, Murphy, and need to build a rocket as fast as possible and only the entire fate of humanity is at stake. Of course, according to Murphy’s law, everything that can go wrong will go wrong. Use a special weapon to ignite the robots with electricity, and defend the rocket at all costs!",
+    longDescription: "Earth’s under a robot takeover, so humans must set foot on Mars. You are the only scientist left, Murphy, and need to build a rocket as fast as possible and only the entire fate of humanity is at stake. Of course, according to Murphy’s law, everything that can go wrong will go wrong. Use a special weapon to ignite the robots with electricity, and defend the rocket at all costs!",
     features: [
       "Dynamic failure systems",
-      "Physics-based flight controls", 
+      "Physics-based flight controls",
       "Procedural obstacle generation",
       "Humorous failure animations",
       "Adaptive difficulty scaling",
       "Replay value through chaos"
     ],
     technologies: ["Unity 2023.2", "Rigidbody Physics", "Procedural Generation", "Particle Systems", "Comedy Timing AI"],
-    year: "2024",
+    year: "2025",
     status: "Live",
-    image: "/images/murphys-rocket-screenshot.jpg",
+    cover: "/images/murphys-rocket-cover.png",
+    gallery: [
+      "/images/murphys-rocket-cover.png",
+      "/images/murphys-rocket-1.png",
+      "/images/murphys-rocket-2.png",
+      "/images/murphys-rocket-3.png",
+      "/images/murphys-rocket-4.png",
+      "/images/murphys-rocket-5.png",
+      "/images/murphys-rocket-6.png"
+    ],
     itchUrl: "https://aayushs-edu.itch.io/murphys-rocket",
-    category: "Shooter",
-    playtime: "15-25 min",
+    category: "Action",
+    playtime: "30 min",
     difficulty: "Medium",
     multiplayer: false,
-    accent: "from-blue-400 via-purple-500 to-pink-500"
+    accent: "from-blue-400 via-purple-500 to-pink-500",
+    jam: "Brackeys 2025.1 Jam",
+    dimension: "3D"
   }
+];
+
+// Reviews data structure
+interface Review {
+  id: string;
+  author: string;
+  message: string;
+  game: string;
+  gameId: string;
+  rating: number;
+}
+
+const reviews: Review[] = [
+  // Reign Or Ruin Reviews
+  { id: "r1", author: "Player2 Judge", message: "Interesting concept! I like the style, audio design, and combat design. The game did get stuck on the first night when speaking with the council though. Thanks for your submission!", game: "Reign Or Ruin", gameId: "reign-or-ruin", rating: 4 },
+  { id: "r2", author: "Player2 Judge", message: "THIS IS AWESOME! I know it's a WIP so I give you that. LOVE THIS! This is a great concept and I know you could get this published on steam as a full game!!!!", game: "Reign Or Ruin", gameId: "reign-or-ruin", rating: 5 },
+  { id: "r3", author: "ToucheToucan", message: "Man they hate me, they just had a mass rebellion against me. Cool idea!", game: "Reign Or Ruin", gameId: "reign-or-ruin", rating: 4 },
+  { id: "r4", author: "wenzhe-elefant", message: "I would give 10 for creativity, but yeah need a bit more polish", game: "Reign Or Ruin", gameId: "reign-or-ruin", rating: 4 },
+  { id: "r5", author: "Dyrkabes", message: "I really like the visuals! Very well done, all in one thematic.", game: "Reign Or Ruin", gameId: "reign-or-ruin", rating: 5 },
+  { id: "r6", author: "Dyrkabes", message: "The council/rebellion thing has a lot of potential, interesting, that you have to balance what AI \"thinks\" about you", game: "Reign Or Ruin", gameId: "reign-or-ruin", rating: 5 },
+
+  // Bounce Back Reviews
+  { id: "b1", author: "Redya Games", message: "Simple and addicting game, I love it!", game: "Bounce Back", gameId: "bounce-back", rating: 5 },
+  { id: "b2", author: "gambitono", message: "like the idea and the visuals neon!!!", game: "Bounce Back", gameId: "bounce-back", rating: 4 },
+  { id: "b3", author: "xefensor", message: "Interesting idea. Though you can just keep multiplying you score by warping back to back.", game: "Bounce Back", gameId: "bounce-back", rating: 3 },
+  { id: "b4", author: "KDeveloper", message: "Great concept but quite simple. I think it could be neat if there were more types of platforms and/or ways to gain new platforms", game: "Bounce Back", gameId: "bounce-back", rating: 4 },
+  { id: "b5", author: "ClemGames", message: "Neat concept and idea!", game: "Bounce Back", gameId: "bounce-back", rating: 4 },
+  { id: "b6", author: "cachandlerdev", message: "The music and visuals look good!", game: "Bounce Back", gameId: "bounce-back", rating: 4 },
+  { id: "b7", author: "Mat Eliot", message: "I did horrible but still enjoyed! Good game.", game: "Bounce Back", gameId: "bounce-back", rating: 4 },
+  { id: "b8", author: "AA Games", message: "Pretty fun concept, My record was 157. Got confused a lot of times when I got reversed XD. I liked strategic approach of this one. Good job :D", game: "Bounce Back", gameId: "bounce-back", rating: 5 },
+  { id: "b9", author: "Macientosh", message: "Cool concept. The game is fun and controls feel good for the most part. Gameplay basically becomes a strategy game and how much you can optimize on block so makes it pretty replayable too.", game: "Bounce Back", gameId: "bounce-back", rating: 5 },
+  { id: "b10", author: "LEGENDBOSS123", message: "Fun game.", game: "Bounce Back", gameId: "bounce-back", rating: 4 },
+  { id: "b11", author: "NotamGames", message: "This concept is simple, but it's really good and well executed. It really made me wanna optimize my strategy and change my approach every leg, great work!", game: "Bounce Back", gameId: "bounce-back", rating: 5 },
+  { id: "b12", author: "Bill the Ball", message: "This is a very neat game", game: "Bounce Back", gameId: "bounce-back", rating: 4 },
+  { id: "b13", author: "dogma quest", message: "The screen wrapping and upside down platforming is really cool!", game: "Bounce Back", gameId: "bounce-back", rating: 4 },
+  { id: "b14", author: "keeramel", message: "Very nice game! my high score is 285", game: "Bounce Back", gameId: "bounce-back", rating: 5 },
+
+  // Biscuit Bandit Reviews
+  { id: "bb1", author: "Trash Pandas", message: "Really good concept, and i think it's very well polished for a 1-person week-long game.", game: "Biscuit Bandit", gameId: "biscuit-bandit", rating: 5 },
+  { id: "bb2", author: "ollie-dickson-6262", message: "Cool idea, and fun to play, maybe could've done with a bit more of a tutorial or something but good job!", game: "Biscuit Bandit", gameId: "biscuit-bandit", rating: 4 },
+  { id: "bb3", author: "jamesedra", message: "pretty fun game! I really liked the setting and turning off the lights", game: "Biscuit Bandit", gameId: "biscuit-bandit", rating: 4 },
+  { id: "bb4", author: "CaseM", message: "really fun game! I liked the line so I knew where someone could see me, that was a nice detail that helped with the 2d aspect of it. Overall, a fantastic game!", game: "Biscuit Bandit", gameId: "biscuit-bandit", rating: 5 },
+  { id: "bb5", author: "AEPSchmitt", message: "This is really solid little stealth game! It was really fun trying to strategically turn off the lights. Pretty incredible difficulty balancing and level design for a game jam.", game: "Biscuit Bandit", gameId: "biscuit-bandit", rating: 5 },
+  { id: "bb6", author: "BetterCallKrishna", message: "Didn't finished it but it was fun to play", game: "Biscuit Bandit", gameId: "biscuit-bandit", rating: 4 },
+  { id: "bb7", author: "SamiCode Games", message: "Amazing Pixel Art, Very Fun", game: "Biscuit Bandit", gameId: "biscuit-bandit", rating: 5 },
+  { id: "bb8", author: "Swynwraig Games", message: "Really good game! The darkness and music are a great addition, really added to the suspense!", game: "Biscuit Bandit", gameId: "biscuit-bandit", rating: 5 },
+  { id: "bb9", author: "Karim D.", message: "Really well executed! the mechanics work great, you can really feel the pressure from the parents, and it's always clear what's happening on screen (the purple line is a nice touch), also nice graphics & ambiance!", game: "Biscuit Bandit", gameId: "biscuit-bandit", rating: 5 },
+  { id: "bb10", author: "theDwarf80", message: "oh this game is nuts great job i love the gameplay but it tis a bit dark 👍😁", game: "Biscuit Bandit", gameId: "biscuit-bandit", rating: 4 }
 ];
 
 // Analytics Dashboard Component
 function AnalyticsDashboard() {
+  const stats = [
+    {
+      icon: <Eye className="h-5 w-5 text-white" />,
+      value: "669",
+      label: "Views",
+      gradient: "from-blue-500 to-cyan-500",
+      shadow: "shadow-blue-500/30"
+    },
+    {
+      icon: <Download className="h-5 w-5 text-white" />,
+      value: "23",
+      label: "Downloads",
+      gradient: "from-green-500 to-emerald-500",
+      shadow: "shadow-green-500/30"
+    },
+    {
+      icon: <Users className="h-5 w-5 text-white" />,
+      value: "3",
+      label: "Followers",
+      gradient: "from-purple-500 to-pink-500",
+      shadow: "shadow-purple-500/30"
+    },
+    {
+      icon: <Star className="h-5 w-5 text-white" />,
+      value: "30",
+      label: "Reviews",
+      gradient: "from-yellow-500 to-orange-500",
+      shadow: "shadow-yellow-500/30"
+    },
+  ];
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.8 }}
-      className="mb-16"
+      className="mb-16 grid gap-6 md:grid-cols-4"
     >
-      <div className="mb-8">
-        <h2 className="mb-3 text-3xl font-bold bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
-          CREATOR ANALYTICS
-        </h2>
-        <p className="text-white/70 text-lg">Live performance metrics from itch.io</p>
-      </div>
-
-      <div className="grid gap-6 md:grid-cols-3">
-        <Card className="border-white/20 bg-gradient-to-br from-cyan-500/10 to-blue-500/10 backdrop-blur-lg">
-          <CardContent className="p-6 text-center">
-            <div className="mb-3 mx-auto h-12 w-12 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 flex items-center justify-center">
-              <Eye className="h-6 w-6 text-white" />
-            </div>
-            <div className="text-3xl font-bold text-white mb-1">614</div>
-            <div className="text-sm text-white/70">Total Views</div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-white/20 bg-gradient-to-br from-green-500/10 to-emerald-500/10 backdrop-blur-lg">
-          <CardContent className="p-6 text-center">
-            <div className="mb-3 mx-auto h-12 w-12 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 flex items-center justify-center">
-              <Download className="h-6 w-6 text-white" />
-            </div>
-            <div className="text-3xl font-bold text-white mb-1">18</div>
-            <div className="text-sm text-white/70">Downloads</div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-white/20 bg-gradient-to-br from-purple-500/10 to-pink-500/10 backdrop-blur-lg">
-          <CardContent className="p-6 text-center">
-            <div className="mb-3 mx-auto h-12 w-12 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center">
-              <Users className="h-6 w-6 text-white" />
-            </div>
-            <div className="text-3xl font-bold text-white mb-1">3</div>
-            <div className="text-sm text-white/70">Followers</div>
-          </CardContent>
-        </Card>
-      </div>
+      {stats.map((stat, i) => (
+        <motion.div
+          key={i}
+          initial={{ opacity: 0, scale: 0.8 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, delay: i * 0.1 }}
+          whileHover={{ scale: 1.05, y: -5 }}
+        >
+          <Card className="relative overflow-hidden border-white/20 bg-gradient-to-br from-white/10 via-white/5 to-transparent backdrop-blur-lg hover:border-white/40 transition-all duration-300 group">
+            <div className={`absolute inset-0 bg-gradient-to-br ${stat.gradient} opacity-20 group-hover:opacity-30 transition-opacity duration-300`} />
+            <CardContent className="relative p-6 text-center">
+              <motion.div
+                className={`mx-auto mb-3 h-12 w-12 rounded-full bg-gradient-to-r ${stat.gradient} flex items-center justify-center shadow-lg ${stat.shadow}`}
+                whileHover={{ rotate: 360 }}
+                transition={{ duration: 0.5 }}
+              >
+                {stat.icon}
+              </motion.div>
+              <motion.div
+                className="text-3xl font-bold text-white mb-1"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.3 + i * 0.1 }}
+              >
+                {stat.value}
+              </motion.div>
+              <div className={`text-sm font-medium bg-gradient-to-r ${stat.gradient} bg-clip-text text-transparent`}>
+                {stat.label}
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      ))}
     </motion.div>
   );
 }
 
-// Featured Game Component with Unity Embed
-function FeaturedGame({ game }: { game: Game }) {
-  const [isFullscreen, setIsFullscreen] = useState(false);
+
+// Reviews Section Component
+function ReviewsSection() {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+
+  // Auto-cycle through reviews
+  useEffect(() => {
+    if (!isAutoPlaying) return;
+
+    const interval = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 3) % reviews.length);
+    }, 4000); // Change every 4 seconds
+
+    return () => clearInterval(interval);
+  }, [isAutoPlaying]);
+
+  // Get current 3 reviews to display
+  const getVisibleReviews = () => {
+    const visible = [];
+    for (let i = 0; i < 3; i++) {
+      visible.push(reviews[(currentIndex + i) % reviews.length]);
+    }
+    return visible;
+  };
+
+  const visibleReviews = getVisibleReviews();
+
+  // Find game accent color
+  const getGameAccent = (gameId: string) => {
+    const game = games.find(g => g.id === gameId);
+    return game ? game.accent : "from-purple-400 to-pink-400";
+  };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 50 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 1, type: "spring" }}
-      className="mb-20"
-    >
-      <div className="mb-8 text-center">
-        <Badge className="mb-4 gap-2 bg-gradient-to-r from-yellow-500 to-amber-500 text-black font-bold">
-          <Star className="h-4 w-4" />
-          FEATURED GAME
-        </Badge>
-        <h2 className={`text-5xl font-bold bg-gradient-to-r ${game.accent} bg-clip-text text-transparent mb-4`}>
-          {game.title}
+    <section className="mb-20">
+      <motion.div
+        initial={{ opacity: 0, x: -50 }}
+        whileInView={{ opacity: 1, x: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.8 }}
+        className="mb-8"
+      >
+        <h2 className="mb-3 text-4xl font-bold bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent">
+          PLAYER REVIEWS
         </h2>
-        <p className="text-xl text-white/80 max-w-2xl mx-auto">{game.subtitle}</p>
+        <p className="text-white/70 text-lg">What players are saying about these games</p>
+      </motion.div>
+
+      <div
+        className="grid gap-6 md:grid-cols-3"
+        onMouseEnter={() => setIsAutoPlaying(false)}
+        onMouseLeave={() => setIsAutoPlaying(true)}
+      >
+        <AnimatePresence mode="wait">
+          {visibleReviews.map((review, index) => (
+            <motion.div
+              key={`${review.id}-${currentIndex}`}
+              initial={{ opacity: 0, y: 20, scale: 0.9 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -20, scale: 0.9 }}
+              transition={{
+                duration: 0.5,
+                delay: index * 0.1,
+                type: "spring",
+                stiffness: 100
+              }}
+            >
+              <Card className="h-full border-white/20 bg-gradient-to-br from-white/10 via-white/5 to-white/10 backdrop-blur-lg hover:border-white/40 transition-all duration-300">
+                <CardContent className="p-6 flex flex-col h-full">
+                  {/* Game name and rating */}
+                  <div className="mb-4">
+                    <Badge className={`bg-gradient-to-r ${getGameAccent(review.gameId)} text-white font-bold mb-2`}>
+                      {review.game}
+                    </Badge>
+                    <div className="flex items-center gap-1 mt-2">
+                      {[...Array(5)].map((_, i) => (
+                        <Star
+                          key={i}
+                          className={`h-4 w-4 ${
+                            i < review.rating
+                              ? "fill-yellow-400 text-yellow-400"
+                              : "text-white/20"
+                          }`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Review message */}
+                  <p className="text-white/90 text-sm leading-relaxed flex-grow mb-4">
+                    "{review.message}"
+                  </p>
+
+                  {/* Author */}
+                  <div className="flex items-center gap-2 text-white/60">
+                    <Users className="h-3 w-3" />
+                    <span className="text-xs">{review.author}</span>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          ))}
+        </AnimatePresence>
       </div>
 
-      <Card className="border-white/20 bg-gradient-to-br from-white/10 via-white/5 to-white/10 backdrop-blur-lg overflow-hidden">
-        <div className="relative">
-          {/* Unity WebGL Embed */}
-          <div className="relative aspect-video bg-black rounded-t-lg overflow-hidden">
-            <iframe
-              src={game.embedUrl}
-              width="100%"
-              height="100%"
-              frameBorder="0"
-              allowFullScreen
-              className="w-full h-full"
-              title={`${game.title} - Unity WebGL Game`}
-            />
-            
-            {/* Fullscreen button */}
-            <Button
-              size="sm"
-              variant="outline"
-              className="absolute top-4 right-4 bg-black/50 border-white/30 hover:bg-black/70"
-              onClick={() => setIsFullscreen(true)}
-            >
-              <Maximize2 className="h-4 w-4" />
-            </Button>
-          </div>
-
-          <div className="p-8">
-            <div className="grid gap-8 lg:grid-cols-2">
-              <div>
-                <h3 className="text-2xl font-bold text-white mb-4">About This Game</h3>
-                <p className="text-white/80 leading-relaxed mb-6">{game.longDescription}</p>
-                
-                <div className="flex gap-4 mb-6">
-                  <div className="text-center">
-                    <div className={`mx-auto mb-2 h-10 w-10 rounded-full bg-gradient-to-r ${game.accent} flex items-center justify-center`}>
-                      <Clock className="h-5 w-5 text-white" />
-                    </div>
-                    <div className="text-sm font-medium text-white">{game.playtime}</div>
-                  </div>
-                  <div className="text-center">
-                    <div className={`mx-auto mb-2 h-10 w-10 rounded-full bg-gradient-to-r ${game.accent} flex items-center justify-center`}>
-                      <Target className="h-5 w-5 text-white" />
-                    </div>
-                    <div className="text-sm font-medium text-white">{game.difficulty}</div>
-                  </div>
-                  <div className="text-center">
-                    <div className={`mx-auto mb-2 h-10 w-10 rounded-full bg-gradient-to-r ${game.accent} flex items-center justify-center`}>
-                      <Gamepad2 className="h-5 w-5 text-white" />
-                    </div>
-                    <div className="text-sm font-medium text-white">{game.category}</div>
-                  </div>
-                </div>
-
-                <Button 
-                  asChild 
-                  size="lg" 
-                  className={`bg-gradient-to-r ${game.accent} hover:scale-105 transition-transform duration-300 shadow-lg font-bold`}
-                >
-                  <a href={game.itchUrl} target="_blank" rel="noopener noreferrer">
-                    <ExternalLink className="mr-2 h-5 w-5" />
-                    PLAY ON ITCH.IO
-                  </a>
-                </Button>
-              </div>
-
-              <div>
-                <h3 className="text-2xl font-bold text-white mb-4">Key Features</h3>
-                <div className="space-y-3 mb-6">
-                  {game.features.map((feature, index) => (
-                    <motion.div 
-                      key={index} 
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.1 }}
-                      className="flex items-center gap-3"
-                    >
-                      <div className={`h-2 w-2 rounded-full bg-gradient-to-r ${game.accent}`} />
-                      <span className="text-white/90">{feature}</span>
-                    </motion.div>
-                  ))}
-                </div>
-
-                <h3 className="text-xl font-bold text-white mb-3">Technology Stack</h3>
-                <div className="flex flex-wrap gap-2">
-                  {game.technologies.map((tech, index) => (
-                    <Badge 
-                      key={index}
-                      variant="outline" 
-                      className="border-white/30 text-white/80"
-                    >
-                      {tech.includes('Unity') && (
-                        <svg width="12" height="12" viewBox="0 0 256 263" className="mr-1 text-white">
-                          <path
-                            fill="currentColor"
-                            d="M128 0L238.4 68.5v127L128 263.5L17.6 195.5v-127L128 0zm0 37.2L50.4 79.7v88.6L128 226.3l77.6-58v-88.6L128 37.2z"
-                          />
-                        </svg>
-                      )}
-                      {tech}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </Card>
-
-      {/* Fullscreen Modal */}
-      <Dialog open={isFullscreen} onOpenChange={setIsFullscreen}>
-        <DialogContent className="max-w-[95vw] max-h-[95vh] p-2">
-          <div className="aspect-video w-full">
-            <iframe
-              src={game.embedUrl}
-              width="100%"
-              height="100%"
-              frameBorder="0"
-              allowFullScreen
-              className="w-full h-full rounded"
-              title={`${game.title} - Unity WebGL Game (Fullscreen)`}
-            />
-          </div>
-        </DialogContent>
-      </Dialog>
-    </motion.div>
+      {/* Progress indicators */}
+      <div className="flex justify-center gap-2 mt-6">
+        {Array.from({ length: Math.ceil(reviews.length / 3) }).map((_, i) => (
+          <button
+            key={i}
+            onClick={() => setCurrentIndex(i * 3)}
+            className={`h-2 transition-all duration-300 ${
+              Math.floor(currentIndex / 3) === i
+                ? "w-8 bg-gradient-to-r from-yellow-400 to-orange-400"
+                : "w-2 bg-white/30 hover:bg-white/50"
+            } rounded-full`}
+            aria-label={`Go to review set ${i + 1}`}
+          />
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -449,47 +537,18 @@ function EpicGameCard({ game, index, onSelect }: { game: Game; index: number; on
 
         <CardHeader className="p-0">
           <div className="relative aspect-video overflow-hidden">
-            {/* Game screenshot placeholder - replace with actual screenshots */}
-            <div className={`absolute inset-0 bg-gradient-to-br ${game.accent} opacity-60`} />
-            
-            {/* Central game icon with Unity integration */}
-            <div className="flex h-full items-center justify-center">
-              <motion.div
-                animate={{ 
-                  rotate: isHovered ? 360 : 0,
-                  scale: isHovered ? 1.2 : 1
-                }}
-                transition={{ duration: 0.5 }}
-                className="relative"
-              >
-                <motion.div
-                  className={`absolute inset-0 rounded-full bg-gradient-to-r ${game.accent} blur-xl opacity-50`}
-                  animate={{ scale: isHovered ? 1.5 : 1 }}
-                  transition={{ duration: 0.5 }}
-                />
-                {/* Unity-powered badge */}
-                <div className="absolute -top-2 -right-2 z-10">
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ delay: 0.5, type: "spring" }}
-                    className="h-6 w-6 rounded-full bg-white flex items-center justify-center shadow-lg"
-                  >
-                    <svg width="14" height="14" viewBox="0 0 256 263" className="text-black">
-                      <path
-                        fill="currentColor"
-                        d="M128 0L238.4 68.5v127L128 263.5L17.6 195.5v-127L128 0zm0 37.2L50.4 79.7v88.6L128 226.3l77.6-58v-88.6L128 37.2z"
-                      />
-                    </svg>
-                  </motion.div>
-                </div>
-                <CategoryIcon className="relative h-16 w-16 text-white drop-shadow-lg" />
-              </motion.div>
-            </div>
+            {/* Cover image */}
+            <img
+              src={game.cover || game.image || "/images/view0.jpg"}
+              alt={`${game.title} cover`}
+              className="absolute inset-0 h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
+              loading="lazy"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
 
-            {/* Status Badge */}
-            <motion.div 
-              className="absolute left-4 top-4"
+            {/* Status and Jam Badges */}
+            <motion.div
+              className="absolute left-4 top-4 flex flex-col gap-2"
               initial={{ scale: 0, x: -20 }}
               animate={{ scale: 1, x: 0 }}
               transition={{ delay: 0.3 + index * 0.1, type: "spring" }}
@@ -498,9 +557,19 @@ function EpicGameCard({ game, index, onSelect }: { game: Game; index: number; on
                 <Activity className="mr-1 h-3 w-3" />
                 LIVE
               </Badge>
+              <Badge className="bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg shadow-purple-500/30">
+                <Trophy className="mr-1 h-3 w-3" />
+                {game.jam}
+              </Badge>
+              {game.jamAchievement && (
+                <Badge className="bg-gradient-to-r from-yellow-500 to-amber-500 text-black font-bold shadow-lg shadow-yellow-500/30">
+                  <Award className="mr-1 h-3 w-3" />
+                  {game.jamAchievement}
+                </Badge>
+              )}
             </motion.div>
 
-            {/* Epic play button overlay */}
+            {/* View details overlay */}
             <AnimatePresence>
               {isHovered && (
                 <motion.div
@@ -530,9 +599,14 @@ function EpicGameCard({ game, index, onSelect }: { game: Game; index: number; on
             transition={{ delay: 0.2 + index * 0.1 }}
           >
             <div className="mb-4 flex items-center justify-between">
-              <Badge variant="outline" className={`border-2 bg-gradient-to-r ${game.accent} bg-clip-text text-transparent font-bold`}>
-                {game.category.toUpperCase()}
-              </Badge>
+              <div className="flex items-center gap-2">
+                <Badge variant="outline" className={`border-2 bg-gradient-to-r ${game.accent} bg-clip-text text-transparent font-bold`}>
+                  {game.category.toUpperCase()}
+                </Badge>
+                <Badge variant="outline" className="border-white/30 text-white/80">
+                  {game.dimension}
+                </Badge>
+              </div>
               <div className="flex items-center gap-2 text-xs text-white/60">
                 <Calendar className="h-3 w-3" />
                 {game.year}
@@ -594,14 +668,20 @@ function EpicGameCard({ game, index, onSelect }: { game: Game; index: number; on
 // Enhanced game details modal
 function EpicGameModal({ game, isOpen, onClose }: { game: Game | null; isOpen: boolean; onClose: () => void }) {
   if (!game) return null;
+  const images = (game.gallery && game.gallery.length > 0)
+    ? game.gallery
+    : [game.cover || game.image || "/images/view0.jpg"];
+  const [activeIndex, setActiveIndex] = useState(0);
+  const prev = () => setActiveIndex((i) => (i - 1 + images.length) % images.length);
+  const next = () => setActiveIndex((i) => (i + 1) % images.length);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-h-[90vh] max-w-6xl overflow-y-auto bg-gradient-to-br from-neutral-950/95 via-neutral-900/95 to-neutral-950/95 backdrop-blur-2xl border border-white/20">
-        <motion.div 
+      <DialogContent className="max-h-[85vh] max-w-[85vw] md:max-w-xl lg:max-w-2xl xl:max-w-3xl overflow-y-auto overflow-x-hidden bg-gradient-to-br from-neutral-950/95 via-neutral-900/95 to-neutral-950/95 backdrop-blur-2xl border border-white/20">
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="space-y-8"
+          className="space-y-3 w-full"
         >
           {/* Epic header */}
           <div className="relative">
@@ -611,44 +691,105 @@ function EpicGameModal({ game, isOpen, onClose }: { game: Game | null; isOpen: b
               transition={{ duration: 4, repeat: Infinity }}
             />
             <div className="relative">
-              <div className="mb-4 flex flex-wrap items-center gap-3">
-                <Badge className="bg-gradient-to-r from-green-500 to-emerald-400 text-white shadow-lg shadow-green-500/30">
-                  <Activity className="mr-1 h-3 w-3" />
+              <div className="mb-2 flex flex-wrap items-center gap-2">
+                <Badge className="bg-gradient-to-r from-green-500 to-emerald-400 text-white shadow-lg shadow-green-500/30 text-xs py-0.5">
+                  <Activity className="mr-1 h-2.5 w-2.5" />
                   LIVE ON ITCH.IO
                 </Badge>
-                <Badge variant="outline" className={`border-2 bg-gradient-to-r ${game.accent} bg-clip-text text-transparent font-bold`}>
+                <Badge variant="outline" className={`border bg-gradient-to-r ${game.accent} bg-clip-text text-transparent font-bold text-xs py-0.5`}>
                   {game.category}
                 </Badge>
-                <Badge variant="outline">{game.year}</Badge>
+                <Badge variant="outline" className="text-xs py-0.5">{game.dimension}</Badge>
+                <Badge variant="outline" className="text-xs py-0.5">{game.year}</Badge>
               </div>
-              <h2 className={`text-4xl font-bold bg-gradient-to-r ${game.accent} bg-clip-text text-transparent mb-2`}>
+              <h2 className={`text-xl font-bold bg-gradient-to-r ${game.accent} bg-clip-text text-transparent mb-1`}>
                 {game.title}
               </h2>
-              <p className="text-xl text-white/90 font-medium">{game.subtitle}</p>
+              <p className="text-sm text-white/90 font-medium">{game.subtitle}</p>
             </div>
           </div>
 
+          {/* Image gallery */}
+          <div className="w-full">
+            <div className="relative aspect-video w-full overflow-hidden rounded-lg border border-white/10 bg-black">
+              <img
+                src={images[activeIndex]}
+                alt={`${game.title} screenshot ${activeIndex + 1}`}
+                className={`h-full w-full ${
+                  game.id === "murphys-rocket" ? "object-contain" : "object-cover"
+                }`}
+              />
+              {images.length > 1 && (
+                <>
+                  <button
+                    aria-label="Previous image"
+                    onClick={prev}
+                    className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-black/50 p-1 text-white hover:bg-black/70"
+                  >
+                    <ChevronLeft className="h-3 w-3" />
+                  </button>
+                  <button
+                    aria-label="Next image"
+                    onClick={next}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-black/50 p-1 text-white hover:bg-black/70"
+                  >
+                    <ChevronRight className="h-3 w-3" />
+                  </button>
+                </>
+              )}
+            </div>
+            {images.length > 1 && (
+              <div className="mt-2 flex gap-1 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent">
+                {images.map((src, i) => (
+                  <button
+                    key={src + i}
+                    onClick={() => setActiveIndex(i)}
+                    className={`relative h-8 w-14 flex-shrink-0 overflow-hidden rounded border ${i === activeIndex ? "border-white" : "border-white/20"}`}
+                    aria-label={`Show image ${i + 1}`}
+                  >
+                    <img src={src} alt="thumbnail" className={`h-full w-full ${
+                      game.id === "murphys-rocket" ? "object-contain bg-black" : "object-cover"
+                    }`} />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
           {/* Game details content */}
-          <div className="grid gap-8 lg:grid-cols-2">
+          <div className="grid gap-3 lg:grid-cols-2 w-full">
             <div>
-              <h3 className="mb-4 text-2xl font-bold text-white">About This Game</h3>
-              <p className="text-white/90 leading-relaxed mb-6">{game.longDescription}</p>
+              <h3 className="mb-2 text-base font-bold text-white">About This Game</h3>
+              <p className="text-xs text-white/90 leading-relaxed">{game.longDescription}</p>
             </div>
 
             <div>
-              <h3 className="mb-4 text-2xl font-bold text-white">Key Features</h3>
-              <div className="space-y-3">
+              <h3 className="mb-2 text-base font-bold text-white">Key Features</h3>
+              <div className="space-y-1.5 mb-3">
                 {game.features.map((feature, index) => (
-                  <motion.div 
-                    key={index} 
+                  <motion.div
+                    key={index}
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: index * 0.1 }}
-                    className="flex items-center gap-3"
+                    className="flex items-center gap-2"
                   >
-                    <div className={`h-2 w-2 rounded-full bg-gradient-to-r ${game.accent}`} />
-                    <span className="text-white/90">{feature}</span>
+                    <div className={`h-1 w-1 rounded-full bg-gradient-to-r ${game.accent}`} />
+                    <span className="text-xs text-white/90">{feature}</span>
                   </motion.div>
+                ))}
+              </div>
+
+              <h3 className="mb-2 text-base font-bold text-white">Technologies</h3>
+              <div className="flex flex-wrap gap-1">
+                {game.technologies.map((tech, index) => (
+                  <Badge
+                    key={index}
+                    variant="outline"
+                    className="border-white/30 text-white/80 text-xs py-0.5 px-2"
+                  >
+                    {tech}
+                  </Badge>
                 ))}
               </div>
             </div>
@@ -657,11 +798,11 @@ function EpicGameModal({ game, isOpen, onClose }: { game: Game | null; isOpen: b
           {/* Action button */}
           <Button 
             asChild 
-            size="lg" 
-            className={`w-full bg-gradient-to-r ${game.accent} hover:scale-105 transition-transform duration-300 shadow-2xl font-bold text-lg`}
+            size="sm"
+            className={`w-full bg-gradient-to-r ${game.accent} hover:scale-105 transition-transform duration-300 shadow-lg font-bold text-xs`}
           >
             <a href={game.itchUrl} target="_blank" rel="noopener noreferrer">
-              <ExternalLink className="mr-3 h-5 w-5" />
+              <ExternalLink className="mr-2 h-3 w-3" />
               PLAY ON ITCH.IO
             </a>
           </Button>
@@ -691,8 +832,6 @@ export default function EpicGamesPage() {
     setSelectedGame(null);
   };
 
-  const featuredGame = games.find(game => game.isFeatured);
-  const otherGames = games.filter(game => !game.isFeatured);
 
   return (
     <div ref={containerRef} className="min-h-screen bg-black text-white [color-scheme:dark] relative overflow-hidden">
@@ -765,7 +904,7 @@ export default function EpicGamesPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5, duration: 0.8 }}
           >
-            UNITY LABORATORY
+            GAMES
           </motion.h1>
           
           <motion.p 
@@ -774,9 +913,6 @@ export default function EpicGamesPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.7, duration: 0.8 }}
           >
-            Interactive experiences built with Unity Engine. From innovative mechanics to engaging gameplay, 
-            each project explores new frontiers in game development.
-            <br />
             <span className="text-white/60 text-lg mt-2 block">
               Powered by Unity Engine • Built with C# • Deployed as WebGL
             </span>
@@ -786,10 +922,7 @@ export default function EpicGamesPage() {
         {/* Analytics Dashboard */}
         <AnalyticsDashboard />
 
-        {/* Featured Game Section */}
-        {featuredGame && <FeaturedGame game={featuredGame} />}
-
-        {/* Other Games Section */}
+        {/* Game Jams Section */}
         <section className="mb-20">
           <motion.div
             initial={{ opacity: 0, x: -50 }}
@@ -799,13 +932,13 @@ export default function EpicGamesPage() {
             className="mb-8"
           >
             <h2 className="mb-3 text-4xl font-bold bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
-              MORE GAMES
+              FEATURED GAMES
             </h2>
-            <p className="text-white/70 text-lg">Additional Unity projects and prototypes</p>
+            <p className="text-white/70 text-lg">Game jam submissions playable on itch.io</p>
           </motion.div>
 
-          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-            {otherGames.map((game, index) => (
+          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-2">
+            {games.map((game, index) => (
               <EpicGameCard
                 key={game.id}
                 game={game}
@@ -815,6 +948,9 @@ export default function EpicGamesPage() {
             ))}
           </div>
         </section>
+
+        {/* Reviews Section */}
+        <ReviewsSection />
 
         {/* Epic call to action */}
         <motion.div
