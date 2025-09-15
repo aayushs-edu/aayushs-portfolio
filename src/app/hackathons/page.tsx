@@ -1,31 +1,18 @@
 "use client"
-import React, { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   Code,
   Trophy,
-  Zap,
   ExternalLink,
   Github,
-  Award,
   Globe,
-  Brain,
-  Heart,
   Sparkles,
   Users,
   Clock,
-  Calendar,
-  ChevronRight,
-  Star,
-  Cpu,
-  Activity,
-  Camera,
   Palette,
   Stethoscope,
-  Lightbulb,
   Rocket,
-  Target,
-  Timer,
   X
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -54,7 +41,7 @@ interface Project {
   category: "Simulation" | "Web" | "Healthcare" | "Social Good";
   status: "Winner" | "Top 10" | "Finalist" | "Completed";
   accent: string;
-  icon: any;
+  icon: React.ComponentType<{ className?: string }>;
 }
 
 const projects: Project[] = [
@@ -207,7 +194,7 @@ function ProjectCard({ project, index, onSelect, activeDemoId, setActiveDemoId }
   };
 
   // Auto-hide loader after a timeout
-  React.useEffect(() => {
+  useEffect(() => {
     if (isLoading) {
       const timer = setTimeout(() => {
         setIsLoading(false);
@@ -413,15 +400,6 @@ function ProjectCard({ project, index, onSelect, activeDemoId, setActiveDemoId }
 }
 
 function ProjectModal({ project, isOpen, onClose }: { project: Project | null; isOpen: boolean; onClose: () => void }) {
-  const [showEmbed, setShowEmbed] = useState(false);
-
-  // Reset embed state when modal closes
-  React.useEffect(() => {
-    if (!isOpen) {
-      setShowEmbed(false);
-    }
-  }, [isOpen]);
-
   if (!project) return null;
 
   return (

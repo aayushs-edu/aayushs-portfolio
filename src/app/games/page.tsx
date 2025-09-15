@@ -1,40 +1,24 @@
 "use client"
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
-import { 
-  Gamepad2, 
-  Play, 
+import Image from "next/image";
+import {
+  Play,
   ExternalLink,
   Calendar,
   Download,
   Star,
   Trophy,
   Sparkles,
-  Zap,
-  Brain,
   Target,
-  Layers,
   Clock,
   Users,
-  Globe,
-  Code,
   ChevronRight,
   ChevronLeft,
-  Github,
-  Cpu,
   Rocket,
   Eye,
-  Settings,
-  RotateCcw,
-  Box,
-  Atom,
-  Gamepad,
-  MonitorPlay,
-  Joystick,
   Activity,
-  TrendingUp,
-  Award,
-  Maximize2
+  Award
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -426,7 +410,7 @@ function ReviewsSection() {
 
                   {/* Review message */}
                   <p className="text-white/90 text-sm leading-relaxed flex-grow mb-4">
-                    "{review.message}"
+                    &ldquo;{review.message}&rdquo;
                   </p>
 
                   {/* Author */}
@@ -493,18 +477,6 @@ function FloatingParticles() {
 function EpicGameCard({ game, index, onSelect }: { game: Game; index: number; onSelect: () => void }) {
   const [isHovered, setIsHovered] = useState(false);
 
-  const getCategoryIcon = (category: string) => {
-    switch (category) {
-      case "Platformer": return Rocket;
-      case "Puzzle": return Brain;
-      case "Action": return Zap;
-      case "Strategy": return Cpu;
-      case "Shooter": return Target;
-      default: return Gamepad2;
-    }
-  };
-
-  const CategoryIcon = getCategoryIcon(game.category);
 
   return (
     <motion.div
@@ -537,11 +509,12 @@ function EpicGameCard({ game, index, onSelect }: { game: Game; index: number; on
         <CardHeader className="p-0">
           <div className="relative aspect-video overflow-hidden">
             {/* Cover image */}
-            <img
+            <Image
               src={game.cover || game.image || "/images/view0.jpg"}
               alt={`${game.title} cover`}
-              className="absolute inset-0 h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
-              loading="lazy"
+              fill
+              className="object-cover object-center transition-transform duration-500 group-hover:scale-105"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent pointer-events-none" />
 
@@ -666,11 +639,12 @@ function EpicGameCard({ game, index, onSelect }: { game: Game; index: number; on
 
 // Enhanced game details modal
 function EpicGameModal({ game, isOpen, onClose }: { game: Game | null; isOpen: boolean; onClose: () => void }) {
+  const [activeIndex, setActiveIndex] = useState(0);
+
   if (!game) return null;
   const images = (game.gallery && game.gallery.length > 0)
     ? game.gallery
     : [game.cover || game.image || "/images/view0.jpg"];
-  const [activeIndex, setActiveIndex] = useState(0);
   const prev = () => setActiveIndex((i) => (i - 1 + images.length) % images.length);
   const next = () => setActiveIndex((i) => (i + 1) % images.length);
 
@@ -711,12 +685,12 @@ function EpicGameModal({ game, isOpen, onClose }: { game: Game | null; isOpen: b
           {/* Image gallery */}
           <div className="w-full">
             <div className="relative aspect-video w-full overflow-hidden rounded-lg border border-white/10 bg-black">
-              <img
+              <Image
                 src={images[activeIndex]}
                 alt={`${game.title} screenshot ${activeIndex + 1}`}
-                className={`h-full w-full ${
-                  game.id === "murphys-rocket" ? "object-contain" : "object-cover"
-                }`}
+                fill
+                className={game.id === "murphys-rocket" ? "object-contain" : "object-cover"}
+                sizes="(max-width: 768px) 100vw, 85vw"
               />
               {images.length > 1 && (
                 <>
@@ -746,9 +720,13 @@ function EpicGameModal({ game, isOpen, onClose }: { game: Game | null; isOpen: b
                     className={`relative h-8 w-14 flex-shrink-0 overflow-hidden rounded border ${i === activeIndex ? "border-white" : "border-white/20"}`}
                     aria-label={`Show image ${i + 1}`}
                   >
-                    <img src={src} alt="thumbnail" className={`h-full w-full ${
-                      game.id === "murphys-rocket" ? "object-contain bg-black" : "object-cover"
-                    }`} />
+                    <Image
+                      src={src}
+                      alt="thumbnail"
+                      fill
+                      className={game.id === "murphys-rocket" ? "object-contain bg-black" : "object-cover"}
+                      sizes="56px"
+                    />
                   </button>
                 ))}
               </div>

@@ -1,7 +1,6 @@
 "use client"
-import React, { useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { ChevronLeft, ChevronRight, Palette, Calendar, Maximize2, X } from "lucide-react"
@@ -38,8 +37,8 @@ function usePaintings(manifestUrl = "/paintings/manifest.json") {
         const arr = Array.isArray(json) ? json : json.items
         if (!Array.isArray(arr)) throw new Error("Invalid manifest format")
         if (!cancelled) setItems(arr)
-      } catch (e: any) {
-        if (!cancelled) setError(e?.message || "Failed to load paintings")
+      } catch (e) {
+        if (!cancelled) setError(e instanceof Error ? e.message : "Failed to load paintings")
       } finally {
         if (!cancelled) setLoading(false)
       }

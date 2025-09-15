@@ -1,40 +1,27 @@
 // src/app/page.tsx
 "use client"
-import React, { useState, useEffect } from "react";
-import { motion, useReducedMotion, AnimatePresence } from "framer-motion";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import {
   ChevronRight,
   Download,
   Trophy,
-  Award,
   Sparkles,
   Palette,
   Film,
   Gamepad2,
   Code,
-  ExternalLink,
-  Star,
   Users,
-  Clock,
-  Zap,
   Brain,
-  Heart,
-  Globe,
-  Rocket,
   ArrowRight,
-  Activity,
-  Target,
   Eye,
   Github,
   Linkedin,
-  Mail,
-  Play,
-  Cpu,
-  Brush
+  Mail
 } from "lucide-react";
 
 // Portfolio Highlights Data
@@ -95,7 +82,7 @@ function HeroSection() {
       setActiveWord((prev) => (prev + 1) % words.length);
     }, 2000);
     return () => clearInterval(interval);
-  }, []);
+  }, [words.length]);
 
   return (
     <section className="relative mx-auto mt-6 max-w-7xl px-4">
@@ -230,7 +217,6 @@ function HeroSection() {
 // Portfolio Showcase Section
 function PortfolioShowcase() {
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
-  const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
   return (
     <section id="showcase" className="mx-auto mt-32 max-w-7xl px-4">
@@ -275,8 +261,6 @@ function PortfolioShowcase() {
             }}
             onHoverStart={() => setHoveredCard(key)}
             onHoverEnd={() => setHoveredCard(null)}
-            onMouseEnter={() => setActiveCategory(key)}
-            onMouseLeave={() => setActiveCategory(null)}
             className="group relative"
           >
             <Link href={item.link}>
