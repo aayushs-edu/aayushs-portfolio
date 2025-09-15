@@ -20,7 +20,10 @@ import {
   Star,
   Users,
   Code,
-  X
+  X,
+  Layers,
+  Box,
+  Activity
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -403,33 +406,6 @@ export default function MasterStrokePage() {
     setSelectedPost(null);
   };
 
-  const stats = [
-    {
-      icon: Brain,
-      value: "2.5M+",
-      label: "Training Samples",
-      gradient: "from-purple-500 to-pink-500"
-    },
-    {
-      icon: Users,
-      value: "500+",
-      label: "Beta Testers",
-      gradient: "from-blue-500 to-cyan-500"
-    },
-    {
-      icon: Zap,
-      value: "89%",
-      label: "Accuracy Rate",
-      gradient: "from-orange-500 to-red-500"
-    },
-    {
-      icon: Star,
-      value: "4.8/5",
-      label: "User Rating",
-      gradient: "from-yellow-400 to-amber-500"
-    }
-  ];
-
   const features = [
     {
       icon: Eye,
@@ -470,6 +446,7 @@ export default function MasterStrokePage() {
         <div className="absolute inset-0 bg-gradient-to-br from-orange-900/20 via-red-900/10 to-purple-900/20" />
         <div className="absolute inset-0 backdrop-blur-[1px]" />
       </div>
+      <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-neutral-950 to-transparent pointer-events-none" />
 
       <div className="mx-auto max-w-7xl px-4 py-12">
         {/* Header */}
@@ -482,49 +459,311 @@ export default function MasterStrokePage() {
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ type: "spring", stiffness: 200 }}
-            className="mx-auto mb-6 h-20 w-20 rounded-2xl bg-gradient-to-br from-orange-500 to-red-500 p-0.5"
+            className="mx-auto mb-4 h-16 w-16 rounded-2xl bg-gradient-to-br from-orange-500 via-red-500 to-purple-500 p-1"
           >
-            <div className="flex h-full w-full items-center justify-center rounded-2xl bg-black">
-              <Palette className="h-10 w-10 text-white" />
+            <div className="flex h-full w-full items-center justify-center rounded-2xl bg-black/90">
+              <Palette className="h-8 w-8 text-white" />
             </div>
           </motion.div>
 
-          <h1 className="text-5xl font-bold mb-4 pb-1 leading-normal bg-gradient-to-r from-orange-400 via-red-400 to-purple-400 bg-clip-text text-transparent">
+          <h1 className="text-4xl md:text-5xl font-bold mb-4 pb-1 leading-tight bg-gradient-to-r from-orange-400 via-red-400 to-purple-400 bg-clip-text text-transparent">
             MasterStroke AI
           </h1>
-          <p className="text-xl text-white/70 max-w-3xl mx-auto">
-            Revolutionizing art education with AI-powered feedback. Get instant, personalized critiques
-            on your artwork using advanced computer vision and machine learning.
+          <p className="text-lg text-white/70 max-w-3xl mx-auto leading-relaxed">
+            Revolutionizing art education with AI-powered feedback and personalized learning paths
           </p>
         </motion.div>
 
-        {/* Stats */}
+        {/* Algorithm Progression Visual - Epic Version */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
-          className="mb-16 grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
+          transition={{ duration: 1 }}
+          className="mb-24 relative"
         >
-          {stats.map((stat, i) => (
+          {/* Section Header */}
+          <div className="text-center mb-16">
             <motion.div
-              key={i}
-              initial={{ opacity: 0, scale: 0.8 }}
-              whileInView={{ opacity: 1, scale: 1 }}
+              initial={{ scale: 0.9, opacity: 0 }}
+              whileInView={{ scale: 1, opacity: 1 }}
               viewport={{ once: true }}
-              transition={{ delay: i * 0.1 }}
-              whileHover={{ scale: 1.05 }}
+              transition={{ delay: 0.1 }}
+              className="mb-6 inline-flex items-center gap-2 rounded-full border border-purple-500/20 bg-gradient-to-r from-orange-500/10 via-red-500/10 to-purple-500/10 px-5 py-2.5 backdrop-blur-xl"
             >
-              <Card className="border-white/10 bg-gradient-to-br from-white/10 via-white/5 to-transparent backdrop-blur-lg hover:border-white/30 transition-all">
-                <CardContent className="py-4 text-center">
-                  <div className={`mx-auto mb-2 h-10 w-10 rounded-full bg-gradient-to-r ${stat.gradient} flex items-center justify-center`}>
-                    <stat.icon className="h-5 w-5 text-white" />
-                  </div>
-                  <div className="text-2xl font-bold">{stat.value}</div>
-                  <div className="text-xs text-white/60">{stat.label}</div>
-                </CardContent>
-              </Card>
+              <Activity className="h-5 w-5 text-orange-400 animate-pulse" />
+              <span className="text-sm font-bold text-transparent bg-gradient-to-r from-orange-300 via-red-300 to-purple-300 bg-clip-text uppercase tracking-wider">
+                AI Pipeline Visualization
+              </span>
             </motion.div>
-          ))}
+
+            <motion.p
+              initial={{ y: 20, opacity: 0 }}
+              whileInView={{ y: 0, opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.3 }}
+              className="text-xl text-white/60 max-w-4xl mx-auto leading-relaxed"
+            >
+            </motion.p>
+          </div>
+
+          <div className="relative">
+            {/* Epic gradient background */}
+            <div className="absolute inset-0 bg-gradient-to-b from-orange-500/5 via-transparent to-purple-500/5 rounded-3xl blur-3xl" />
+
+            {/* Animated connection line */}
+            <motion.div
+              initial={{ scaleX: 0 }}
+              whileInView={{ scaleX: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 1.5, delay: 0.5 }}
+              className="absolute top-1/2 left-10 right-10 h-1 bg-gradient-to-r from-orange-500 via-red-500 to-purple-500 -translate-y-1/2 hidden lg:block rounded-full"
+              style={{ transformOrigin: "left center" }}
+            />
+
+            {/* Glowing dots on the line */}
+            {[0, 1, 2, 3, 4].map((i) => (
+              <motion.div
+                key={i}
+                initial={{ scale: 0 }}
+                whileInView={{ scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.7 + i * 0.2, type: "spring" }}
+                className="absolute top-1/2 -translate-y-1/2 hidden lg:block"
+                style={{ left: `${20 + i * 15}%` }}
+              >
+                <div className="h-4 w-4 rounded-full bg-white shadow-2xl shadow-white/50 animate-pulse" />
+              </motion.div>
+            ))}
+
+            <div className="grid grid-cols-1 gap-10 lg:grid-cols-5 relative z-10">
+              {[
+                {
+                  title: "Original Painting",
+                  subtitle: "Your Artwork",
+                  image: "/images/masterstroke-1.png",
+                  icon: Palette,
+                  color: "from-blue-500 to-cyan-500"
+                },
+                {
+                  title: "SAM2.1 Segmentation",
+                  subtitle: "Object Detection",
+                  image: "/images/masterstroke-2.png",
+                  icon: Eye,
+                  color: "from-green-500 to-emerald-500"
+                },
+                {
+                  title: "Value Block-in",
+                  subtitle: "Block in large shapes",
+                  image: "/images/masterstroke-3.png",
+                  icon: Layers,
+                  color: "from-purple-500 to-pink-500"
+                },
+                {
+                  title: "PidiNet Edges",
+                  subtitle: "Probability Edge Map",
+                  image: "/images/masterstroke-4.png",
+                  icon: Box,
+                  color: "from-orange-500 to-red-500"
+                },
+                {
+                  title: "Pencil Sketch",
+                  subtitle: "Foundation Analysis",
+                  image: "/images/masterstroke-5.png",
+                  icon: Brush,
+                  color: "from-yellow-500 to-amber-500"
+                }
+              ].map((step, i) => {
+                const Icon = step.icon;
+                return (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, y: 50, scale: 0.9 }}
+                    whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                    viewport={{ once: true }}
+                    transition={{
+                      delay: i * 0.2,
+                      duration: 0.8,
+                      ease: [0.25, 0.1, 0.25, 1]
+                    }}
+                    className="relative group"
+                  >
+                    {/* Glow effect behind card */}
+                    <div className={`absolute -inset-1 rounded-3xl bg-gradient-to-r ${step.color} opacity-0 blur-2xl transition-all duration-500 group-hover:opacity-40`} />
+
+                    {/* Step number badge */}
+                    <div className="absolute -top-4 -left-4 z-20">
+                      <motion.div
+                        initial={{ scale: 0, rotate: -180 }}
+                        whileInView={{ scale: 1, rotate: 0 }}
+                        viewport={{ once: true }}
+                        transition={{
+                          delay: 0.3 + i * 0.2,
+                          type: "spring",
+                          stiffness: 200
+                        }}
+                        className={`h-12 w-12 rounded-2xl bg-gradient-to-br ${step.color} flex items-center justify-center text-white font-bold text-lg shadow-2xl border-2 border-white/20`}
+                      >
+                        {i + 1}
+                      </motion.div>
+                    </div>
+
+                    <Card className="relative h-full border-0 bg-gradient-to-br from-neutral-900/95 via-neutral-900/80 to-neutral-950/95 backdrop-blur-xl transition-all duration-500 overflow-hidden rounded-3xl hover:shadow-2xl hover:-translate-y-2">
+                      {/* Animated gradient overlay */}
+                      <motion.div
+                        className={`absolute inset-0 bg-gradient-to-br ${step.color} transition-opacity duration-700`}
+                        animate={{ opacity: i === 2 ? 0.05 : 0.03 }}
+                        whileHover={{ opacity: 0.1 }}
+                      />
+
+                      {/* Image Container */}
+                      <div className="relative aspect-[4/3] overflow-hidden bg-gradient-to-b from-black/20 to-black/60">
+                        <motion.img
+                          src={step.image}
+                          alt={step.title}
+                          className="h-full w-full object-cover"
+                          initial={{ scale: 1.2, filter: "blur(10px)" }}
+                          whileInView={{ scale: 1, filter: "blur(0px)" }}
+                          viewport={{ once: true }}
+                          transition={{ delay: 0.4 + i * 0.2, duration: 0.8 }}
+                          whileHover={{ scale: 1.05 }}
+                        />
+
+                        {/* Gradient overlays for depth */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-neutral-950 via-neutral-950/20 to-transparent" />
+                        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-transparent" />
+
+                        {/* Icon badge */}
+                        <motion.div
+                          className="absolute top-4 right-4"
+                          initial={{ scale: 0, rotate: -90 }}
+                          whileInView={{ scale: 1, rotate: 0 }}
+                          viewport={{ once: true }}
+                          transition={{
+                          delay: 0.5 + i * 0.2,
+                          type: "spring",
+                          stiffness: 200
+                          }}
+                          whileHover={{ scale: 1.1, rotate: 10 }}
+                        >
+                          <div className={`h-7 w-7 rounded-xl bg-gradient-to-br ${step.color} p-1.5 shadow-2xl backdrop-blur-md border border-white/20`}>
+                          <Icon className="h-full w-full text-white drop-shadow-lg" />
+                          </div>
+                        </motion.div>
+
+                        {/* Step label */}
+                        <div className="absolute bottom-4 left-4">
+                          <motion.div
+                            initial={{ x: -20, opacity: 0 }}
+                            whileInView={{ x: 0, opacity: 1 }}
+                            viewport={{ once: true }}
+                            transition={{ delay: 0.6 + i * 0.2 }}
+                            className="inline-flex items-center gap-2 rounded-full bg-black/60 backdrop-blur-md px-3 py-1.5 border border-white/10"
+                          >
+                            <div className={`h-2 w-2 rounded-full bg-gradient-to-r ${step.color} animate-pulse`} />
+                            <span className="text-xs font-medium text-white/80">Step {i + 1}</span>
+                          </motion.div>
+                        </div>
+                      </div>
+
+                      {/* Content */}
+                      <CardContent className="p-6">
+                        <motion.h3
+                          initial={{ y: 10, opacity: 0 }}
+                          whileInView={{ y: 0, opacity: 1 }}
+                          viewport={{ once: true }}
+                          transition={{ delay: 0.7 + i * 0.2 }}
+                          className="font-bold text-lg text-white mb-2 group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:from-white group-hover:to-white/70 group-hover:bg-clip-text transition-all"
+                        >
+                          {step.title}
+                        </motion.h3>
+                        <motion.p
+                          initial={{ y: 10, opacity: 0 }}
+                          whileInView={{ y: 0, opacity: 1 }}
+                          viewport={{ once: true }}
+                          transition={{ delay: 0.8 + i * 0.2 }}
+                          className={`text-sm font-medium bg-gradient-to-r ${step.color} bg-clip-text text-transparent`}
+                        >
+                          {step.subtitle}
+                        </motion.p>
+                      </CardContent>
+                    </Card>
+
+                    {/* Epic arrow connector */}
+                    {i < 4 && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0, x: -20 }}
+                        whileInView={{ opacity: 1, scale: 1, x: 0 }}
+                        viewport={{ once: true }}
+                        transition={{
+                          delay: 0.5 + i * 0.2,
+                          type: "spring",
+                          stiffness: 100
+                        }}
+                        className="absolute top-1/2 -right-8 -translate-y-1/2 hidden lg:flex items-center z-30"
+                      >
+                        <div className="relative">
+                          <ChevronRight className="h-10 w-10 text-white/30" />
+                          <motion.div
+                            animate={{ x: [0, 5, 0] }}
+                            transition={{
+                              duration: 2,
+                              repeat: Infinity,
+                              delay: i * 0.3
+                            }}
+                            className="absolute inset-0 flex items-center justify-center"
+                          >
+                            <ChevronRight className={`h-10 w-10 text-transparent bg-gradient-to-r ${step.color} bg-clip-text`} />
+                          </motion.div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </motion.div>
+                );
+              })}
+            </div>
+
+            {/* Result indicator */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.8 }}
+              className="mt-10 text-center"
+            >
+              <div className="inline-flex items-center gap-3 rounded-full border border-green-500/20 bg-green-500/10 px-6 py-3 backdrop-blur-sm">
+                <Activity className="h-5 w-5 text-green-400 animate-pulse" />
+                <span className="text-sm font-medium text-green-300">
+                  Real-time AI Analysis & Personalized Feedback
+                </span>
+              </div>
+            </motion.div>
+          </div>
+        </motion.div>
+
+        {/* Blog Section */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.4 }}
+          className="mb-16"
+        >
+          <div className="mb-8 text-center">
+            <h2 className="text-3xl font-bold mb-3">Development Blog</h2>
+            <p className="text-white/60 max-w-2xl mx-auto">
+              Follow our journey as we build the future of AI-powered art education.
+              Technical deep-dives, progress updates, and insights from our research.
+            </p>
+          </div>
+          <div className="grid gap-6 lg:grid-cols-2">
+            {blogPosts.map((post) => (
+              <BlogCard
+                key={post.id}
+                post={post}
+                onSelect={() => openBlogModal(post)}
+              />
+            ))}
+          </div>
         </motion.div>
 
         {/* Key Features */}
@@ -558,31 +797,6 @@ export default function MasterStrokePage() {
           </div>
         </motion.div>
 
-        {/* Blog Section */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.4 }}
-          className="mb-16"
-        >
-          <div className="mb-8 text-center">
-            <h2 className="text-3xl font-bold mb-3">Development Blog</h2>
-            <p className="text-white/60 max-w-2xl mx-auto">
-              Follow our journey as we build the future of AI-powered art education.
-              Technical deep-dives, progress updates, and insights from our research.
-            </p>
-          </div>
-          <div className="grid gap-6 lg:grid-cols-2">
-            {blogPosts.map((post) => (
-              <BlogCard
-                key={post.id}
-                post={post}
-                onSelect={() => openBlogModal(post)}
-              />
-            ))}
-          </div>
-        </motion.div>
-
         {/* CTA */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -590,21 +804,21 @@ export default function MasterStrokePage() {
           viewport={{ once: true }}
           className="text-center"
         >
-          <Card className="border-white/10 bg-gradient-to-br from-orange-500/10 to-red-500/10 p-12">
+          <Card className="border-white/10 bg-gradient-to-br from-orange-500/10 to-red-500/10 px-8 py-8">
             <Brain className="mx-auto mb-4 h-12 w-12 text-orange-400" />
-            <h3 className="text-2xl font-bold mb-3">Join the Revolution</h3>
+            <h3 className="text-2xl font-bold mb-3">Art Education Redefined</h3>
             <p className="text-white/70 max-w-2xl mx-auto mb-6">
-              MasterStroke AI is currently in closed beta. Sign up to be notified when we launch publicly
-              and get early access to groundbreaking art education technology.
+              MasterStroke AI is currently in development. Email me to learn more!
             </p>
             <div className="flex justify-center gap-4">
-              <Button className="bg-gradient-to-r from-orange-500 to-red-500 hover:opacity-90">
-                <Sparkles className="mr-2 h-4 w-4" />
-                Request Early Access
-              </Button>
-              <Button variant="secondary">
-                <BookOpen className="mr-2 h-4 w-4" />
-                Read Documentation
+              <Button
+          className="bg-gradient-to-r from-orange-500 to-red-500 hover:opacity-90"
+          asChild
+              >
+          <a href="mailto:aayushs2008@gmail.com?subject=MasterStroke%20AI%20Interest" target="_blank" rel="noopener noreferrer">
+            <Sparkles className="mr-2 h-4 w-4" />
+            Request Early Access
+          </a>
               </Button>
             </div>
           </Card>

@@ -318,6 +318,30 @@ function ProjectCard({ project, index, onSelect, activeDemoId, setActiveDemoId }
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                   allowFullScreen
                 />
+                {/* Instructions for ExoVision */}
+                {project.id === "exosky" && !isLoading && (
+                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 max-w-lg">
+                    <div className="bg-black/90 backdrop-blur-lg rounded-lg px-4 py-3 border border-white/20 shadow-lg">
+                      <div className="space-y-1">
+                        <p className="text-white text-sm font-semibold mb-2 text-center">ExoVision Controls</p>
+                        <div className="flex flex-wrap gap-3 justify-center">
+                          <div className="flex items-center gap-1.5">
+                            <kbd className="px-2 py-0.5 text-xs font-semibold text-white bg-white/20 rounded border border-white/30">E</kbd>
+                            <span className="text-white/90 text-xs">Interact</span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <kbd className="px-2 py-0.5 text-xs font-semibold text-white bg-white/20 rounded border border-white/30">Mouse</kbd>
+                            <span className="text-white/90 text-xs">Look Around</span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <kbd className="px-2 py-0.5 text-xs font-semibold text-white bg-white/20 rounded border border-white/30">Right Click</kbd>
+                            <span className="text-white/90 text-xs">Interact UI</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
                 {/* Close button */}
                 <div className="absolute top-2 right-2 flex gap-2 z-20">
                   <Button
@@ -557,6 +581,7 @@ export default function HackathonsPage() {
         <div className="absolute inset-0 bg-gradient-to-br from-blue-900/20 via-purple-900/20 to-pink-900/20" />
         <div className="absolute inset-0 backdrop-blur-[1px]" />
       </div>
+      <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-neutral-950 to-transparent pointer-events-none" />
 
       <div className="mx-auto max-w-7xl px-4 py-12">
         {/* Header */}

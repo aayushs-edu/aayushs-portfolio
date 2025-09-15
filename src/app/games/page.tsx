@@ -261,29 +261,29 @@ const reviews: Review[] = [
 function AnalyticsDashboard() {
   const stats = [
     {
-      icon: <Eye className="h-5 w-5 text-white" />,
-      value: "669",
+      icon: Eye,
+      value: "1000+",
       label: "Views",
       gradient: "from-blue-500 to-cyan-500",
       shadow: "shadow-blue-500/30"
     },
     {
-      icon: <Download className="h-5 w-5 text-white" />,
+      icon: Download,
       value: "23",
       label: "Downloads",
       gradient: "from-green-500 to-emerald-500",
       shadow: "shadow-green-500/30"
     },
     {
-      icon: <Users className="h-5 w-5 text-white" />,
+      icon: Users,
       value: "3",
       label: "Followers",
       gradient: "from-purple-500 to-pink-500",
       shadow: "shadow-purple-500/30"
     },
     {
-      icon: <Star className="h-5 w-5 text-white" />,
-      value: "30",
+      icon: Star,
+      value: "30+",
       label: "Reviews",
       gradient: "from-yellow-500 to-orange-500",
       shadow: "shadow-yellow-500/30"
@@ -296,7 +296,7 @@ function AnalyticsDashboard() {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.8 }}
-      className="mb-16 grid gap-6 md:grid-cols-4"
+      className="mb-12 grid gap-4 grid-cols-2 md:grid-cols-4 max-w-4xl mx-auto"
     >
       {stats.map((stat, i) => (
         <motion.div
@@ -305,27 +305,27 @@ function AnalyticsDashboard() {
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5, delay: i * 0.1 }}
-          whileHover={{ scale: 1.05, y: -5 }}
+          whileHover={{ scale: 1.05, y: -3 }}
         >
           <Card className="relative overflow-hidden border-white/20 bg-gradient-to-br from-white/10 via-white/5 to-transparent backdrop-blur-lg hover:border-white/40 transition-all duration-300 group">
             <div className={`absolute inset-0 bg-gradient-to-br ${stat.gradient} opacity-20 group-hover:opacity-30 transition-opacity duration-300`} />
-            <CardContent className="relative p-6 text-center">
+            <CardContent className="relative py-3 px-4 text-center">
               <motion.div
-                className={`mx-auto mb-3 h-12 w-12 rounded-full bg-gradient-to-r ${stat.gradient} flex items-center justify-center shadow-lg ${stat.shadow}`}
+                className={`mx-auto mb-1.5 h-9 w-9 rounded-full bg-gradient-to-r ${stat.gradient} flex items-center justify-center shadow-lg ${stat.shadow}`}
                 whileHover={{ rotate: 360 }}
                 transition={{ duration: 0.5 }}
               >
-                {stat.icon}
+                <stat.icon className="h-4 w-4 text-white" />
               </motion.div>
               <motion.div
-                className="text-3xl font-bold text-white mb-1"
+                className="text-xl font-bold text-white"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.3 + i * 0.1 }}
               >
                 {stat.value}
               </motion.div>
-              <div className={`text-sm font-medium bg-gradient-to-r ${stat.gradient} bg-clip-text text-transparent`}>
+              <div className={`text-xs font-medium bg-gradient-to-r ${stat.gradient} bg-clip-text text-transparent`}>
                 {stat.label}
               </div>
             </CardContent>
@@ -529,10 +529,10 @@ function EpicGameCard({ game, index, onSelect }: { game: Game; index: number; on
       className="group perspective-1000"
     >
       <Card className="relative overflow-hidden border-white/20 bg-gradient-to-br from-neutral-900/80 via-neutral-800/60 to-neutral-900/80 backdrop-blur-lg transition-all duration-500 hover:border-white/40 hover:shadow-2xl hover:shadow-purple-500/20">
-        
+
         {/* Animated background gradient */}
-        <motion.div 
-          className={`absolute inset-0 bg-gradient-to-br ${game.accent} opacity-0 transition-opacity duration-500 group-hover:opacity-20`}
+        <motion.div
+          className={`absolute inset-0 bg-gradient-to-br ${game.accent} opacity-0 transition-opacity duration-500 group-hover:opacity-20 pointer-events-none`}
         />
 
         <CardHeader className="p-0">
@@ -544,7 +544,7 @@ function EpicGameCard({ game, index, onSelect }: { game: Game; index: number; on
               className="absolute inset-0 h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
               loading="lazy"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent pointer-events-none" />
 
             {/* Status and Jam Badges */}
             <motion.div
@@ -646,13 +646,13 @@ function EpicGameCard({ game, index, onSelect }: { game: Game; index: number; on
             </div>
 
             {/* Action buttons */}
-            <div className="flex gap-3">
-              <Button 
-                asChild 
-                size="sm" 
-                className={`flex-1 bg-gradient-to-r ${game.accent} hover:scale-105 transition-transform duration-300 shadow-lg font-bold`}
+            <div className="flex gap-3 relative z-10">
+              <Button
+                asChild
+                size="sm"
+                className={`flex-1 bg-gradient-to-r ${game.accent} hover:scale-105 transition-transform duration-300 shadow-lg font-bold cursor-pointer pointer-events-auto`}
               >
-                <a href={game.itchUrl} target="_blank" rel="noopener noreferrer">
+                <a href={game.itchUrl} target="_blank" rel="noopener noreferrer" className="cursor-pointer">
                   <Rocket className="mr-2 h-4 w-4" />
                   PLAY NOW
                 </a>
@@ -834,26 +834,32 @@ export default function EpicGamesPage() {
 
 
   return (
-    <div ref={containerRef} className="min-h-screen bg-black text-white [color-scheme:dark] relative overflow-hidden">
-      {/* Epic aurora background */}
-      <motion.div 
-        style={{ y: backgroundY }}
-        className="pointer-events-none fixed inset-0 -z-10"
-      >
-        <div className="absolute inset-0 bg-gradient-to-br from-violet-900/40 via-purple-800/30 to-fuchsia-900/40" />
-        <motion.div 
-          className="absolute inset-0 opacity-60"
+    <div ref={containerRef} className="min-h-screen bg-gradient-to-br from-neutral-950 via-neutral-900 to-neutral-950 text-white [color-scheme:dark] overflow-x-hidden">
+      <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-neutral-950 to-transparent pointer-events-none z-10" />
+      {/* Animated background with parallax effect */}
+      <div className="fixed inset-0 overflow-hidden">
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width='60' height='60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.02'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-30" />
+
+        {/* Animated gradient orbs */}
+        <motion.div
+          style={{ y: backgroundY }}
           animate={{
-            background: [
-              "radial-gradient(60% 40% at 20% 10%, rgb(139 92 246 / 0.4), transparent 60%), radial-gradient(50% 30% at 80% 0%, rgb(236 72 153 / 0.3), transparent 60%), radial-gradient(40% 40% at 50% 100%, rgb(59 130 246 / 0.4), transparent 60%)",
-              "radial-gradient(60% 40% at 30% 20%, rgb(236 72 153 / 0.4), transparent 60%), radial-gradient(50% 30% at 70% 10%, rgb(59 130 246 / 0.3), transparent 60%), radial-gradient(40% 40% at 60% 90%, rgb(139 92 246 / 0.4), transparent 60%)",
-              "radial-gradient(60% 40% at 20% 10%, rgb(139 92 246 / 0.4), transparent 60%), radial-gradient(50% 30% at 80% 0%, rgb(236 72 153 / 0.3), transparent 60%), radial-gradient(40% 40% at 50% 100%, rgb(59 130 246 / 0.4), transparent 60%)"
-            ]
+            x: [0, 100, 0],
+            y: [0, -100, 0],
           }}
-          transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+          className="absolute left-1/4 top-1/4 h-[500px] w-[500px] rounded-full bg-violet-600/10 blur-3xl"
         />
-        <div className="absolute inset-0 backdrop-blur-[1px]" />
-      </motion.div>
+        <motion.div
+          style={{ y: backgroundY }}
+          animate={{
+            x: [0, -100, 0],
+            y: [0, 100, 0],
+          }}
+          transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+          className="absolute bottom-1/4 right-1/4 h-[500px] w-[500px] rounded-full bg-purple-600/10 blur-3xl"
+        />
+      </div>
 
       {/* Floating particles */}
       <FloatingParticles />

@@ -6,12 +6,10 @@ import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
-import { 
-  Github, 
-  Linkedin, 
-  Mail, 
-  Sun, 
-  Moon, 
+import {
+  Github,
+  Linkedin,
+  Mail,
   Menu,
   Palette,
   Film,
@@ -24,19 +22,8 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export default function Navigation() {
-  const [theme, setTheme] = useState("dark");
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
-
-  useEffect(() => {
-    const saved = localStorage.getItem("theme");
-    if (saved) setTheme(saved);
-  }, []);
-
-  useEffect(() => {
-    document.documentElement.classList.toggle("dark", theme === "dark");
-    localStorage.setItem("theme", theme);
-  }, [theme]);
 
   const navLinks = [
     { label: "Home", href: "/", icon: Home },
@@ -50,9 +37,9 @@ export default function Navigation() {
   const isActive = (href: string) => pathname === href;
 
   return (
-    <div className="sticky top-0 z-40 w-full">
+    <div className="sticky top-0 z-40 w-full bg-gradient-to-b from-neutral-950 to-transparent pb-4">
       <div className="mx-auto max-w-7xl px-4">
-        <div className="mt-4 flex items-center justify-between rounded-2xl bg-black p-3">
+        <div className="mt-4 flex items-center justify-between rounded-2xl bg-neutral-900/80 backdrop-blur-md border border-white/10 p-3">
           <Link href="/" className="flex items-center gap-2 text-lg font-semibold tracking-tight">
             <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white">
               AS
@@ -80,7 +67,6 @@ export default function Navigation() {
           </div>
 
           <div className="flex items-center gap-2">
-            <ThemeToggle theme={theme} setTheme={setTheme} />
             <Socials />
             
             {/* Mobile Menu */}
@@ -120,19 +106,6 @@ export default function Navigation() {
   );
 }
 
-function ThemeToggle({ theme, setTheme }: { theme: string; setTheme: (theme: string) => void }) {
-  return (
-    <Button 
-      variant="ghost" 
-      size="sm" 
-      onClick={() => setTheme(theme === "dark" ? "light" : "dark")} 
-      className="gap-2"
-    >
-      {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-    </Button>
-  );
-}
-
 function Socials() {
   const iconClass = "h-5 w-5";
   return (
@@ -140,31 +113,46 @@ function Socials() {
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
-            <a href="#" aria-label="GitHub">
-              <Button variant="ghost" size="sm">
-                <Github className={iconClass} />
-              </Button>
-            </a>
+        <a
+          href="https://github.com/aayushs-edu"
+          aria-label="GitHub"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <Button variant="ghost" size="sm">
+            <Github className={iconClass} />
+          </Button>
+        </a>
           </TooltipTrigger>
           <TooltipContent>GitHub</TooltipContent>
         </Tooltip>
         <Tooltip>
           <TooltipTrigger asChild>
-            <a href="#" aria-label="LinkedIn">
-              <Button variant="ghost" size="sm">
-                <Linkedin className={iconClass} />
-              </Button>
-            </a>
+        <a
+          href="https://linkedin.com/in/aayush-sharma-1420bb311"
+          aria-label="LinkedIn"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <Button variant="ghost" size="sm">
+            <Linkedin className={iconClass} />
+          </Button>
+        </a>
           </TooltipTrigger>
           <TooltipContent>LinkedIn</TooltipContent>
         </Tooltip>
         <Tooltip>
           <TooltipTrigger asChild>
-            <a href="mailto:you@email.com" aria-label="Email">
-              <Button variant="ghost" size="sm">
-                <Mail className={iconClass} />
-              </Button>
-            </a>
+        <a
+          href="mailto:aayushs2008@email.com"
+          aria-label="Email"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <Button variant="ghost" size="sm">
+            <Mail className={iconClass} />
+          </Button>
+        </a>
           </TooltipTrigger>
           <TooltipContent>Email me</TooltipContent>
         </Tooltip>

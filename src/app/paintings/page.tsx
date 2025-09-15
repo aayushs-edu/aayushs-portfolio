@@ -52,18 +52,16 @@ function usePaintings(manifestUrl = "/paintings/manifest.json") {
 
 // Components
 // Updated PaintingCard component
-function PaintingCard({ 
-  painting, 
-  onClick, 
+function PaintingCard({
+  painting,
+  onClick,
   delay = 0,
-  isCenter = false,
-  isLeftColumn = false  // New prop for left column paintings
-}: { 
+  isCenter = false
+}: {
   painting: PaintingItem
   onClick: () => void
   delay?: number
   isCenter?: boolean
-  isLeftColumn?: boolean  // New prop type
 }) {
   const [imageLoaded, setImageLoaded] = useState(false)
   const [isHovered, setIsHovered] = useState(false)
@@ -78,10 +76,8 @@ function PaintingCard({
     cardRef.current.style.setProperty('--mouse-y', `${y}%`)
   }
 
-  // Different scale values based on position
+  // Consistent hover scale for all cards
   const getHoverScale = () => {
-    if (isLeftColumn) return 1.06  // Slightly less scale since they're already bigger
-    if (isCenter) return 1.08
     return 1.05
   }
 
@@ -102,7 +98,7 @@ function PaintingCard({
         z: 50
       }}
       whileTap={{ scale: 0.98 }}
-      className={`group relative cursor-pointer preserve-3d ${isLeftColumn ? 'scale-110' : ''}`}  // Make left column cards 10% bigger
+      className="group relative cursor-pointer preserve-3d"
       onClick={onClick}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -136,8 +132,8 @@ function PaintingCard({
           {/* Outer frame */}
           <div className="absolute inset-0 rounded-2xl ring-1 ring-white/10 transition-all duration-300 group-hover:ring-2 group-hover:ring-violet-500/30" />
           
-          {/* Inner frame with gradient - thicker for left column */}
-          <div className={`border-[${isLeftColumn ? '4px' : '3px'}] border-transparent bg-gradient-to-br from-neutral-800 via-neutral-900 to-black p-${isLeftColumn ? '4' : '3'} transition-all duration-500 group-hover:from-violet-900/20 group-hover:via-neutral-900 group-hover:to-purple-900/20`}>
+          {/* Inner frame with gradient */}
+          <div className="border-[3px] border-transparent bg-gradient-to-br from-neutral-800 via-neutral-900 to-black p-3 transition-all duration-500 group-hover:from-violet-900/20 group-hover:via-neutral-900 group-hover:to-purple-900/20">
             <div className="relative overflow-hidden rounded-lg">
               <img
                 src={painting.src}
@@ -169,11 +165,11 @@ function PaintingCard({
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: isHovered ? 0 : 20, opacity: isHovered ? 1 : 0 }}
             transition={{ delay: 0.1 }}
-            className={`w-full p-${isLeftColumn ? '6' : '5'}`}  // More padding for left column
+            className="w-full p-5"
           >
-            <h3 className={`text-${isLeftColumn ? 'xl' : 'lg'} font-bold text-white drop-shadow-lg`}>{painting.title}</h3>
+            <h3 className="text-lg font-bold text-white drop-shadow-lg">{painting.title}</h3>
             {painting.year && (
-              <p className={`mt-1 text-${isLeftColumn ? 'base' : 'sm'} text-white/80`}>{painting.year}</p>
+              <p className="mt-1 text-sm text-white/80">{painting.year}</p>
             )}
             {painting.medium && (
               <p className="mt-2 text-xs text-violet-300">{painting.medium}</p>
@@ -190,8 +186,8 @@ function PaintingCard({
               exit={{ scale: 0, rotate: 180 }}
               className="absolute right-4 top-4"
             >
-              <div className={`rounded-full bg-violet-600/90 p-${isLeftColumn ? '4' : '3'} shadow-lg backdrop-blur-sm transition-colors hover:bg-violet-500`}>
-                <Maximize2 className={`h-${isLeftColumn ? '6' : '5'} w-${isLeftColumn ? '6' : '5'} text-white`} />
+              <div className="rounded-full bg-violet-600/90 p-3 shadow-lg backdrop-blur-sm transition-colors hover:bg-violet-500">
+                <Maximize2 className="h-5 w-5 text-white" />
               </div>
             </motion.div>
           )}
@@ -213,12 +209,6 @@ function PaintingCard({
         </div>
       )}
       
-      {/* Extra glow for left column paintings */}
-      {isLeftColumn && (
-        <div className="absolute -inset-3 -z-10 opacity-30">
-          <div className="h-full w-full animate-pulse rounded-3xl bg-gradient-to-r from-purple-600/20 via-violet-600/20 to-purple-600/20 blur-xl" />
-        </div>
-      )}
     </motion.div>
   )
 }
@@ -286,7 +276,7 @@ function WallLayout({ paintings, onOpen }: { paintings: PaintingItem[]; onOpen: 
           </div>
 
           {/* Wall layout */}
-          <div className="relative z-10 hidden md:grid md:grid-cols-[1fr_1.2fr_1fr] gap-5 items-stretch">
+          <div className="relative z-10 hidden md:grid md:grid-cols-[1.3fr_1.3fr_1.3fr] gap-5 items-stretch">
             {/* Left Column */}
             <div className="flex flex-col gap-5 self-center">
               {seaTurtle && (
@@ -614,7 +604,8 @@ export default function PaintingsPage() {
     }, [])
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-neutral-950 via-neutral-900 to-black overflow-x-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-neutral-950 via-neutral-900 to-neutral-950 overflow-x-hidden">
+      <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-neutral-950 to-transparent pointer-events-none z-10" />
       {/* Animated background with parallax effect */}
       <div className="fixed inset-0 overflow-hidden">
         <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width='60' height='60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.02'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-30" />
