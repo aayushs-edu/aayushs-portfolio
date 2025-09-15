@@ -8,19 +8,13 @@ import {
   Clock,
   Calendar,
   ChevronRight,
-  ArrowRight,
   Cpu,
   Eye,
   Lightbulb,
   Target,
   Brush,
   Camera,
-  Zap,
-  BookOpen,
   Star,
-  Users,
-  Code,
-  X,
   Layers,
   Box,
   Activity
@@ -343,8 +337,24 @@ function BlogModal({ post, isOpen, onClose }: { post: BlogPost | null; isOpen: b
               if (paragraph.startsWith('#')) {
                 const level = paragraph.match(/^#+/)?.[0].length || 1;
                 const text = paragraph.replace(/^#+\s/, '');
-                const HeadingTag = `h${Math.min(level, 6)}` as keyof JSX.IntrinsicElements;
-                return <HeadingTag key={i} className={`font-bold ${level === 1 ? 'text-2xl mb-4' : level === 2 ? 'text-xl mb-3 mt-6' : 'text-lg mb-2 mt-4'}`}>{text}</HeadingTag>;
+                const headingClass = `font-bold ${level === 1 ? 'text-2xl mb-4' : level === 2 ? 'text-xl mb-3 mt-6' : 'text-lg mb-2 mt-4'}`;
+
+                switch(level) {
+                  case 1:
+                    return <h1 key={i} className={headingClass}>{text}</h1>;
+                  case 2:
+                    return <h2 key={i} className={headingClass}>{text}</h2>;
+                  case 3:
+                    return <h3 key={i} className={headingClass}>{text}</h3>;
+                  case 4:
+                    return <h4 key={i} className={headingClass}>{text}</h4>;
+                  case 5:
+                    return <h5 key={i} className={headingClass}>{text}</h5>;
+                  case 6:
+                    return <h6 key={i} className={headingClass}>{text}</h6>;
+                  default:
+                    return <h3 key={i} className={headingClass}>{text}</h3>;
+                }
               }
               if (paragraph.match(/^\d\./)) {
                 return (

@@ -31,7 +31,6 @@ import {
   Gamepad,
   MonitorPlay,
   Joystick,
-  Controller,
   Activity,
   TrendingUp,
   Award,
