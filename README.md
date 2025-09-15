@@ -9,7 +9,7 @@
 
   **A modern, interactive portfolio showcasing the intersection of fine art and technology**
 
-  [🌐 Live Demo](https://aayushs-portfolio.vercel.app) • [📧 Contact](mailto:aayushs2008@gmail.com) • [💼 LinkedIn](https://linkedin.com/in/aayush-sharma-1420bb311)
+  [🌐 Live Demo](https://aayushs-portfolio.netlify.app) • [📧 Contact](mailto:aayushs2008@gmail.com) • [💼 LinkedIn](https://linkedin.com/in/aayush-sharma-1420bb311)
 
 </div>
 
@@ -203,7 +203,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ---
 
 <div align="center">
-  <b>Built with 💜 by Aayush Sharma</b>
+  <b>Built by Aayush Sharma</b>
   <br>
   <sub>Where Art Meets Code</sub>
 </div>
