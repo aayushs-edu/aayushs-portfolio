@@ -40,200 +40,66 @@ interface BlogPost {
 
 const blogPosts: BlogPost[] = [
   {
-    id: "intro-masterstroke",
-    title: "Introducing MasterStroke AI",
-    subtitle: "Revolutionizing Art Education with AI",
-    excerpt: "Learn about the vision behind MasterStroke AI and how we're using computer vision to democratize art education.",
-    content: `# Introducing MasterStroke AI
+    id: "bridging-art-ai",
+    title: "The Idea: Bridging Art and AI",
+    subtitle: "🎨✏️ What if a machine could teach you how to draw like a true artist?",
+    excerpt: "We've all seen them, we've all tried them. YouTube tutorials were never enough. Now, with cutting-edge AI, we're building something that understands art the way artists do - from primitive shapes to final forms.",
+    content: `# The Idea: Bridging Art and AI
 
-## The Vision
+## 🎨✏️ What if a machine could teach you how to draw like a true artist?
 
-MasterStroke AI was born from a simple observation: millions of aspiring artists around the world lack access to quality art education and personalized feedback. Traditional art education is expensive, time-consuming, and often inaccessible to many who wish to pursue their artistic passions.
+[IMAGE: /images/masterstroke-blog1-1.webp]
 
-## How It Works
+We've all seen them, we've all tried them. If you ever wanted to learn how to draw, YouTube was the place to go. But following along with those videos was not actually teaching you anything. And good art teachers are not always available or affordable. With the newest AI technology, I knew that this problem could be solved: a model that generates steps on how to draw a piece like a real artist, from primitive shapes to final forms. For each step, it will give feedback to the user by analyzing proportions, perspective, lighting, etc.
 
-Our platform leverages cutting-edge computer vision and machine learning algorithms to analyze artwork in real-time. When you upload a sketch or painting, MasterStroke AI:
+[GIF: /images/masterstroke-blog1-4.gif]
 
-1. **Analyzes Composition** - Evaluates the rule of thirds, golden ratio, and visual balance
-2. **Assesses Values** - Examines light, shadow, and contrast relationships
-3. **Reviews Technique** - Identifies brush strokes, line quality, and medium usage
-4. **Provides Feedback** - Generates constructive, actionable advice for improvement
+## The Ambitious Vision
 
-## The Technology Stack
+At first glance, this seems very ambitious. How can AI critique art? How does AI know how artwork is constructed, step by step? The truth is, most AI systems today are built to generate end results. You give them a prompt, they give you a polished image. But artists don't work that way. The real magic of drawing happens in the in-between stages:
+- **The faint circles** that map out a head
+- **The blocky forms** that give volume to a still life
+- **The careful shading** that transforms flat lines into depth.
+If we want AI to truly teach art, it has to understand these steps—not just the destination.
 
-We're building MasterStroke on a robust foundation:
-- **TensorFlow & PyTorch** for deep learning models
-- **OpenCV** for image processing
-- **Custom CNN architectures** trained on millions of artwork samples
-- **React & Next.js** for a seamless user experience
+[GIF: /images/masterstroke-blog1-3.gif]
 
-## What's Next
+## Breaking New Ground in AI Research
 
-We're currently in closed beta with a select group of art students and educators. The feedback has been overwhelmingly positive, with users reporting significant improvements in their artwork after just a few weeks of using the platform.
+Recently, many have made breakthroughs in this niche area of machine learning. **Inverse Painting** explored the idea of reversing a finished artwork back into earlier stages, almost like peeling away layers of paint to reveal the sketch underneath.
 
-Stay tuned for our public launch announcement!`,
-    date: "January 15, 2025",
+[IMAGE: /images/masterstroke-blog1-6.png]
+
+Meanwhile, **DeepPrimitive** showed that even the most detailed images can be simplified into a small set of basic shapes—circles, rectangles, and lines—just like the first steps an art teacher would show a beginner.
+
+[IMAGE_PLACEHOLDER: DeepPrimitive examples showing complex art broken into primitives]
+
+## What Makes This Different
+
+Traditional AI art tools:
+- Generate finished pieces instantly
+- Skip the learning process
+- Can't explain their decisions
+- Don't understand construction
+
+MasterStroke AI:
+- Understands artistic process
+- Teaches through stages
+- Provides constructive feedback
+- Builds fundamental skills
+
+[GIF_PLACEHOLDER: Side-by-side comparison of traditional AI vs MasterStroke approach]
+
+## The Journey Ahead
+
+This is just the beginning. We're not just building another AI tool - we're creating an AI teacher that understands art the way humans do. Stay tuned as we dive deeper into the technology making this possible.
+
+[IMAGE_PLACEHOLDER: Roadmap visualization or future vision artwork]`,
+    date: "June 15, 2025",
     readTime: "5 min read",
-    category: "Update",
-    featured: true,
-    tags: ["AI", "Computer Vision", "Art Education", "Launch"]
-  },
-  {
-    id: "cv-techniques",
-    title: "Computer Vision Techniques for Art Analysis",
-    subtitle: "Deep dive into our technical approach",
-    excerpt: "Exploring the computer vision algorithms and neural networks powering MasterStroke's art analysis capabilities.",
-    content: `# Computer Vision Techniques for Art Analysis
-
-## The Challenge
-
-Analyzing art is fundamentally different from typical computer vision tasks. While object detection focuses on identifying "what" is in an image, art analysis must understand "how well" something is executed - a much more subjective and nuanced challenge.
-
-## Our Approach
-
-### 1. Multi-Scale Feature Extraction
-
-We use a modified ResNet-152 architecture with attention mechanisms to extract features at multiple scales:
-- **Global features** for overall composition
-- **Regional features** for focal points and balance
-- **Local features** for technique and detail work
-
-### 2. Style Transfer Networks
-
-By leveraging style transfer techniques, we can:
-- Separate content from style
-- Compare user artwork against master references
-- Identify areas where technique could be improved
-
-### 3. Custom Loss Functions
-
-We've developed specialized loss functions that consider:
-- Artistic principles (golden ratio, rule of thirds)
-- Historical art movements and their characteristics
-- Medium-specific techniques (oil, watercolor, pencil)
-
-## Training Data
-
-Our models are trained on:
-- 2.5 million artwork samples from museums worldwide
-- 500,000 student artworks with instructor annotations
-- Synthetic data generated through style transfer
-
-## Results
-
-Early testing shows:
-- 89% accuracy in identifying composition issues
-- 92% agreement with human art instructors on major feedback points
-- 3.2x improvement in student artwork scores after 30 days
-
-The journey to democratize art education continues!`,
-    date: "January 12, 2025",
-    readTime: "8 min read",
     category: "AI Research",
-    featured: false,
-    tags: ["Computer Vision", "Deep Learning", "ResNet", "Technical"]
-  },
-  {
-    id: "beta-launch",
-    title: "MasterStroke Beta: What We Learned",
-    subtitle: "Insights from our closed beta program",
-    excerpt: "Key learnings from 500+ beta testers and how their feedback is shaping the future of MasterStroke AI.",
-    content: `# MasterStroke Beta: What We Learned
-
-## The Numbers
-
-Our closed beta launched with:
-- **500+ beta testers** from 42 countries
-- **15,000+ artworks** analyzed
-- **50,000+ feedback sessions** generated
-- **4.8/5 average rating** from users
-
-## Key Insights
-
-### What Users Love
-
-1. **Instant Feedback** - No more waiting days for instructor reviews
-2. **Non-Judgmental** - AI provides objective, constructive criticism
-3. **Available 24/7** - Practice and improve on your schedule
-4. **Progress Tracking** - Visual timeline of improvement over time
-
-### Areas for Improvement
-
-Based on user feedback, we're working on:
-- Supporting more art mediums (sculpture, digital art)
-- Adding collaborative features for art communities
-- Implementing style-specific feedback modes
-- Creating guided tutorials based on identified weaknesses
-
-## Success Stories
-
-*"MasterStroke helped me finally understand values in my paintings. My work has improved dramatically!"* - Sarah, Beta Tester
-
-*"As an art teacher, I use MasterStroke to provide additional support to my students outside class hours."* - Michael, Art Educator
-
-## What's Next
-
-The public launch is scheduled for Q2 2025 with:
-- Expanded medium support
-- Mobile app for on-the-go feedback
-- Integration with popular art platforms
-- Tiered pricing for students and professionals`,
-    date: "January 10, 2025",
-    readTime: "6 min read",
-    category: "Update",
     featured: true,
-    tags: ["Beta", "User Feedback", "Product Development"]
-  },
-  {
-    id: "art-theory-ai",
-    title: "Bridging Art Theory and AI",
-    subtitle: "How we encode artistic principles",
-    excerpt: "The challenge of teaching machines to understand subjective artistic concepts and aesthetic principles.",
-    content: `# Bridging Art Theory and AI
-
-## The Subjective Nature of Art
-
-One of our biggest challenges has been encoding subjective artistic principles into objective algorithms. How do you teach a machine about "good" composition when even human experts disagree?
-
-## Our Solution: Consensus Learning
-
-Instead of defining rigid rules, we use consensus learning:
-1. Multiple art experts annotate the same pieces
-2. We identify areas of agreement and disagreement
-3. The AI learns to recognize patterns in consensus
-4. Confidence scores reflect the degree of subjectivity
-
-## Encoded Principles
-
-### Composition Rules
-- Rule of thirds
-- Golden ratio
-- Leading lines
-- Visual hierarchy
-- Balance and symmetry
-
-### Value Systems
-- Light source consistency
-- Contrast ratios
-- Atmospheric perspective
-- Form modeling
-
-### Color Theory
-- Complementary schemes
-- Temperature relationships
-- Saturation balance
-- Mood associations
-
-## The Human Touch
-
-While AI can identify technical issues, we always emphasize that art is ultimately about human expression. MasterStroke AI is a tool to help artists improve their technical skills, not replace their creative vision.
-
-The goal is augmentation, not automation - helping artists express their vision more effectively.`,
-    date: "January 8, 2025",
-    readTime: "7 min read",
-    category: "Art Theory",
-    featured: false,
-    tags: ["Art Theory", "Machine Learning", "Philosophy"]
+    tags: ["AI", "Computer Vision", "Art Education", "Machine Learning", "DeepPrimitive", "Inverse Painting"]
   }
 ];
 
@@ -245,8 +111,9 @@ function BlogCard({ post, onSelect }: { post: BlogPost; onSelect: () => void }) 
       viewport={{ once: true }}
       whileHover={{ y: -5 }}
       transition={{ duration: 0.3 }}
+      className="h-full"
     >
-      <Card className="group cursor-pointer border-white/10 bg-gradient-to-br from-neutral-900/80 via-neutral-800/60 to-neutral-900/80 backdrop-blur-lg hover:border-orange-500/30 transition-all duration-300" onClick={onSelect}>
+      <Card className="h-full group cursor-pointer border-white/10 bg-gradient-to-br from-neutral-900/80 via-neutral-800/60 to-neutral-900/80 backdrop-blur-lg hover:border-orange-500/30 transition-all duration-300" onClick={onSelect}>
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1">
@@ -302,13 +169,74 @@ function BlogModal({ post, isOpen, onClose }: { post: BlogPost | null; isOpen: b
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-h-[85vh] max-w-4xl overflow-y-auto bg-gradient-to-br from-neutral-950/95 via-neutral-900/95 to-neutral-950/95 backdrop-blur-2xl border border-white/20">
+      <DialogContent className="!max-w-[85vw] w-[85vw] max-h-[90vh] overflow-hidden bg-gradient-to-br from-neutral-950/95 via-neutral-900/95 to-neutral-950/95 backdrop-blur-2xl border border-white/20 sm:!max-w-[85vw]">
+        {/* Side decorative elements */}
+        <div className="absolute left-0 top-0 bottom-0 w-32 lg:w-48 pointer-events-none overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-r from-orange-500/10 via-transparent to-transparent" />
+          <motion.div
+            animate={{
+              y: [0, -20, 0],
+              rotate: [0, 5, 0]
+            }}
+            transition={{ duration: 8, repeat: Infinity }}
+            className="absolute -left-20 top-20 opacity-20"
+          >
+            <Palette className="h-32 w-32 text-orange-400" />
+          </motion.div>
+          <motion.div
+            animate={{
+              y: [0, 20, 0],
+              rotate: [0, -5, 0]
+            }}
+            transition={{ duration: 10, repeat: Infinity, delay: 1 }}
+            className="absolute -left-16 bottom-32 opacity-20"
+          >
+            <Brush className="h-24 w-24 text-purple-400" />
+          </motion.div>
+        </div>
+
+        <div className="absolute right-0 top-0 bottom-0 w-32 lg:w-48 pointer-events-none overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-l from-purple-500/10 via-transparent to-transparent" />
+          <motion.div
+            animate={{
+              y: [0, 30, 0],
+              rotate: [0, -8, 0]
+            }}
+            transition={{ duration: 12, repeat: Infinity }}
+            className="absolute -right-16 top-40 opacity-20"
+          >
+            <Brain className="h-28 w-28 text-red-400" />
+          </motion.div>
+          <motion.div
+            animate={{
+              y: [0, -25, 0],
+              scale: [1, 1.1, 1]
+            }}
+            transition={{ duration: 9, repeat: Infinity, delay: 2 }}
+            className="absolute -right-20 bottom-20 opacity-20"
+          >
+            <Sparkles className="h-32 w-32 text-purple-400" />
+          </motion.div>
+        </div>
+
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="space-y-6"
+          className="relative z-10 max-w-7xl mx-auto px-8 lg:px-20 py-8 max-h-[85vh] overflow-y-auto
+            [&::-webkit-scrollbar]:w-2
+            [&::-webkit-scrollbar-track]:bg-transparent
+            [&::-webkit-scrollbar-thumb]:bg-gradient-to-b
+            [&::-webkit-scrollbar-thumb]:from-orange-500/20
+            [&::-webkit-scrollbar-thumb]:via-red-500/20
+            [&::-webkit-scrollbar-thumb]:to-purple-500/20
+            [&::-webkit-scrollbar-thumb]:rounded-full
+            [&::-webkit-scrollbar-thumb]:border
+            [&::-webkit-scrollbar-thumb]:border-white/10
+            hover:[&::-webkit-scrollbar-thumb]:from-orange-500/40
+            hover:[&::-webkit-scrollbar-thumb]:via-red-500/40
+            hover:[&::-webkit-scrollbar-thumb]:to-purple-500/40"
         >
-          <div>
+          <div className="mb-6">
             <div className="flex items-center gap-2 mb-3">
               {post.featured && (
                 <Badge className="bg-gradient-to-r from-orange-500 to-red-500 text-white">
@@ -318,8 +246,6 @@ function BlogModal({ post, isOpen, onClose }: { post: BlogPost | null; isOpen: b
               )}
               <Badge variant="outline">{post.category}</Badge>
             </div>
-            <h2 className="text-3xl font-bold mb-2">{post.title}</h2>
-            <p className="text-lg text-orange-400/80 mb-3">{post.subtitle}</p>
             <div className="flex items-center gap-4 text-sm text-white/60">
               <span className="flex items-center gap-1">
                 <Calendar className="h-4 w-4" />
@@ -332,33 +258,243 @@ function BlogModal({ post, isOpen, onClose }: { post: BlogPost | null; isOpen: b
             </div>
           </div>
 
-          <div className="prose prose-invert max-w-none">
-            {post.content.split('\n\n').map((paragraph, i) => {
-              if (paragraph.startsWith('#')) {
-                const level = paragraph.match(/^#+/)?.[0].length || 1;
-                const text = paragraph.replace(/^#+\s/, '');
-                const headingClass = `font-bold ${level === 1 ? 'text-2xl mb-4' : level === 2 ? 'text-xl mb-3 mt-6' : 'text-lg mb-2 mt-4'}`;
+          <div className="prose prose-invert max-w-none lg:prose-lg">
+            {(() => {
+              let imageCounter = 0;
+              const elements: JSX.Element[] = [];
+              const paragraphs = post.content.split('\n\n');
 
-                switch(level) {
-                  case 1:
-                    return <h1 key={i} className={headingClass}>{text}</h1>;
-                  case 2:
-                    return <h2 key={i} className={headingClass}>{text}</h2>;
-                  case 3:
-                    return <h3 key={i} className={headingClass}>{text}</h3>;
-                  case 4:
-                    return <h4 key={i} className={headingClass}>{text}</h4>;
-                  case 5:
-                    return <h5 key={i} className={headingClass}>{text}</h5>;
-                  case 6:
-                    return <h6 key={i} className={headingClass}>{text}</h6>;
-                  default:
-                    return <h3 key={i} className={headingClass}>{text}</h3>;
+              for (let i = 0; i < paragraphs.length; i++) {
+                const paragraph = paragraphs[i];
+
+                // Handle images (both placeholders and actual images) with side-by-side layout
+                if (paragraph.startsWith('[IMAGE_PLACEHOLDER:') || paragraph.startsWith('[IMAGE:')) {
+                  const isPlaceholder = paragraph.startsWith('[IMAGE_PLACEHOLDER:');
+                  const description = paragraph.match(/\[IMAGE_PLACEHOLDER:\s*(.+?)\]/)?.[1] || '';
+                  const imagePath = paragraph.match(/\[IMAGE:\s*(.+?)\]/)?.[1] || '';
+                  const isEven = imageCounter % 2 === 0;
+                  imageCounter++;
+
+                  // Collect the next text content until we hit another image/gif or run out
+                  let textContent: string[] = [];
+                  let j = i + 1;
+                  while (j < paragraphs.length &&
+                         !paragraphs[j].startsWith('[IMAGE_PLACEHOLDER:') &&
+                         !paragraphs[j].startsWith('[IMAGE:') &&
+                         !paragraphs[j].startsWith('[GIF_PLACEHOLDER:') &&
+                         !paragraphs[j].startsWith('[GIF:')) {
+                    textContent.push(paragraphs[j]);
+                    j++;
+                  }
+
+                  elements.push(
+                    <motion.div
+                      key={`img-${i}`}
+                      initial={{ opacity: 0, x: isEven ? -30 : 30 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      viewport={{ once: true }}
+                      className={`my-12 grid lg:grid-cols-2 gap-8 items-center ${isEven ? '' : 'lg:direction-rtl'}`}
+                    >
+                      <div className={`${isEven ? '' : 'lg:order-2'}`}>
+                        <div className="relative rounded-2xl overflow-hidden border border-orange-500/20 bg-gradient-to-br from-orange-500/5 via-red-500/5 to-purple-500/5">
+                          {isPlaceholder ? (
+                            <div className={`${imageCounter === 1 ? 'aspect-[21/9]' : imageCounter === 3 ? 'aspect-[16/9]' : imageCounter === 4 ? 'aspect-square' : 'aspect-[4/3]'} flex items-center justify-center`}>
+                              <div className="text-center p-8">
+                                <Camera className="h-12 w-12 mx-auto mb-4 text-orange-400/50" />
+                                <p className="text-sm text-orange-400/70 font-medium">Image placeholder</p>
+                                <p className="text-xs text-white/40 mt-2">{description}</p>
+                              </div>
+                            </div>
+                          ) : (
+                            <motion.img
+                              src={imagePath}
+                              alt="Blog illustration"
+                              className={`w-full h-full object-cover ${imageCounter === 1 ? 'aspect-[21/9]' : imageCounter === 3 ? 'aspect-[16/9]' : imageCounter === 4 ? 'aspect-square' : 'aspect-[4/3]'}`}
+                              initial={{ scale: 1.1, filter: "blur(5px)" }}
+                              whileInView={{ scale: 1, filter: "blur(0px)" }}
+                              viewport={{ once: true }}
+                              transition={{ duration: 0.6 }}
+                            />
+                          )}
+                          <div className="absolute inset-0 bg-gradient-to-t from-neutral-950/50 to-transparent pointer-events-none" />
+                        </div>
+                      </div>
+                      <div className={`space-y-4 ${isEven ? '' : 'lg:order-1 lg:text-right'}`}>
+                        {textContent.slice(0, 2).map((text, idx) =>
+                          renderParagraph(text, `${i}-text-${idx}`)
+                        )}
+                      </div>
+                    </motion.div>
+                  );
+
+                  // Skip the paragraphs we just consumed
+                  i = j - 1;
+                  continue;
                 }
+
+                // Handle GIFs (both placeholders and actual GIFs) with side-by-side layout
+                if (paragraph.startsWith('[GIF_PLACEHOLDER:') || paragraph.startsWith('[GIF:')) {
+                  const isPlaceholder = paragraph.startsWith('[GIF_PLACEHOLDER:');
+                  const description = paragraph.match(/\[GIF_PLACEHOLDER:\s*(.+?)\]/)?.[1] || '';
+                  const gifPath = paragraph.match(/\[GIF:\s*(.+?)\]/)?.[1] || '';
+                  const isEven = imageCounter % 2 === 0;
+                  imageCounter++;
+
+                  // Collect the next text content
+                  let textContent: string[] = [];
+                  let j = i + 1;
+                  while (j < paragraphs.length &&
+                         !paragraphs[j].startsWith('[IMAGE_PLACEHOLDER:') &&
+                         !paragraphs[j].startsWith('[IMAGE:') &&
+                         !paragraphs[j].startsWith('[GIF_PLACEHOLDER:') &&
+                         !paragraphs[j].startsWith('[GIF:')) {
+                    textContent.push(paragraphs[j]);
+                    j++;
+                  }
+
+                  elements.push(
+                    <motion.div
+                      key={`gif-${i}`}
+                      initial={{ opacity: 0, x: isEven ? -30 : 30 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      viewport={{ once: true }}
+                      className={`my-12 grid lg:grid-cols-2 gap-8 items-center`}
+                    >
+                      <div className={`${isEven ? '' : 'lg:order-2'}`}>
+                        <div className="relative rounded-2xl overflow-hidden border border-purple-500/20 bg-gradient-to-br from-purple-500/10 via-pink-500/5 to-orange-500/10">
+                          {isPlaceholder ? (
+                            <>
+                              <div className={`${imageCounter === 2 ? 'aspect-[16/9]' : imageCounter === 5 ? 'aspect-[21/9]' : 'aspect-video'} flex items-center justify-center`}>
+                                <div className="text-center p-8">
+                                  <Activity className="h-12 w-12 mx-auto mb-4 text-purple-400/50 animate-pulse" />
+                                  <p className="text-sm text-purple-400/70 font-medium">Animation placeholder</p>
+                                  <p className="text-xs text-white/40 mt-2">{description}</p>
+                                </div>
+                              </div>
+                              <motion.div
+                                className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-orange-500/10"
+                                animate={{ opacity: [0.3, 0.5, 0.3] }}
+                                transition={{ duration: 3, repeat: Infinity }}
+                              />
+                            </>
+                          ) : (
+                            <>
+                              <motion.img
+                                src={gifPath}
+                                alt="Blog animation"
+                                className={`w-full h-full object-cover ${imageCounter === 2 ? 'aspect-[16/9]' : imageCounter === 5 ? 'aspect-[21/9]' : 'aspect-video'}`}
+                                initial={{ opacity: 0 }}
+                                whileInView={{ opacity: 1 }}
+                                viewport={{ once: true }}
+                                transition={{ duration: 0.8 }}
+                              />
+                              <div className="absolute inset-0 bg-gradient-to-t from-neutral-950/30 to-transparent pointer-events-none" />
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      <div className={`space-y-4 ${isEven ? '' : 'lg:order-1 lg:text-right'}`}>
+                        {textContent.slice(0, 2).map((text, idx) =>
+                          renderParagraph(text, `${i}-text-${idx}`)
+                        )}
+                      </div>
+                    </motion.div>
+                  );
+
+                  // Skip the paragraphs we just consumed
+                  i = j - 1;
+                  continue;
+                }
+
+                // Regular paragraphs
+                elements.push(renderParagraph(paragraph, i));
               }
+
+              function renderParagraph(paragraph: string, key: string | number): JSX.Element {
+                if (paragraph.startsWith('#')) {
+                  const level = paragraph.match(/^#+/)?.[0].length || 1;
+                  const text = paragraph.replace(/^#+\s/, '');
+                const isMainTitle = level === 1;
+                const hasEmoji = text.includes('🎨') || text.includes('✏️');
+
+                if (isMainTitle) {
+                  return (
+                    <motion.h1
+                      key={key}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="text-3xl md:text-4xl font-bold mb-8 pb-2 leading-tight bg-gradient-to-r from-orange-400 via-red-400 to-purple-400 bg-clip-text text-transparent"
+                    >
+                      {text}
+                    </motion.h1>
+                  );
+                }
+
+                if (level === 2) {
+                  if (hasEmoji) {
+                    return (
+                      <motion.h2
+                        key={key}
+                        initial={{ opacity: 0, x: -20 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true }}
+                        className="text-2xl md:text-3xl font-bold mb-4 mt-8 text-center"
+                      >
+                        <span className="bg-gradient-to-r from-orange-300 to-purple-300 bg-clip-text text-transparent">
+                          {text}
+                        </span>
+                      </motion.h2>
+                    );
+                  }
+                  return (
+                    <motion.h2
+                      key={key}
+                      initial={{ opacity: 0, x: -20 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      viewport={{ once: true }}
+                      className="text-xl md:text-2xl font-bold mb-4 mt-8 text-white"
+                    >
+                      {text}
+                    </motion.h2>
+                  );
+                }
+
+                const headingClass = `font-bold ${level === 3 ? 'text-lg mb-3 mt-6' : 'text-base mb-2 mt-4'}`;
+                return <h3 key={key} className={headingClass}>{text}</h3>;
+              }
+
+              // Handle bullet points with bold text
+              if (paragraph.startsWith('-')) {
+                return (
+                  <motion.ul
+                    key={key}
+                    initial={{ opacity: 0, x: -20 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    className="space-y-3 my-6"
+                  >
+                    {paragraph.split('\n').map((item, j) => {
+                      const cleanItem = item.replace(/^-\s/, '');
+                      const parts = cleanItem.split('**');
+
+                      return (
+                        <li key={j} className="flex items-start gap-3">
+                          <span className="text-orange-400 mt-1.5">▸</span>
+                          <span className="text-white/80 flex-1">
+                            {parts.map((part, k) =>
+                              k % 2 === 1 ? <strong key={k} className="text-orange-300 font-semibold">{part}</strong> : part
+                            )}
+                          </span>
+                        </li>
+                      );
+                    })}
+                  </motion.ul>
+                );
+              }
+
               if (paragraph.match(/^\d\./)) {
                 return (
-                  <ol key={i} className="list-decimal list-inside space-y-2 my-4">
+                  <ol key={key} className="list-decimal list-inside space-y-2 my-4">
                     {paragraph.split('\n').map((item, j) => (
                       <li key={j} className="text-white/80">
                         {item.replace(/^\d\.\s\*\*(.+?)\*\*/, '$1').replace(/^\d\.\s/, '')}
@@ -367,26 +503,82 @@ function BlogModal({ post, isOpen, onClose }: { post: BlogPost | null; isOpen: b
                   </ol>
                 );
               }
-              if (paragraph.startsWith('-')) {
-                return (
-                  <ul key={i} className="list-disc list-inside space-y-2 my-4">
-                    {paragraph.split('\n').map((item, j) => (
-                      <li key={j} className="text-white/80">
-                        {item.replace(/^-\s\*\*(.+?)\*\*/, '$1').replace(/^-\s/, '')}
-                      </li>
-                    ))}
-                  </ul>
-                );
-              }
+
               if (paragraph.startsWith('*"')) {
                 return (
-                  <blockquote key={i} className="border-l-4 border-orange-500 pl-4 my-4 italic text-white/70">
+                  <blockquote key={key} className="border-l-4 border-orange-500 pl-4 my-4 italic text-white/70">
                     {paragraph.replace(/\*/g, '')}
                   </blockquote>
                 );
               }
-              return <p key={i} className="text-white/80 leading-relaxed my-4">{paragraph}</p>;
-            })}
+
+              // Handle comparison sections
+              if (paragraph.includes('Traditional AI tools:') || paragraph.includes('MasterStroke AI:')) {
+                const sections = paragraph.split('\n\n');
+                return (
+                  <div key={key} className="grid md:grid-cols-2 gap-6 my-8">
+                    {sections.map((section, idx) => {
+                      const lines = section.split('\n');
+                      const title = lines[0].replace(':', '');
+                      const items = lines.slice(1);
+                      const isTraditional = title.includes('Traditional');
+
+                      return (
+                        <motion.div
+                          key={idx}
+                          initial={{ opacity: 0, y: 20 }}
+                          whileInView={{ opacity: 1, y: 0 }}
+                          viewport={{ once: true }}
+                          transition={{ delay: idx * 0.1 }}
+                          className={`rounded-xl p-6 border ${
+                            isTraditional
+                              ? 'border-red-500/20 bg-gradient-to-br from-red-500/5 to-orange-500/5'
+                              : 'border-green-500/20 bg-gradient-to-br from-green-500/5 to-emerald-500/5'
+                          }`}
+                        >
+                          <h4 className={`font-bold mb-4 ${
+                            isTraditional ? 'text-red-400' : 'text-green-400'
+                          }`}>
+                            {title}
+                          </h4>
+                          <ul className="space-y-2">
+                            {items.filter(item => item.trim()).map((item, k) => (
+                              <li key={k} className="flex items-start gap-2">
+                                <span className={isTraditional ? 'text-red-400/60' : 'text-green-400/60'}>•</span>
+                                <span className="text-white/70 text-sm">
+                                  {item.replace(/^-\s/, '')}
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                        </motion.div>
+                      );
+                    })}
+                  </div>
+                );
+              }
+
+              // Don't render image/gif tags as text if they somehow slip through
+              if (paragraph.startsWith('[IMAGE:') || paragraph.startsWith('[GIF:') ||
+                  paragraph.startsWith('[IMAGE_PLACEHOLDER:') || paragraph.startsWith('[GIF_PLACEHOLDER:')) {
+                return null;
+              }
+
+              return (
+                <motion.p
+                  key={key}
+                  initial={{ opacity: 0 }}
+                  whileInView={{ opacity: 1 }}
+                  viewport={{ once: true }}
+                  className="text-white/80 leading-relaxed my-4"
+                >
+                  {paragraph}
+                </motion.p>
+              );
+              }
+
+              return elements;
+            })()}
           </div>
 
           <div className="flex flex-wrap gap-2 pt-4 border-t border-white/10">
@@ -521,30 +713,7 @@ export default function MasterStrokePage() {
             {/* Epic gradient background */}
             <div className="absolute inset-0 bg-gradient-to-b from-orange-500/5 via-transparent to-purple-500/5 rounded-3xl blur-3xl" />
 
-            {/* Animated connection line */}
-            <motion.div
-              initial={{ scaleX: 0 }}
-              whileInView={{ scaleX: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 1.5, delay: 0.5 }}
-              className="absolute top-1/2 left-10 right-10 h-1 bg-gradient-to-r from-orange-500 via-red-500 to-purple-500 -translate-y-1/2 hidden lg:block rounded-full"
-              style={{ transformOrigin: "left center" }}
-            />
-
-            {/* Glowing dots on the line */}
-            {[0, 1, 2, 3, 4].map((i) => (
-              <motion.div
-                key={i}
-                initial={{ scale: 0 }}
-                whileInView={{ scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.7 + i * 0.2, type: "spring" }}
-                className="absolute top-1/2 -translate-y-1/2 hidden lg:block"
-                style={{ left: `${20 + i * 15}%` }}
-              >
-                <div className="h-4 w-4 rounded-full bg-white shadow-2xl shadow-white/50 animate-pulse" />
-              </motion.div>
-            ))}
+            
 
             <div className="grid grid-cols-1 gap-10 lg:grid-cols-5 relative z-10">
               {[
@@ -660,20 +829,6 @@ export default function MasterStrokePage() {
                           <Icon className="h-full w-full text-white drop-shadow-lg" />
                           </div>
                         </motion.div>
-
-                        {/* Step label */}
-                        <div className="absolute bottom-4 left-4">
-                          <motion.div
-                            initial={{ x: -20, opacity: 0 }}
-                            whileInView={{ x: 0, opacity: 1 }}
-                            viewport={{ once: true }}
-                            transition={{ delay: 0.6 + i * 0.2 }}
-                            className="inline-flex items-center gap-2 rounded-full bg-black/60 backdrop-blur-md px-3 py-1.5 border border-white/10"
-                          >
-                            <div className={`h-2 w-2 rounded-full bg-gradient-to-r ${step.color} animate-pulse`} />
-                            <span className="text-xs font-medium text-white/80">Step {i + 1}</span>
-                          </motion.div>
-                        </div>
                       </div>
 
                       {/* Content */}
@@ -703,7 +858,7 @@ export default function MasterStrokePage() {
                     {i < 4 && (
                       <motion.div
                         initial={{ opacity: 0, scale: 0, x: -20 }}
-                        whileInView={{ opacity: 1, scale: 1, x: 0 }}
+                        whileInView={{ opacity: 1, scale: 1, x: 10 }}
                         viewport={{ once: true }}
                         transition={{
                           delay: 0.5 + i * 0.2,

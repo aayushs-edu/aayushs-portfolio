@@ -35,9 +35,9 @@ export default function Navigation() {
   const isActive = (href: string) => pathname === href;
 
   return (
-    <div className="sticky top-0 z-40 w-full bg-gradient-to-b from-neutral-950 to-transparent pb-4">
+    <div className="sticky top-0 z-40 w-full bg-black pt-4 pb-4">
       <div className="mx-auto max-w-7xl px-4">
-        <div className="mt-4 flex items-center justify-between rounded-2xl bg-neutral-900/80 backdrop-blur-md border border-white/10 p-3">
+        <div className="flex items-center justify-between rounded-2xl bg-black backdrop-blur-md border border-white/10 p-3">
           <Link href="/" className="flex items-center gap-2 text-lg font-semibold tracking-tight">
             <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white">
               AS
