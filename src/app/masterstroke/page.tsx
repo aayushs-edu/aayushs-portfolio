@@ -1,5 +1,5 @@
 "use client"
-import React, { useState } from "react";
+import React, { JSX, useState } from "react";
 import { motion } from "framer-motion";
 import {
   Sparkles,
@@ -261,7 +261,7 @@ function BlogModal({ post, isOpen, onClose }: { post: BlogPost | null; isOpen: b
           <div className="prose prose-invert max-w-none lg:prose-lg">
             {(() => {
               let imageCounter = 0;
-              const elements: JSX.Element[] = [];
+              const elements: (JSX.Element | null)[] = [];
               const paragraphs = post.content.split('\n\n');
 
               for (let i = 0; i < paragraphs.length; i++) {
@@ -276,7 +276,7 @@ function BlogModal({ post, isOpen, onClose }: { post: BlogPost | null; isOpen: b
                   imageCounter++;
 
                   // Collect the next text content until we hit another image/gif or run out
-                  let textContent: string[] = [];
+                  const textContent: string[] = [];
                   let j = i + 1;
                   while (j < paragraphs.length &&
                          !paragraphs[j].startsWith('[IMAGE_PLACEHOLDER:') &&
@@ -341,7 +341,7 @@ function BlogModal({ post, isOpen, onClose }: { post: BlogPost | null; isOpen: b
                   imageCounter++;
 
                   // Collect the next text content
-                  let textContent: string[] = [];
+                  const textContent: string[] = [];
                   let j = i + 1;
                   while (j < paragraphs.length &&
                          !paragraphs[j].startsWith('[IMAGE_PLACEHOLDER:') &&
@@ -410,7 +410,7 @@ function BlogModal({ post, isOpen, onClose }: { post: BlogPost | null; isOpen: b
                 elements.push(renderParagraph(paragraph, i));
               }
 
-              function renderParagraph(paragraph: string, key: string | number): JSX.Element {
+              function renderParagraph(paragraph: string, key: string | number): JSX.Element | null {
                 if (paragraph.startsWith('#')) {
                   const level = paragraph.match(/^#+/)?.[0].length || 1;
                   const text = paragraph.replace(/^#+\s/, '');
@@ -577,7 +577,7 @@ function BlogModal({ post, isOpen, onClose }: { post: BlogPost | null; isOpen: b
               );
               }
 
-              return elements;
+              return elements.filter((el): el is JSX.Element => el !== null);
             })()}
           </div>
 
