@@ -26,13 +26,17 @@ import {
   Globe,
   Rocket,
   ExternalLink,
-  Trophy,
-  Award
+  Trophy
 } from "lucide-react";
 
 // Hero Section Component with Portrait and Role Lines
 function HeroSection() {
   const [hoveredRole, setHoveredRole] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const roles = [
     {
@@ -111,27 +115,35 @@ function HeroSection() {
       {/* Animated Background Effects */}
       <div className="absolute inset-0 z-0 overflow-hidden">
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
-          {[...Array(50)].map((_, i) => (
-            <motion.div
-              key={i}
-              className="absolute h-1 w-1 rounded-full bg-white/30"
-              initial={{
-                x: Math.random() * (typeof window !== 'undefined' ? window.innerWidth : 1920),
-                y: Math.random() * (typeof window !== 'undefined' ? window.innerHeight : 1080),
-                scale: Math.random() * 0.5 + 0.5,
-              }}
-              animate={{
-                y: [null, -100],
-                opacity: [1, 0],
-              }}
-              transition={{
-                duration: Math.random() * 3 + 2,
-                repeat: Infinity,
-                ease: "linear",
-                delay: Math.random() * 2,
-              }}
-            />
-          ))}
+          {mounted && [...Array(50)].map((_, i) => {
+            const randomX = Math.random() * window.innerWidth;
+            const randomY = Math.random() * window.innerHeight;
+            const randomScale = Math.random() * 0.5 + 0.5;
+            const randomDuration = Math.random() * 3 + 2;
+            const randomDelay = Math.random() * 2;
+
+            return (
+              <motion.div
+                key={i}
+                className="absolute h-1 w-1 rounded-full bg-white/30"
+                initial={{
+                  x: randomX,
+                  y: randomY,
+                  scale: randomScale,
+                }}
+                animate={{
+                  y: [null, -100],
+                  opacity: [1, 0],
+                }}
+                transition={{
+                  duration: randomDuration,
+                  repeat: Infinity,
+                  ease: "linear",
+                  delay: randomDelay,
+                }}
+              />
+            );
+          })}
         </div>
       </div>
 
@@ -1117,7 +1129,7 @@ function DeveloperSection() {
                 <h3 className="text-4xl font-bold text-white">ExoVision</h3>
               </div>
               <p className="text-white/70 text-lg mb-4">
-                3D interactive star map of 2000+ exoplanets from NASA's database - NASA Space Apps Challenge 2024
+                3D interactive star map of 2000+ exoplanets from NASA&apos;s database - NASA Space Apps Challenge 2024
               </p>
               <div className="flex flex-wrap gap-2 mb-6">
                 {["Unity", "C#", "WebGL", "NASA API", "Python"].map((tech, i) => (

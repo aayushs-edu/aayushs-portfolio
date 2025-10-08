@@ -42,7 +42,7 @@ function usePaintings(manifestUrl = "/paintings/manifest.json") {
         const enhancedItems = await Promise.all(
           arr.map(async (item: PaintingItem) => {
             const baseName = item.src.replace(/\.[^/.]+$/, "") // Remove extension
-            const heldImagePath = `${baseName}_2.JPEG`
+            const heldImagePath = `${baseName}_2`
 
             // Try to check if the _2 image exists by attempting to load it
             try {
@@ -193,11 +193,11 @@ function PaintingCard({
           </div>
         </div>
 
-        {/* Hover overlay */}
-        <motion.div
+        {/* Hover overlay with blur backdrop */}
+        <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: isHovered ? 1 : 0 }}
-          className="absolute inset-0 flex items-end bg-gradient-to-t from-black/90 via-black/40 to-transparent"
+          className="absolute inset-0 flex items-end bg-gradient-to-t from-black/90 via-black/40 to-transparent backdrop-blur-[2px]"
         >
           <motion.div 
             initial={{ y: 20, opacity: 0 }}
@@ -395,7 +395,7 @@ function WallLayout({ paintings, onOpen }: { paintings: PaintingItem[]; onOpen: 
   )
 }
 
-function GridLayout({ paintings, allPaintings, onOpen }: { paintings: PaintingItem[]; allPaintings: PaintingItem[]; onOpen: (idx: number) => void }) {
+function GridLayout({ paintings, onOpen }: { paintings: PaintingItem[]; onOpen: (idx: number) => void }) {
   return (
     <motion.div
       layout
@@ -406,7 +406,7 @@ function GridLayout({ paintings, allPaintings, onOpen }: { paintings: PaintingIt
           <PaintingCard
             key={painting.id}
             painting={painting}
-            onClick={() => onOpen(allPaintings.indexOf(painting))}
+            onClick={() => onOpen(idx)}
             delay={idx * 0.05}
           />
         ))}
@@ -595,6 +595,7 @@ function PaintingLightbox({
 export default function PaintingsPage() {
   const { items: paintings, loading, error } = usePaintings()
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
+  const [view, setView] = useState<"wall" | "grid">("wall")
 
   const portfolioPaintings = paintings.filter(p => p.wallPosition === "portfolio")
   const prePortfolioPaintings = paintings.filter(p => p.wallPosition === "pre-portfolio")
@@ -698,18 +699,54 @@ export default function PaintingsPage() {
             <section className="mb-24">
               <div className="mx-auto mb-10 max-w-7xl">
                 <motion.div
-                  initial={{ opacity: 0, y: -20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="text-center"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="flex items-center justify-between"
                 >
-                  <h2 className="text-4xl font-bold text-white">High School Portfolio</h2>
-                  <p className="mt-2 text-white/50">
-                    Recreating my studio wall arrangement in digital form
-                  </p>
+                  <div>
+                    <h2 className="text-4xl font-bold text-white">High School Portfolio</h2>
+                    <p className="mt-2 text-white/50">
+                      Recreating my studio wall arrangement in digital form
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => setView("wall")}
+                      className={classNames(
+                        "rounded-full px-6 py-2 font-medium transition-all",
+                        view === "wall"
+                          ? "bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-lg shadow-violet-600/25"
+                          : "border border-white/20 text-white/70 hover:border-white/40 hover:text-white"
+                      )}
+                    >
+                      Wall View
+                    </motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => setView("grid")}
+                      className={classNames(
+                        "rounded-full px-6 py-2 font-medium transition-all",
+                        view === "grid"
+                          ? "bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-lg shadow-violet-600/25"
+                          : "border border-white/20 text-white/70 hover:border-white/40 hover:text-white"
+                      )}
+                    >
+                      Grid View
+                    </motion.button>
+                  </div>
                 </motion.div>
               </div>
 
-              <WallLayout paintings={paintings} onOpen={openPainting} />
+              {view === "wall" ? (
+                <WallLayout paintings={paintings} onOpen={openPainting} />
+              ) : (
+                <div className="mx-auto max-w-7xl">
+                  <GridLayout paintings={portfolioPaintings} onOpen={openPainting} />
+                </div>
+              )}
             </section>
 
             {/* Pre-Portfolio Section */}
@@ -729,7 +766,7 @@ export default function PaintingsPage() {
                   </motion.div>
                 </div>
                 <div className="mx-auto max-w-7xl">
-                  <GridLayout paintings={prePortfolioPaintings} allPaintings={paintings} onOpen={openPainting} />
+                  <GridLayout paintings={prePortfolioPaintings} onOpen={openPainting} />
                 </div>
               </section>
             )}
