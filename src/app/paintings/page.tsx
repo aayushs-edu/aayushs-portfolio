@@ -16,6 +16,7 @@ type PaintingItem = {
   size?: string
   wallPosition?: "portfolio" | "pre-portfolio"
   gridPosition?: { row: number; col: number; span?: number }
+  heldImageSrc?: string
 }
 
 // Utility
@@ -36,7 +37,31 @@ function usePaintings(manifestUrl = "/paintings/manifest.json") {
         const json = await res.json()
         const arr = Array.isArray(json) ? json : json.items
         if (!Array.isArray(arr)) throw new Error("Invalid manifest format")
-        if (!cancelled) setItems(arr)
+
+        // Map paintings and add corresponding "_2" held images for those that have them
+        const enhancedItems = await Promise.all(
+          arr.map(async (item: PaintingItem) => {
+            const baseName = item.src.replace(/\.[^/.]+$/, "") // Remove extension
+            const heldImagePath = `${baseName}_2.JPEG`
+
+            // Try to check if the _2 image exists by attempting to load it
+            try {
+              const imgRes = await fetch(heldImagePath, { method: 'HEAD' })
+              if (imgRes.ok) {
+                return {
+                  ...item,
+                  heldImageSrc: heldImagePath
+                }
+              }
+            } catch {
+              // Image doesn't exist, that's fine
+            }
+
+            return item
+          })
+        )
+
+        if (!cancelled) setItems(enhancedItems)
       } catch (e) {
         if (!cancelled) setError(e instanceof Error ? e.message : "Failed to load paintings")
       } finally {
@@ -142,10 +167,24 @@ function PaintingCard({
                 className={classNames(
                   "h-full w-full object-cover transition-all duration-700",
                   imageLoaded ? "opacity-100 scale-100" : "opacity-0 scale-105",
-                  isHovered ? "scale-110" : ""
+                  isHovered && !painting.heldImageSrc ? "scale-110" : "",
+                  painting.heldImageSrc && isHovered ? "opacity-0" : ""
                 )}
               />
-              
+
+              {/* Held image (shown on hover) */}
+              {painting.heldImageSrc && (
+                <img
+                  src={painting.heldImageSrc}
+                  alt={`${painting.title} - held`}
+                  loading="lazy"
+                  className={classNames(
+                    "absolute inset-0 h-full w-full object-cover transition-all duration-700",
+                    isHovered ? "opacity-100 scale-110" : "opacity-0 scale-100"
+                  )}
+                />
+              )}
+
               {/* Animated light reflection */}
               <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100">
                 <div className="absolute inset-0 -translate-x-full animate-[slide_3s_infinite] bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12" />
@@ -154,11 +193,11 @@ function PaintingCard({
           </div>
         </div>
 
-        {/* Hover overlay with blur backdrop */}
-        <motion.div 
+        {/* Hover overlay */}
+        <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: isHovered ? 1 : 0 }}
-          className="absolute inset-0 flex items-end bg-gradient-to-t from-black/90 via-black/40 to-transparent backdrop-blur-[2px]"
+          className="absolute inset-0 flex items-end bg-gradient-to-t from-black/90 via-black/40 to-transparent"
         >
           <motion.div 
             initial={{ y: 20, opacity: 0 }}
@@ -356,7 +395,7 @@ function WallLayout({ paintings, onOpen }: { paintings: PaintingItem[]; onOpen: 
   )
 }
 
-function GridLayout({ paintings, onOpen }: { paintings: PaintingItem[]; onOpen: (idx: number) => void }) {
+function GridLayout({ paintings, allPaintings, onOpen }: { paintings: PaintingItem[]; allPaintings: PaintingItem[]; onOpen: (idx: number) => void }) {
   return (
     <motion.div
       layout
@@ -367,7 +406,7 @@ function GridLayout({ paintings, onOpen }: { paintings: PaintingItem[]; onOpen: 
           <PaintingCard
             key={painting.id}
             painting={painting}
-            onClick={() => onOpen(idx)}
+            onClick={() => onOpen(allPaintings.indexOf(painting))}
             delay={idx * 0.05}
           />
         ))}
@@ -556,7 +595,6 @@ function PaintingLightbox({
 export default function PaintingsPage() {
   const { items: paintings, loading, error } = usePaintings()
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
-  const [view, setView] = useState<"wall" | "grid">("wall")
 
   const portfolioPaintings = paintings.filter(p => p.wallPosition === "portfolio")
   const prePortfolioPaintings = paintings.filter(p => p.wallPosition === "pre-portfolio")
@@ -629,36 +667,6 @@ export default function PaintingsPage() {
       </div>
 
       <div className="relative z-10 px-4 py-16">
-        {/* Header with stunning typography */}
-        <div className="mx-auto mb-16 max-w-7xl">
-          <motion.div
-            initial={{ opacity: 0, y: -30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="text-center"
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 0.2, duration: 0.6 }}
-              className="mb-6 inline-block"
-            >
-              <div className="rounded-full bg-gradient-to-r from-violet-600/20 to-purple-600/20 px-6 py-2 backdrop-blur-sm">
-                <span className="bg-gradient-to-r from-violet-400 to-purple-400 bg-clip-text text-sm font-medium text-transparent">
-                  FINE ART COLLECTION
-                </span>
-              </div>
-            </motion.div>
-            
-            <h1 className="mb-6 bg-gradient-to-r from-white via-white/90 to-white/70 bg-clip-text text-6xl font-bold tracking-tight text-transparent sm:text-7xl">
-              Art Portfolio
-            </h1>
-            
-            <p className="mx-auto max-w-2xl text-lg text-white/60 leading-relaxed">
-              A curated collection of oil paintings exploring light, color, and emotion through landscapes, portraits, and moments captured in time
-            </p>
-          </motion.div>
-        </div>
 
         {/* Loading state */}
         {loading && (
@@ -690,54 +698,18 @@ export default function PaintingsPage() {
             <section className="mb-24">
               <div className="mx-auto mb-10 max-w-7xl">
                 <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  className="flex items-center justify-between"
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="text-center"
                 >
-                  <div>
-                    <h2 className="text-4xl font-bold text-white">High School Portfolio</h2>
-                    <p className="mt-2 text-white/50">
-                      Recreating my studio wall arrangement in digital form
-                    </p>
-                  </div>
-                  <div className="flex gap-2">
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => setView("wall")}
-                      className={classNames(
-                        "rounded-full px-6 py-2 font-medium transition-all",
-                        view === "wall"
-                          ? "bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-lg shadow-violet-600/25"
-                          : "border border-white/20 text-white/70 hover:border-white/40 hover:text-white"
-                      )}
-                    >
-                      Wall View
-                    </motion.button>
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => setView("grid")}
-                      className={classNames(
-                        "rounded-full px-6 py-2 font-medium transition-all",
-                        view === "grid"
-                          ? "bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-lg shadow-violet-600/25"
-                          : "border border-white/20 text-white/70 hover:border-white/40 hover:text-white"
-                      )}
-                    >
-                      Grid View
-                    </motion.button>
-                  </div>
+                  <h2 className="text-4xl font-bold text-white">High School Portfolio</h2>
+                  <p className="mt-2 text-white/50">
+                    Recreating my studio wall arrangement in digital form
+                  </p>
                 </motion.div>
               </div>
 
-              {view === "wall" ? (
-                <WallLayout paintings={paintings} onOpen={openPainting} />
-              ) : (
-                <div className="mx-auto max-w-7xl">
-                  <GridLayout paintings={portfolioPaintings} onOpen={openPainting} />
-                </div>
-              )}
+              <WallLayout paintings={paintings} onOpen={openPainting} />
             </section>
 
             {/* Pre-Portfolio Section */}
@@ -757,10 +729,63 @@ export default function PaintingsPage() {
                   </motion.div>
                 </div>
                 <div className="mx-auto max-w-7xl">
-                  <GridLayout paintings={prePortfolioPaintings} onOpen={openPainting} />
+                  <GridLayout paintings={prePortfolioPaintings} allPaintings={paintings} onOpen={openPainting} />
                 </div>
               </section>
             )}
+
+            {/* About Section */}
+            <section className="mt-24">
+              <div className="mx-auto max-w-7xl">
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.8 }}
+                  className="overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-neutral-900/80 via-neutral-950/90 to-black/95 shadow-2xl backdrop-blur-xl"
+                >
+                  <div className="grid md:grid-cols-2 gap-8 items-center p-8 md:p-12">
+                    {/* Image */}
+                    <motion.div
+                      initial={{ opacity: 0, x: -30 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: 0.2, duration: 0.6 }}
+                      className="relative group"
+                    >
+                      <div className="overflow-hidden rounded-2xl border border-white/10 shadow-2xl">
+                        <img
+                          src="/paintings/origin.JPEG"
+                          alt="The Origin"
+                          className="w-full h-auto object-cover transition-transform duration-500 group-hover:scale-105"
+                        />
+                      </div>
+                      <div className="absolute -inset-0.5 rounded-2xl bg-gradient-to-r from-violet-600/20 to-purple-600/20 opacity-0 transition-opacity duration-300 group-hover:opacity-100 blur-xl -z-10" />
+                    </motion.div>
+
+                    {/* Text */}
+                    <motion.div
+                      initial={{ opacity: 0, x: 30 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: 0.4, duration: 0.6 }}
+                    >
+                      <div className="rounded-full bg-gradient-to-r from-violet-600/20 to-purple-600/20 px-4 py-2 backdrop-blur-sm inline-block mb-4">
+                        <span className="bg-gradient-to-r from-violet-400 to-purple-400 bg-clip-text text-sm font-medium text-transparent">
+                          THE BEGINNING
+                        </span>
+                      </div>
+                      <h2 className="text-4xl font-bold text-white mb-6">Where It All Started</h2>
+                      <p className="text-lg text-white/70 leading-relaxed">
+                        This all started when Ms. Hromec asked me to draw a book cover on the whiteboard and I left the class in awe.
+                        She saw something in me and informed my parents about my artistic talent. They immediately enrolled me in art class,
+                        and from then I have been improving my craft.
+                      </p>
+                    </motion.div>
+                  </div>
+                </motion.div>
+              </div>
+            </section>
           </>
         )}
 

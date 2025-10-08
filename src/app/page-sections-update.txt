@@ -1,0 +1,9 @@
+This file contains the pattern for updating sections to alternate left/right:
+
+Painter (LEFT): Title/Description on left, Content on right
+Animator (RIGHT): Content on left, Title/Description on right
+AI Engineer (LEFT): Title/Description on left, Content on right
+Developer (RIGHT): Content on left, Title/Description on right
+Game Designer (LEFT): Title/Description on left, Content on right
+
+Each uses flex-row or flex-row-reverse to switch sides.

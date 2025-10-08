@@ -1,6 +1,6 @@
 // src/app/layout.tsx
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Kalam } from "next/font/google";
+import { Geist, Geist_Mono, Kalam, Sniglet } from "next/font/google";
 import Navigation from "@/components/Navigation";
 import "./globals.css";
 
@@ -20,6 +20,12 @@ const kalam = Kalam({
   subsets: ["latin"],
 });
 
+const sniglet = Sniglet({
+  weight: ["400", "800"],
+  variable: "--font-sniglet",
+  subsets: ["latin"],
+});
+
 export const metadata: Metadata = {
   title: "Aayush Sharma - Art × Code Portfolio",
   description: "Portfolio showcasing art, animation, games, and creative coding",
@@ -33,7 +39,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${kalam.variable} antialiased dark`}
+        className={`${geistSans.variable} ${geistMono.variable} ${kalam.variable} ${sniglet.variable} antialiased dark`}
       >
         <Navigation />
         {children}
