@@ -32,34 +32,37 @@ function usePaintings(manifestUrl = "/paintings/manifest.json") {
     let cancelled = false
     ;(async () => {
       try {
-        const res = await fetch(manifestUrl, { cache: "no-store" })
+        const res = await fetch(manifestUrl, { cache: "force-cache" })
         if (!res.ok) throw new Error(`Manifest not found (${res.status})`)
         const json = await res.json()
         const arr = Array.isArray(json) ? json : json.items
         if (!Array.isArray(arr)) throw new Error("Invalid manifest format")
 
-        // Map paintings and add corresponding "_2" held images for those that have them
-        const enhancedItems = await Promise.all(
-          arr.map(async (item: PaintingItem) => {
-            const baseName = item.src.replace(/\.[^/.]+$/, "") // Remove extension
-            const heldImagePath = `${baseName}_2`
+        // Only these specific paintings have "_2" held images
+        const paintingsWithHeldImages = ['RedDeadRedemption', 'Inhaler', 'Covid']
 
-            // Try to check if the _2 image exists by attempting to load it
-            try {
-              const imgRes = await fetch(heldImagePath, { method: 'HEAD' })
-              if (imgRes.ok) {
-                return {
-                  ...item,
-                  heldImageSrc: heldImagePath
-                }
-              }
-            } catch {
-              // Image doesn't exist, that's fine
-            }
-
+        const enhancedItems = arr.map((item: PaintingItem) => {
+          // If heldImageSrc is already defined in manifest, use it
+          if (item.heldImageSrc) {
             return item
-          })
-        )
+          }
+
+          // Check if this painting has a held image variant
+          const baseName = item.src.replace(/\.[^/.]+$/, "")
+          const fileName = baseName.split('/').pop() || ''
+          const hasHeldImage = paintingsWithHeldImages.some(name =>
+            fileName.includes(name)
+          )
+
+          if (hasHeldImage) {
+            return {
+              ...item,
+              heldImageSrc: `${baseName}_2.JPEG`
+            }
+          }
+
+          return item
+        })
 
         if (!cancelled) setItems(enhancedItems)
       } catch (e) {
@@ -163,21 +166,23 @@ function PaintingCard({
                 src={painting.src}
                 alt={painting.title}
                 loading="lazy"
+                decoding="async"
                 onLoad={() => setImageLoaded(true)}
                 className={classNames(
                   "h-full w-full object-cover transition-all duration-700",
                   imageLoaded ? "opacity-100 scale-100" : "opacity-0 scale-105",
                   isHovered && !painting.heldImageSrc ? "scale-110" : "",
-                  painting.heldImageSrc && isHovered ? "opacity-0" : ""
+                  painting.heldImageSrc && isHovered ? "opacity-0 scale-100" : ""
                 )}
               />
 
-              {/* Held image (shown on hover) */}
+              {/* Held image (shown on hover) - preload but keep hidden until hover */}
               {painting.heldImageSrc && (
                 <img
                   src={painting.heldImageSrc}
                   alt={`${painting.title} - held`}
                   loading="lazy"
+                  decoding="async"
                   className={classNames(
                     "absolute inset-0 h-full w-full object-cover transition-all duration-700",
                     isHovered ? "opacity-100 scale-110" : "opacity-0 scale-100"
@@ -193,11 +198,11 @@ function PaintingCard({
           </div>
         </div>
 
-        {/* Hover overlay with blur backdrop */}
-        <motion.div 
+        {/* Hover overlay */}
+        <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: isHovered ? 1 : 0 }}
-          className="absolute inset-0 flex items-end bg-gradient-to-t from-black/90 via-black/40 to-transparent backdrop-blur-[2px]"
+          className="absolute inset-0 flex items-end bg-gradient-to-t from-black/90 via-black/40 to-transparent"
         >
           <motion.div 
             initial={{ y: 20, opacity: 0 }}
@@ -297,9 +302,9 @@ function WallLayout({ paintings, onOpen }: { paintings: PaintingItem[]; onOpen: 
             />
           </div>
 
-          {/* Floating particles */}
+          {/* Floating particles - reduced for performance */}
           <div className="absolute inset-0 overflow-hidden">
-            {[...Array(6)].map((_, i) => (
+            {[...Array(3)].map((_, i) => (
               <div
                 key={i}
                 className="absolute h-1 w-1 animate-float rounded-full bg-violet-400/30"
@@ -520,11 +525,13 @@ function PaintingLightbox({
                 <div className="h-20 w-20 animate-spin rounded-full border-4 border-violet-600/20 border-t-violet-600" />
               </div>
             )}
-            
+
             {/* Image with proper constraints */}
             <img
               src={painting.src}
               alt={painting.title}
+              loading="eager"
+              decoding="async"
               className={`h-auto max-h-[85vh] w-auto max-w-[90vw] rounded-lg object-contain shadow-2xl transition-opacity duration-300 ${
                 imageLoaded ? 'opacity-100' : 'opacity-0'
               }`}
@@ -794,6 +801,8 @@ export default function PaintingsPage() {
                         <img
                           src="/paintings/origin.JPEG"
                           alt="The Origin"
+                          loading="lazy"
+                          decoding="async"
                           className="w-full h-auto object-cover transition-transform duration-500 group-hover:scale-105"
                         />
                       </div>

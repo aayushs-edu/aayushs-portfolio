@@ -26,7 +26,9 @@ import {
   Globe,
   Rocket,
   ExternalLink,
-  Trophy
+  Trophy,
+  Star,
+  Users
 } from "lucide-react";
 
 // Hero Section Component with Portrait and Role Lines
@@ -112,10 +114,10 @@ function HeroSection() {
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-[#020202]">
-      {/* Animated Background Effects */}
+      {/* Animated Background Effects - Reduced for performance */}
       <div className="absolute inset-0 z-0 overflow-hidden">
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
-          {mounted && [...Array(50)].map((_, i) => {
+          {mounted && [...Array(20)].map((_, i) => {
             const randomX = Math.random() * window.innerWidth;
             const randomY = Math.random() * window.innerHeight;
             const randomScale = Math.random() * 0.5 + 0.5;
@@ -176,10 +178,17 @@ function HeroSection() {
             transition={{ duration: 1, type: "spring", stiffness: 100 }}
             className="relative z-10 -mt-12 md:-mt-16 lg:-mt-20"
           >
-            <img
-              src="/images/portrait.PNG"
+            <Image
+              src="/images/portrait.webp"
               alt="Aayush Sharma"
+              width={1275}
+              height={1275}
+              priority
+              quality={90}
+              placeholder="blur"
+              blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAIAAAAmkwkpAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAP0lEQVR4nAE0AMv/AERERERERERERAAAAAAAAAAAAAAAAAAAAERERERERERERAAAAAAAAAAAAAAAAAAA8fYMBd8zje8AAAAASUVORK5CYII="
               className="w-[825px] h-[825px] md:w-[900px] md:h-[900px] lg:w-[1050px] lg:h-[1050px] xl:w-[1125px] xl:h-[1125px] 2xl:w-[1275px] 2xl:h-[1275px] object-contain"
+              sizes="(max-width: 640px) 825px, (max-width: 768px) 900px, (max-width: 1024px) 1050px, (max-width: 1280px) 1125px, 1275px"
             />
           </motion.div>
 
@@ -570,6 +579,9 @@ function PainterSection() {
                         src={heldImg}
                         alt={`Held painting ${i}`}
                         fill
+                        sizes="400px"
+                        quality={80}
+                        loading="lazy"
                         className="object-cover"
                       />
                     </div>
@@ -637,6 +649,9 @@ function PainterSection() {
                         alt={work.title}
                         width={800}
                         height={500}
+                        sizes="(max-width: 768px) 90vw, 800px"
+                        quality={80}
+                        loading={i === 0 ? "eager" : "lazy"}
                         className="max-h-[500px] w-auto h-auto"
                         priority={i === 0}
                         style={{ objectFit: "contain" }}
@@ -691,10 +706,11 @@ function AnimatorSection() {
             key={i}
             src={video.src}
             poster={video.poster}
-            autoPlay
+            autoPlay={i === currentVideo}
             loop
             muted
             playsInline
+            preload={i === 0 ? "auto" : "metadata"}
             className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${
               i === currentVideo ? 'opacity-100' : 'opacity-0'
             }`}
@@ -804,6 +820,9 @@ function AnimatorSection() {
                       src={video.poster}
                       alt={video.title}
                       fill
+                      sizes="96px"
+                      quality={70}
+                      loading="lazy"
                       className="object-cover"
                     />
                     {i !== currentVideo && (
@@ -984,6 +1003,9 @@ function AIEngineerSection() {
                               src={step.image}
                               alt={step.title}
                               fill
+                              sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 20vw"
+                              quality={75}
+                              loading="lazy"
                               className="object-cover transition-transform duration-500 group-hover:scale-110"
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-neutral-950/80 via-transparent to-transparent" />
@@ -1053,6 +1075,9 @@ function AIEngineerSection() {
                       src={media.src}
                       alt={media.title}
                       fill
+                      sizes="(max-width: 768px) 100vw, 50vw"
+                      quality={75}
+                      loading="lazy"
                       className="object-cover transition-transform duration-500 group-hover:scale-110"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
@@ -1150,6 +1175,9 @@ function DeveloperSection() {
                   alt="ExoVision - Interactive 3D star map"
                   width={1200}
                   height={675}
+                  sizes="(max-width: 768px) 100vw, 66vw"
+                  quality={80}
+                  loading="lazy"
                   className="w-full h-auto transition-transform duration-500 hover:scale-105"
                 />
               </div>
@@ -1213,6 +1241,9 @@ function DeveloperSection() {
                         src={project.src}
                         alt={project.title}
                         fill
+                        sizes="(max-width: 768px) 100vw, 33vw"
+                        quality={75}
+                        loading="lazy"
                         className="object-cover transition-transform duration-500 group-hover:scale-110"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent" />
@@ -1285,6 +1316,42 @@ function GameDesignerSection() {
     }
   ];
 
+  const reviews = [
+    // Reign Or Ruin Reviews
+    { id: "r1", author: "Player2 Judge", message: "Interesting concept! I like the style, audio design, and combat design.", game: "Reign Or Ruin", rating: 4 },
+    { id: "r2", author: "Player2 Judge", message: "THIS IS AWESOME! LOVE THIS! This is a great concept and I know you could get this published on steam as a full game!!!!", game: "Reign Or Ruin", rating: 5 },
+    { id: "r3", author: "ToucheToucan", message: "Man they hate me, they just had a mass rebellion against me. Cool idea!", game: "Reign Or Ruin", rating: 4 },
+    { id: "r4", author: "wenzhe-elefant", message: "I would give 10 for creativity, but yeah need a bit more polish", game: "Reign Or Ruin", rating: 4 },
+    { id: "r5", author: "Dyrkabes", message: "I really like the visuals! Very well done, all in one thematic.", game: "Reign Or Ruin", rating: 5 },
+    { id: "r6", author: "Dyrkabes", message: "The council/rebellion thing has a lot of potential, interesting, that you have to balance what AI \"thinks\" about you", game: "Reign Or Ruin", rating: 5 },
+    // Bounce Back Reviews
+    { id: "b1", author: "Redya Games", message: "Simple and addicting game, I love it!", game: "Bounce Back", rating: 5 },
+    { id: "b2", author: "gambitono", message: "like the idea and the visuals neon!!!", game: "Bounce Back", rating: 4 },
+    { id: "b3", author: "xefensor", message: "Interesting idea. Though you can just keep multiplying you score by warping back to back.", game: "Bounce Back", rating: 3 },
+    { id: "b4", author: "KDeveloper", message: "Great concept but quite simple. I think it could be neat if there were more types of platforms and/or ways to gain new platforms", game: "Bounce Back", rating: 4 },
+    { id: "b5", author: "ClemGames", message: "Neat concept and idea!", game: "Bounce Back", rating: 4 },
+    { id: "b6", author: "cachandlerdev", message: "The music and visuals look good!", game: "Bounce Back", rating: 4 },
+    { id: "b7", author: "Mat Eliot", message: "I did horrible but still enjoyed! Good game.", game: "Bounce Back", rating: 4 },
+    { id: "b8", author: "AA Games", message: "Pretty fun concept, My record was 157. Good job :D", game: "Bounce Back", rating: 5 },
+    { id: "b9", author: "Macientosh", message: "Cool concept. The game is fun and controls feel good for the most part.", game: "Bounce Back", rating: 5 },
+    { id: "b10", author: "LEGENDBOSS123", message: "Fun game.", game: "Bounce Back", rating: 4 },
+    { id: "b11", author: "NotamGames", message: "This concept is simple, but it's really good and well executed. It really made me wanna optimize my strategy!", game: "Bounce Back", rating: 5 },
+    { id: "b12", author: "Bill the Ball", message: "This is a very neat game", game: "Bounce Back", rating: 4 },
+    { id: "b13", author: "dogma quest", message: "The screen wrapping and upside down platforming is really cool!", game: "Bounce Back", rating: 4 },
+    { id: "b14", author: "keeramel", message: "Very nice game! my high score is 285", game: "Bounce Back", rating: 5 },
+    // Biscuit Bandit Reviews
+    { id: "bb1", author: "Trash Pandas", message: "Really good concept, and i think it's very well polished for a 1-person week-long game.", game: "Biscuit Bandit", rating: 5 },
+    { id: "bb2", author: "ollie-dickson-6262", message: "Cool idea, and fun to play, maybe could've done with a bit more of a tutorial or something but good job!", game: "Biscuit Bandit", rating: 4 },
+    { id: "bb3", author: "jamesedra", message: "pretty fun game! I really liked the setting and turning off the lights", game: "Biscuit Bandit", rating: 4 },
+    { id: "bb4", author: "CaseM", message: "really fun game! I liked the line so I knew where someone could see me, that was a nice detail that helped with the 2d aspect of it.", game: "Biscuit Bandit", rating: 5 },
+    { id: "bb5", author: "AEPSchmitt", message: "This is really solid little stealth game! Pretty incredible difficulty balancing and level design for a game jam.", game: "Biscuit Bandit", rating: 5 },
+    { id: "bb6", author: "BetterCallKrishna", message: "Didn't finished it but it was fun to play", game: "Biscuit Bandit", rating: 4 },
+    { id: "bb7", author: "SamiCode Games", message: "Amazing Pixel Art, Very Fun", game: "Biscuit Bandit", rating: 5 },
+    { id: "bb8", author: "Swynwraig Games", message: "Really good game! The darkness and music are a great addition, really added to the suspense!", game: "Biscuit Bandit", rating: 5 },
+    { id: "bb9", author: "Karim D.", message: "Really well executed! the mechanics work great, you can really feel the pressure from the parents!", game: "Biscuit Bandit", rating: 5 },
+    { id: "bb10", author: "theDwarf80", message: "oh this game is nuts great job i love the gameplay but it tis a bit dark 👍😁", game: "Biscuit Bandit", rating: 4 }
+  ];
+
   return (
     <section id="games-section" className="relative min-h-screen flex items-center py-20 px-4 overflow-hidden">
       {/* Gold themed background */}
@@ -1344,6 +1411,9 @@ function GameDesignerSection() {
                     src={game.src}
                     alt={game.title}
                     fill
+                    sizes="(max-width: 768px) 100vw, 50vw"
+                    quality={75}
+                    loading="lazy"
                     className="object-cover transition-transform duration-500 group-hover:scale-110"
                   />
 
@@ -1385,6 +1455,106 @@ function GameDesignerSection() {
             </div>
           </div>
         </div>
+
+        {/* Infinite Scrolling Reviews Section - Full Width */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8 }}
+          className="mt-20 w-full"
+        >
+          <h3 className="text-3xl font-bold mb-6 text-white text-center lg:text-left">
+            <span className="bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent">
+              Player Reviews
+            </span>
+          </h3>
+
+          {/* Infinite scrolling container */}
+          <div className="relative overflow-hidden w-full -mx-4 px-4">
+            <div className="flex gap-4 animate-infinite-scroll hover:pause-animation">
+              {/* First set of reviews */}
+              {reviews.map((review) => (
+                <div
+                  key={review.id}
+                  className="flex-shrink-0 w-80 bg-gradient-to-br from-white/10 via-white/5 to-white/10 backdrop-blur-lg border border-white/20 rounded-xl p-5 hover:border-yellow-500/40 transition-all duration-300"
+                >
+                  {/* Game name */}
+                  <div className="mb-3">
+                    <span className="inline-block px-3 py-1 rounded-full bg-yellow-500/20 border border-yellow-500/30 text-yellow-300 text-xs font-bold">
+                      {review.game}
+                    </span>
+                  </div>
+
+                  {/* Star rating */}
+                  <div className="flex items-center gap-1 mb-3">
+                    {[...Array(5)].map((_, i) => (
+                      <Star
+                        key={i}
+                        className={`h-4 w-4 ${
+                          i < review.rating
+                            ? "fill-yellow-400 text-yellow-400"
+                            : "text-white/20"
+                        }`}
+                      />
+                    ))}
+                  </div>
+
+                  {/* Review message */}
+                  <p className="text-white/90 text-sm leading-relaxed mb-4 line-clamp-3">
+                    &ldquo;{review.message}&rdquo;
+                  </p>
+
+                  {/* Author */}
+                  <div className="flex items-center gap-2 text-white/60">
+                    <Users className="h-3 w-3" />
+                    <span className="text-xs">{review.author}</span>
+                  </div>
+                </div>
+              ))}
+
+              {/* Duplicate set for infinite effect */}
+              {reviews.map((review) => (
+                <div
+                  key={`${review.id}-duplicate`}
+                  className="flex-shrink-0 w-80 bg-gradient-to-br from-white/10 via-white/5 to-white/10 backdrop-blur-lg border border-white/20 rounded-xl p-5 hover:border-yellow-500/40 transition-all duration-300"
+                >
+                  {/* Game name */}
+                  <div className="mb-3">
+                    <span className="inline-block px-3 py-1 rounded-full bg-yellow-500/20 border border-yellow-500/30 text-yellow-300 text-xs font-bold">
+                      {review.game}
+                    </span>
+                  </div>
+
+                  {/* Star rating */}
+                  <div className="flex items-center gap-1 mb-3">
+                    {[...Array(5)].map((_, i) => (
+                      <Star
+                        key={i}
+                        className={`h-4 w-4 ${
+                          i < review.rating
+                            ? "fill-yellow-400 text-yellow-400"
+                            : "text-white/20"
+                        }`}
+                      />
+                    ))}
+                  </div>
+
+                  {/* Review message */}
+                  <p className="text-white/90 text-sm leading-relaxed mb-4 line-clamp-3">
+                    &ldquo;{review.message}&rdquo;
+                  </p>
+
+                  {/* Author */}
+                  <div className="flex items-center gap-2 text-white/60">
+                    <Users className="h-3 w-3" />
+                    <span className="text-xs">{review.author}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </motion.div>
       </div>
     </section>
   );
