@@ -228,13 +228,21 @@ const SketchfabEmbed: React.FC<SketchfabEmbedProps> = ({
 export default function AnimationPage() {
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isMuted, setIsMuted] = useState(true);
+  const [isMuted, setIsMuted] = useState(false); // default: try unmuted
+  const [showPlayWithSound, setShowPlayWithSound] = useState(false);
   const [selectedImage, setSelectedImage] = useState<number | null>(null);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   const currentVideo = videos[currentVideoIndex];
+
+  // Sync video muted property with state whenever it changes
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.muted = isMuted;
+    }
+  }, [isMuted]);
 
   // Auto-play video when currentVideoIndex changes
   useEffect(() => {
@@ -243,11 +251,37 @@ export default function AnimationPage() {
     }
   }, [currentVideoIndex, isPlaying]);
 
-  // Auto-play first video on mount
+  // Auto-play first video on mount (try unmuted first)
   useEffect(() => {
     if (videoRef.current) {
       setIsPlaying(true);
-      videoRef.current.play();
+      // If user previously opted-in, prefer unmuted autoplay
+      let preferUnmuted = false;
+      try { preferUnmuted = typeof window !== 'undefined' && localStorage.getItem('animation-unmuted') === '1'; } catch (e) {}
+
+      // Try to play unmuted first when preferred
+      videoRef.current.muted = !preferUnmuted ? false : false;
+
+      videoRef.current.play()
+        .then(() => {
+          // Successfully playing with sound
+          setIsMuted(false);
+        })
+        .catch((error) => {
+          // If autoplay with sound fails due to browser policy, fall back to muted autoplay
+          console.log("Autoplay with sound blocked by browser:", error);
+          if (videoRef.current) {
+            // Mute and try to autoplay again (browsers allow muted autoplay)
+            videoRef.current.muted = true;
+            setIsMuted(true);
+            videoRef.current.play().catch(err => {
+              // If this also fails, user interaction will be required to start playback with sound
+              console.log("Muted autoplay also failed:", err);
+            });
+            // Show a CTA so the user can opt-in to play with sound
+            setShowPlayWithSound(true);
+          }
+        });
     }
   }, []);
 
@@ -263,9 +297,41 @@ export default function AnimationPage() {
   };
 
   const toggleMute = () => {
-    if (videoRef.current) {
-      videoRef.current.muted = !isMuted;
-      setIsMuted(!isMuted);
+    setIsMuted((prev) => {
+      const next = !prev;
+      try {
+        if (typeof window !== 'undefined') {
+          if (!next) {
+            // user unmuted -> persist preference
+            localStorage.setItem('animation-unmuted', '1');
+          } else {
+            // user muted -> remove preference
+            localStorage.removeItem('animation-unmuted');
+          }
+        }
+      } catch (e) {
+        // ignore storage errors
+      }
+      return next;
+    });
+  };
+
+  // User gesture to play video with sound (persists preference)
+  const playWithSound = async () => {
+    const v = videoRef.current;
+    if (!v) return;
+    try {
+      v.muted = false;
+      await v.play();
+      setIsMuted(false);
+      setShowPlayWithSound(false);
+      try {
+        if (typeof window !== 'undefined') localStorage.setItem('animation-unmuted', '1');
+      } catch (e) {
+        // ignore
+      }
+    } catch (err) {
+      console.log('Play with sound failed:', err);
     }
   };
 
@@ -471,7 +537,7 @@ export default function AnimationPage() {
                 {[
                   { icon: Clock, label: "Duration", value: "2:47" },
                   { icon: Layers, label: "Scenes", value: "24" },
-                  { icon: Star, label: "FPS", value: "60" },
+                  { icon: Star, label: "FPS", value: "24" },
                 ].map((stat, i) => (
                   <div key={i} className="flex items-center gap-2">
                     <stat.icon className="h-4 w-4 text-purple-400" />
@@ -525,13 +591,49 @@ export default function AnimationPage() {
                     className="h-full w-full object-cover"
                     src={currentVideo.src}
                     poster={currentVideo.poster}
-                    muted={isMuted}
                     loop
+                    muted={isMuted}
+                    playsInline
+                    autoPlay={isPlaying}
+                    preload="auto"
                   />
+                  {showPlayWithSound && (
+                    <div className="absolute inset-0 z-30 flex items-center justify-center">
+                      <button
+                        onClick={playWithSound}
+                        className="rounded-md bg-purple-600 px-6 py-3 text-white shadow-2xl hover:scale-105 transition-transform"
+                      >
+                        Play with sound
+                      </button>
+                    </div>
+                  )}
                   
                   {/* Film overlay */}
                   <div className="film-overlay" />
-                  
+
+                  {/* Muted Indicator */}
+                  {isMuted && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="absolute top-4 left-1/2 -translate-x-1/2 z-20"
+                    >
+                      <motion.button
+                        onClick={toggleMute}
+                        animate={{ scale: [1, 1.05, 1] }}
+                        transition={{ duration: 2, repeat: Infinity }}
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="flex items-center gap-2 rounded-full border border-purple-500/30 bg-black/70 px-4 py-2 backdrop-blur-md shadow-lg cursor-pointer hover:border-purple-500/50 hover:bg-black/80 transition-colors"
+                      >
+                        <VolumeX className="h-4 w-4 text-purple-400" />
+                        <span className="text-sm text-white/90 font-medium">Watch with audio</span>
+                        <Volume2 className="h-4 w-4 text-purple-400 opacity-50" />
+                      </motion.button>
+                    </motion.div>
+                  )}
+
                   {/* Video Controls Overlay */}
                   <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-6">
                     {/* Progress Bar */}
@@ -620,7 +722,7 @@ export default function AnimationPage() {
                       </Badge>
                       <Badge className="bg-violet-500/20 text-violet-300">
                         <Sparkles className="mr-1 h-3 w-3" />
-                        4K Render
+                        HD Render
                       </Badge>
                     </div>
                   </div>
