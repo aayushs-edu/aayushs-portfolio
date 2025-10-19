@@ -708,6 +708,7 @@ function AnimatorSection() {
             poster={video.poster}
             autoPlay={i === currentVideo}
             loop
+            muted
             playsInline
             preload={i === 0 ? "auto" : "metadata"}
             className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${
