@@ -68,7 +68,7 @@ If we want AI to truly teach art, it has to understand these steps—not just th
 
 Recently, many have made breakthroughs in this niche area of machine learning. **Inverse Painting** explored the idea of reversing a finished artwork back into earlier stages, almost like peeling away layers of paint to reveal the sketch underneath.
 
-[IMAGE: /images/masterstroke-blog1-6.png]
+[IMAGE: /images/masterstroke-blog1-6.webp]
 
 Meanwhile, **DeepPrimitive** showed that even the most detailed images can be simplified into a small set of basic shapes—circles, rectangles, and lines—just like the first steps an art teacher would show a beginner.
 
@@ -720,35 +720,35 @@ export default function MasterStrokePage() {
                 {
                   title: "Original Painting",
                   subtitle: "Your Artwork",
-                  image: "/images/masterstroke-1.png",
+                  image: "/images/masterstroke-1.webp",
                   icon: Palette,
                   color: "from-blue-500 to-cyan-500"
                 },
                 {
                   title: "SAM2.1 Segmentation",
                   subtitle: "Object Detection",
-                  image: "/images/masterstroke-2.png",
+                  image: "/images/masterstroke-2.webp",
                   icon: Eye,
                   color: "from-green-500 to-emerald-500"
                 },
                 {
                   title: "Value Block-in",
                   subtitle: "Block in large shapes",
-                  image: "/images/masterstroke-3.png",
+                  image: "/images/masterstroke-3.webp",
                   icon: Layers,
                   color: "from-purple-500 to-pink-500"
                 },
                 {
                   title: "PidiNet Edges",
                   subtitle: "Probability Edge Map",
-                  image: "/images/masterstroke-4.png",
+                  image: "/images/masterstroke-4.webp",
                   icon: Box,
                   color: "from-orange-500 to-red-500"
                 },
                 {
                   title: "Pencil Sketch",
                   subtitle: "Foundation Analysis",
-                  image: "/images/masterstroke-5.png",
+                  image: "/images/masterstroke-5.webp",
                   icon: Brush,
                   color: "from-yellow-500 to-amber-500"
                 }
