@@ -467,7 +467,7 @@ function PainterSection() {
     "/paintings/Covid_2.webp",
     "/paintings/RedDeadRedemption_2.webp",
     "/paintings/Inhaler_2.webp",
-    "/paintings/art_contest.webp"
+    "/paintings/art_contest.jpg"
   ];
 
   useEffect(() => {
