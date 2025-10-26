@@ -34,21 +34,21 @@ const videos = [
   { 
     id: 1, 
     src: "/videos/wild-west.mp4", 
-    poster: "/images/video-poster-1.jpg",
+    poster: "/images/video-poster-1.webp",
     title: "Wild West",
     year: "2024"
   },
   { 
     id: 2, 
     src: "/videos/messi.mp4", 
-    poster: "/images/video-poster-2.jpg",
+    poster: "/images/video-poster-2.webp",
     title: "Soccer Star",
     year: "2024"
   },
   { 
     id: 3, 
     src: "/videos/sanctuary.mp4", 
-    poster: "/images/sanctuary.jpg",
+    poster: "/images/sanctuary.webp",
     title: "Sanctuary",
     year: "2023"
   },
@@ -56,14 +56,14 @@ const videos = [
 
 // Scene gallery images - replace with your actual image paths
 const sceneGallery = [
-  { id: 1, src: "/images/view0.jpg", title: "Opening Shot", category: "Establishing" },
-  { id: 2, src: "/images/view1.jpg", title: "Character Introduction", category: "Character" },
-  { id: 3, src: "/images/view2.jpg", title: "Environment Design", category: "Environment" },
-  { id: 4, src: "/images/view3.jpg", title: "Action Sequence", category: "Animation" },
-  { id: 5, src: "/images/view4.jpg", title: "Action Sequence", category: "Animation" },
-  { id: 6, src: "/images/view5.jpg", title: "Action Sequence", category: "Animation" },
-  { id: 7, src: "/images/view6.jpg", title: "Cowboy Shot", category: "Framing" },
-  { id: 8, src: "/images/view7.jpg", title: "Final Blow", category: "Character" },
+  { id: 1, src: "/images/view0.webp", title: "Opening Shot", category: "Establishing" },
+  { id: 2, src: "/images/view1.webp", title: "Character Introduction", category: "Character" },
+  { id: 3, src: "/images/view2.webp", title: "Environment Design", category: "Environment" },
+  { id: 4, src: "/images/view3.webp", title: "Action Sequence", category: "Animation" },
+  { id: 5, src: "/images/view4.webp", title: "Action Sequence", category: "Animation" },
+  { id: 6, src: "/images/view5.webp", title: "Action Sequence", category: "Animation" },
+  { id: 7, src: "/images/view6.webp", title: "Cowboy Shot", category: "Framing" },
+  { id: 8, src: "/images/view7.webp", title: "Final Blow", category: "Character" },
 ];
 
 // Sketchfab Embed Component Interface

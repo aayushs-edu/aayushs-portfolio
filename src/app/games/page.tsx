@@ -73,12 +73,12 @@ const games: Game[] = [
     technologies: ["Unity 2022.3 LTS", "C# Scripting", "Physics2D", "WebGL Build"],
     year: "2025",
     status: "Live",
-    cover: "/images/bounce-back-cover.jpg",
+    cover: "/images/bounce-back-cover.webp",
     gallery: [
-      "/images/bounce-back-cover.png",
-      "/images/bounce-back-1.png",
-      "/images/bounce-back-2.png",
-      "/images/bounce-back-3.png"
+      "/images/bounce-back-cover.webp",
+      "/images/bounce-back-1.webp",
+      "/images/bounce-back-2.webp",
+      "/images/bounce-back-3.webp"
     ],
     itchUrl: "https://aayushs-edu.itch.io/bounce-back",
     category: "Platformer",
@@ -107,12 +107,12 @@ const games: Game[] = [
     technologies: ["Unity 6", "Player2 AI SDK", "LLM Integration", "Tilemap System", "Audio Manager", "Navmesh"],
     year: "2025",
     status: "Live",
-    cover: "/images/reign-or-ruin-cover.png",
+    cover: "/images/reign-or-ruin-cover.webp",
     gallery: [
-      "/images/reign-or-ruin-cover.png",
-      "/images/reign-or-ruin-1.png",
-      "/images/reign-or-ruin-2.png",
-      "/images/reign-or-ruin-3.png"
+      "/images/reign-or-ruin-cover.webp",
+      "/images/reign-or-ruin-1.webp",
+      "/images/reign-or-ruin-2.webp",
+      "/images/reign-or-ruin-3.webp"
     ],
     itchUrl: "https://aayushs-edu.itch.io/reign-or-ruin",
     category: "Strategy",
@@ -141,9 +141,9 @@ const games: Game[] = [
     technologies: ["Unity 2022.3", "2D Animation", "Stealth AI System", "Navmesh AI", "Sound Design"],
     year: "2025",
     status: "Live",
-    cover: "/images/biscuit-bandit-cover.png",
+    cover: "/images/biscuit-bandit-cover.webp",
     gallery: [
-      "/images/biscuit-bandit-cover.png",
+      "/images/biscuit-bandit-cover.webp",
     ],
     itchUrl: "https://aayushs-edu.itch.io/biscuit-bandit",
     category: "Stealth",
@@ -171,15 +171,15 @@ const games: Game[] = [
     technologies: ["Unity 2023.2", "Rigidbody Physics", "Procedural Generation", "Particle Systems", "Comedy Timing AI"],
     year: "2025",
     status: "Live",
-    cover: "/images/murphys-rocket-cover.png",
+    cover: "/images/murphys-rocket-cover.webp",
     gallery: [
-      "/images/murphys-rocket-cover.png",
-      "/images/murphys-rocket-1.png",
-      "/images/murphys-rocket-2.png",
-      "/images/murphys-rocket-3.png",
-      "/images/murphys-rocket-4.png",
-      "/images/murphys-rocket-5.png",
-      "/images/murphys-rocket-6.png"
+      "/images/murphys-rocket-cover.webp",
+      "/images/murphys-rocket-1.webp",
+      "/images/murphys-rocket-2.webp",
+      "/images/murphys-rocket-3.webp",
+      "/images/murphys-rocket-4.webp",
+      "/images/murphys-rocket-5.webp",
+      "/images/murphys-rocket-6.webp"
     ],
     itchUrl: "https://aayushs-edu.itch.io/murphys-rocket",
     category: "Action",
@@ -510,7 +510,7 @@ function EpicGameCard({ game, index, onSelect }: { game: Game; index: number; on
           <div className="relative aspect-video overflow-hidden">
             {/* Cover image */}
             <Image
-              src={game.cover || game.image || "/images/view0.jpg"}
+              src={game.cover || game.image || "/images/view0.webp"}
               alt={`${game.title} cover`}
               fill
               className="object-cover object-center transition-transform duration-500 group-hover:scale-105"
@@ -644,7 +644,7 @@ function EpicGameModal({ game, isOpen, onClose }: { game: Game | null; isOpen: b
   if (!game) return null;
   const images = (game.gallery && game.gallery.length > 0)
     ? game.gallery
-    : [game.cover || game.image || "/images/view0.jpg"];
+    : [game.cover || game.image || "/images/view0.webp"];
   const prev = () => setActiveIndex((i) => (i - 1 + images.length) % images.length);
   const next = () => setActiveIndex((i) => (i + 1) % images.length);
 

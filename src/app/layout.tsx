@@ -35,7 +35,7 @@ export const metadata: Metadata = {
   title: "Aayush Sharma - Art × Code Portfolio",
   description: "Portfolio showcasing art, animation, games, and creative coding",
   other: {
-    'preload-images': '/images/portrait.PNG',
+    'preload-images': '/images/portrait.webp',
   },
 };
 
@@ -47,7 +47,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <head>
-        <link rel="preload" href="/images/portrait.PNG" as="image" />
+        <link rel="preload" href="/images/portrait.webp" as="image" />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${kalam.variable} ${sniglet.variable} antialiased dark`}

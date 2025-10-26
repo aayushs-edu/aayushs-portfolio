@@ -69,11 +69,11 @@ const projects: Project[] = [
     duration: "48 hours",
     teamSize: 4,
     year: "2024",
-    image: "/images/exosky-cover.jpg",
+    image: "/images/exosky-cover.webp",
     gallery: [
-      "/images/exosky-cover.jpg",
-      "/images/exosky-1.jpg",
-      "/images/exosky-2.jpg"
+      "/images/exosky-cover.webp",
+      "/images/exosky-1.webp",
+      "/images/exosky-2.webp"
     ],
     demoUrl: "https://mijosexoskydemo.github.io",
     githubUrl: "https://github.com/mijosexoskydemo/mijosexoskydemo.github.io",
@@ -108,12 +108,12 @@ const projects: Project[] = [
     duration: "1.5 months",
     teamSize: 2,
     year: "2025",
-    image: "/images/lumina-cover.jpg",
+    image: "/images/lumina-cover.webp",
     gallery: [
-      "/images/lumina-cover.jpg",
-      "/images/lumina-1.jpg",
-      "/images/lumina-2.jpg",
-      "/images/lumina-3.jpg"
+      "/images/lumina-cover.webp",
+      "/images/lumina-1.webp",
+      "/images/lumina-2.webp",
+      "/images/lumina-3.webp"
     ],
     demoUrl: "https://luminadev.netlify.app",
     githubUrl: "https://github.com/aayushs-edu/lumina",
@@ -147,11 +147,11 @@ const projects: Project[] = [
     duration: "1 month",
     teamSize: 4,
     year: "2024",
-    image: "/images/medai-cover.jpg",
+    image: "/images/medai-cover.webp",
     gallery: [
-      "/images/medai-cover.jpg",
-      "/images/medai-1.jpg",
-      "/images/medai-2.jpg"
+      "/images/medai-cover.webp",
+      "/images/medai-1.webp",
+      "/images/medai-2.webp"
     ],
     demoUrl: "https://medai24.netlify.app",
     githubUrl: "https://github.com/aayushs-edu/MedAI",
