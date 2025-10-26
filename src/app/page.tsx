@@ -464,10 +464,10 @@ function PainterSection() {
   ];
 
   const heldImages = [
-    "/paintings/Covid_2.JPEG",
-    "/paintings/RedDeadRedemption_2.JPEG",
-    "/paintings/Inhaler_2.JPEG",
-    "/paintings/art_contest.JPEG"
+    "/paintings/Covid_2.webp",
+    "/paintings/RedDeadRedemption_2.webp",
+    "/paintings/Inhaler_2.webp",
+    "/paintings/art_contest.webp"
   ];
 
   useEffect(() => {

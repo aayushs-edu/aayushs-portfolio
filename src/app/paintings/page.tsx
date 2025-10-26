@@ -799,7 +799,7 @@ export default function PaintingsPage() {
                     >
                       <div className="overflow-hidden rounded-2xl border border-white/10 shadow-2xl">
                         <img
-                          src="/paintings/origin.JPEG"
+                          src="/paintings/origin.webp"
                           alt="The Origin"
                           loading="lazy"
                           decoding="async"
