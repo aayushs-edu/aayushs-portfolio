@@ -697,9 +697,9 @@ function AnimatorSection() {
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
 
   const videos = [
-    { src: "/videos/wild-west.mp4", title: "Wild West Showdown", year: "2025", poster: "/images/view0.webp" },
-    { src: "/videos/sanctuary.mp4", title: "Sanctuary", year: "2023", poster: "/images/Sanctuary.webp" },
-    { src: "/videos/messi.mp4", title: "Messi Tribute", year: "2024", poster: "/images/Messi.webp" }
+    { src: "https://github.com/aayushs-edu/aayushs-portfolio/releases/download/videos-v1.0/wild-west.mp4", title: "Wild West Showdown", year: "2025", poster: "/images/view0.webp" },
+    { src: "https://github.com/aayushs-edu/aayushs-portfolio/releases/download/videos-v1.0/sanctuary.mp4", title: "Sanctuary", year: "2023", poster: "/images/Sanctuary.webp" },
+    { src: "https://github.com/aayushs-edu/aayushs-portfolio/releases/download/videos-v1.0/messi.mp4", title: "Messi Tribute", year: "2024", poster: "/images/Messi.webp" }
   ];
 
   useEffect(() => {
@@ -713,9 +713,13 @@ function AnimatorSection() {
     // Play the current video
     const currentVideoElement = videoRefs.current[currentVideo];
     if (currentVideoElement) {
-      currentVideoElement.play().catch((err: unknown) => {
-        console.log("Video play failed:", err);
-      });
+      const playPromise = currentVideoElement.play();
+      if (playPromise !== undefined) {
+        playPromise.catch((err: unknown) => {
+          // Browser prevented autoplay - this is expected
+          console.warn("Video autoplay prevented:", err);
+        });
+      }
     }
   }, [currentVideo]);
 
@@ -735,6 +739,9 @@ function AnimatorSection() {
             muted
             playsInline
             preload={i === 0 ? "auto" : "none"}
+            onError={(e) => {
+              console.error(`Failed to load video: ${video.src}`, e);
+            }}
             className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${
               i === currentVideo ? 'opacity-100' : 'opacity-0'
             }`}

@@ -33,21 +33,21 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 const videos = [
   { 
     id: 1, 
-    src: "/videos/wild-west.mp4", 
+    src: "https://github.com/aayushs-edu/aayushs-portfolio/releases/download/videos-v1.0/wild-west.mp4", 
     poster: "/images/video-poster-1.webp",
     title: "Wild West",
     year: "2024"
   },
   { 
     id: 2, 
-    src: "/videos/messi.mp4", 
+    src: "https://github.com/aayushs-edu/aayushs-portfolio/releases/download/videos-v1.0/messi.mp4", 
     poster: "/images/video-poster-2.webp",
     title: "Soccer Star",
     year: "2024"
   },
   { 
     id: 3, 
-    src: "/videos/sanctuary.mp4", 
+    src: "https://github.com/aayushs-edu/aayushs-portfolio/releases/download/videos-v1.0/sanctuary.mp4", 
     poster: "/images/sanctuary.webp",
     title: "Sanctuary",
     year: "2023"
