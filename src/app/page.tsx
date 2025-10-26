@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import Image from "next/image";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   ChevronRight,
   Download,
@@ -184,7 +184,7 @@ function HeroSection() {
               width={1275}
               height={1275}
               priority
-              quality={90}
+              quality={85}
               placeholder="blur"
               blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAIAAAAmkwkpAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAP0lEQVR4nAE0AMv/AERERERERERERAAAAAAAAAAAAAAAAAAAAERERERERERERAAAAAAAAAAAAAAAAAAA8fYMBd8zje8AAAAASUVORK5CYII="
               className="w-[825px] h-[825px] md:w-[900px] md:h-[900px] lg:w-[1050px] lg:h-[1050px] xl:w-[1125px] xl:h-[1125px] 2xl:w-[1275px] 2xl:h-[1275px] object-contain"
@@ -582,6 +582,8 @@ function PainterSection() {
                         sizes="400px"
                         quality={80}
                         loading="lazy"
+                        placeholder="blur"
+                        blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAIAAAAmkwkpAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAP0lEQVR4nAE0AMv/AERERERERERERAAAAAAAAAAAAAAAAAAAAERERERERERERAAAAAAAAAAAAAAAAAAA8fYMBd8zje8AAAAASUVORK5CYII="
                         className="object-cover"
                       />
                     </div>
@@ -650,8 +652,10 @@ function PainterSection() {
                         width={800}
                         height={500}
                         sizes="(max-width: 768px) 90vw, 800px"
-                        quality={80}
+                        quality={85}
                         loading={i === 0 ? "eager" : "lazy"}
+                        placeholder="blur"
+                        blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAIAAAAmkwkpAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAP0lEQVR4nAE0AMv/AERERERERERERAAAAAAAAAAAAAAAAAAAAERERERERERERAAAAAAAAAAAAAAAAAAA8fYMBd8zje8AAAAASUVORK5CYII="
                         className="max-h-[500px] w-auto h-auto"
                         priority={i === 0}
                         style={{ objectFit: "contain" }}
@@ -690,12 +694,30 @@ function PainterSection() {
 // Animator Section - Epic Video Background with Right-aligned Title
 function AnimatorSection() {
   const [currentVideo, setCurrentVideo] = useState(0);
+  const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
 
   const videos = [
     { src: "/videos/wild-west.mp4", title: "Wild West Showdown", year: "2025", poster: "/images/view0.jpg" },
     { src: "/videos/sanctuary.mp4", title: "Sanctuary", year: "2023", poster: "/images/Sanctuary.png" },
     { src: "/videos/messi.mp4", title: "Messi Tribute", year: "2024", poster: "/images/Messi.png" }
   ];
+
+  useEffect(() => {
+    // Pause all videos
+    videoRefs.current.forEach((video: HTMLVideoElement | null) => {
+      if (video) {
+        video.pause();
+      }
+    });
+
+    // Play the current video
+    const currentVideoElement = videoRefs.current[currentVideo];
+    if (currentVideoElement) {
+      currentVideoElement.play().catch((err: unknown) => {
+        console.log("Video play failed:", err);
+      });
+    }
+  }, [currentVideo]);
 
   return (
     <section id="animator-section" className="relative min-h-screen flex items-stretch overflow-hidden">
@@ -704,13 +726,15 @@ function AnimatorSection() {
         {videos.map((video, i) => (
           <video
             key={i}
+            ref={(el) => {
+              videoRefs.current[i] = el;
+            }}
             src={video.src}
             poster={video.poster}
-            autoPlay={i === currentVideo}
             loop
             muted
             playsInline
-            preload={i === 0 ? "auto" : "metadata"}
+            preload={i === 0 ? "auto" : "none"}
             className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${
               i === currentVideo ? 'opacity-100' : 'opacity-0'
             }`}
@@ -823,6 +847,8 @@ function AnimatorSection() {
                       sizes="96px"
                       quality={70}
                       loading="lazy"
+                      placeholder="blur"
+                      blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAIAAAAmkwkpAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAP0lEQVR4nAE0AMv/AERERERERERERAAAAAAAAAAAAAAAAAAAAERERERERERERAAAAAAAAAAAAAAAAAAA8fYMBd8zje8AAAAASUVORK5CYII="
                       className="object-cover"
                     />
                     {i !== currentVideo && (
@@ -1004,8 +1030,10 @@ function AIEngineerSection() {
                               alt={step.title}
                               fill
                               sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 20vw"
-                              quality={75}
+                              quality={80}
                               loading="lazy"
+                              placeholder="blur"
+                              blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAIAAAAmkwkpAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAP0lEQVR4nAE0AMv/AERERERERERERAAAAAAAAAAAAAAAAAAAAERERERERERERAAAAAAAAAAAAAAAAAAA8fYMBd8zje8AAAAASUVORK5CYII="
                               className="object-cover transition-transform duration-500 group-hover:scale-110"
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-neutral-950/80 via-transparent to-transparent" />
@@ -1052,7 +1080,7 @@ function AIEngineerSection() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {[
                 {
-                  src: "/images/masterstroke-blog1-3.gif",
+                  src: "/gifs/masterstroke-blog1-3.gif",
                   title: "Art Education",
                   description: "Teaching art the way artists learn"
                 },
@@ -1076,8 +1104,10 @@ function AIEngineerSection() {
                       alt={media.title}
                       fill
                       sizes="(max-width: 768px) 100vw, 50vw"
-                      quality={75}
+                      quality={80}
                       loading="lazy"
+                      placeholder="blur"
+                      blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAIAAAAmkwkpAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAP0lEQVR4nAE0AMv/AERERERERERERAAAAAAAAAAAAAAAAAAAAERERERERERERAAAAAAAAAAAAAAAAAAA8fYMBd8zje8AAAAASUVORK5CYII="
                       className="object-cover transition-transform duration-500 group-hover:scale-110"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
@@ -1176,8 +1206,10 @@ function DeveloperSection() {
                   width={1200}
                   height={675}
                   sizes="(max-width: 768px) 100vw, 66vw"
-                  quality={80}
+                  quality={85}
                   loading="lazy"
+                  placeholder="blur"
+                  blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAIAAAAmkwkpAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAP0lEQVR4nAE0AMv/AERERERERERERAAAAAAAAAAAAAAAAAAAAERERERERERERAAAAAAAAAAAAAAAAAAA8fYMBd8zje8AAAAASUVORK5CYII="
                   className="w-full h-auto transition-transform duration-500 hover:scale-105"
                 />
               </div>
@@ -1242,8 +1274,10 @@ function DeveloperSection() {
                         alt={project.title}
                         fill
                         sizes="(max-width: 768px) 100vw, 33vw"
-                        quality={75}
+                        quality={85}
                         loading="lazy"
+                        placeholder="blur"
+                        blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAIAAAAmkwkpAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAP0lEQVR4nAE0AMv/AERERERERERERAAAAAAAAAAAAAAAAAAAAERERERERERERAAAAAAAAAAAAAAAAAAA8fYMBd8zje8AAAAASUVORK5CYII="
                         className="object-cover transition-transform duration-500 group-hover:scale-110"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent" />
@@ -1412,8 +1446,10 @@ function GameDesignerSection() {
                     alt={game.title}
                     fill
                     sizes="(max-width: 768px) 100vw, 50vw"
-                    quality={75}
+                    quality={85}
                     loading="lazy"
+                    placeholder="blur"
+                    blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAIAAAAmkwkpAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAP0lEQVR4nAE0AMv/AERERERERERERAAAAAAAAAAAAAAAAAAAAERERERERERERAAAAAAAAAAAAAAAAAAA8fYMBd8zje8AAAAASUVORK5CYII="
                     className="object-cover transition-transform duration-500 group-hover:scale-110"
                   />
 

@@ -57,7 +57,7 @@ function usePaintings(manifestUrl = "/paintings/manifest.json") {
           if (hasHeldImage) {
             return {
               ...item,
-              heldImageSrc: `${baseName}_2.JPEG`
+              heldImageSrc: `${baseName}_2.webp`
             }
           }
 

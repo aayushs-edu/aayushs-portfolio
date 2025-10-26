@@ -52,7 +52,7 @@ const blogPosts: BlogPost[] = [
 
 We've all seen them, we've all tried them. If you ever wanted to learn how to draw, YouTube was the place to go. But following along with those videos was not actually teaching you anything. And good art teachers are not always available or affordable. With the newest AI technology, I knew that this problem could be solved: a model that generates steps on how to draw a piece like a real artist, from primitive shapes to final forms. For each step, it will give feedback to the user by analyzing proportions, perspective, lighting, etc.
 
-[GIF: /images/masterstroke-blog1-4.gif]
+[GIF: /gifs/masterstroke-blog1-4.gif]
 
 ## The Ambitious Vision
 
@@ -62,7 +62,7 @@ At first glance, this seems very ambitious. How can AI critique art? How does AI
 - **The careful shading** that transforms flat lines into depth.
 If we want AI to truly teach art, it has to understand these steps—not just the destination.
 
-[GIF: /images/masterstroke-blog1-3.gif]
+[GIF: /gifs/masterstroke-blog1-3.gif]
 
 ## Breaking New Ground in AI Research
 
