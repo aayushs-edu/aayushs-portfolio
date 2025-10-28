@@ -61,7 +61,7 @@ function HeroSection() {
     },
     {
       title: "AI Engineer",
-      color: "#ff8f45ff",
+      color: "#ff8f45",
       position: "right-top",
       pathData: "M 58 37 L 62 32 L 75 32",
       delay: 0.7,
@@ -904,7 +904,7 @@ function AnimatorSection() {
   );
 }
 
-// AI Engineer Section - Left aligned with MasterStroke progression
+// AI Engineer Section - Left aligned with Paintwise progression
 function AIEngineerSection() {
   return (
     <section id="ai-section" className="relative min-h-screen flex items-center py-20 px-4 overflow-hidden">
@@ -923,9 +923,9 @@ function AIEngineerSection() {
             className="lg:w-1/3 lg:sticky lg:top-32"
           >
             <Brain className="h-16 w-16 mb-6" style={{ color: "#ff8f45" }} />
-            <h2 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-6">
+            <h2 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-8 pb-4">
               <span className="text-white/40 block mb-2">I am an</span>
-              <span className="block" style={{
+              <span className="block pb-4 overflow-visible" style={{
                 color: "#ff8f45",
                 textShadow: "0 0 30px #ff8f4580, 0 0 60px #ff8f4540"
               }}>
@@ -949,7 +949,7 @@ function AIEngineerSection() {
 
           {/* Content - Right Side */}
           <div className="lg:w-2/3 space-y-16">
-            {/* MasterStroke Project */}
+            {/* Paintwise Project */}
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -957,9 +957,18 @@ function AIEngineerSection() {
               transition={{ duration: 0.8 }}
             >
               <div className="mb-8">
-                <Link href="/masterstroke">
-                  <h3 className="text-4xl font-bold mb-4 text-white hover:text-orange-400 transition-colors cursor-pointer inline-block">
-                    MasterStroke AI
+                <Link href="/paintwise">
+                  <h3
+                    className="text-4xl font-bold mb-4 cursor-pointer inline-block animate-gradient"
+                    style={{
+                      background: 'linear-gradient(90deg, #22d3ee, #3b82f6, #8b5cf6, #a855f7, #8b5cf6, #3b82f6, #22d3ee)',
+                      backgroundSize: '200% auto',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      backgroundClip: 'text',
+                    }}
+                  >
+                    Paintwise AI
                   </h3>
                 </Link>
                 <p className="text-white/70 text-lg mb-6">
@@ -969,42 +978,42 @@ function AIEngineerSection() {
 
               {/* Progression Display */}
               <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-b from-orange-500/5 via-transparent to-orange-500/5 rounded-2xl blur-2xl" />
+                <div className="absolute inset-0 bg-gradient-to-b from-blue-500/5 via-purple-500/5 to-cyan-500/5 rounded-2xl blur-2xl" />
 
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 relative z-10">
                   {[
                     {
                       title: "Original",
                       subtitle: "Your Artwork",
-                      image: "/images/masterstroke-1.webp",
+                      image: "/images/paintwise-1.webp",
                       icon: Palette,
                       color: "from-blue-500 to-cyan-500"
                     },
                     {
                       title: "Segmentation",
                       subtitle: "SAM2.1",
-                      image: "/images/masterstroke-2.webp",
+                      image: "/images/paintwise-2.webp",
                       icon: Eye,
                       color: "from-green-500 to-emerald-500"
                     },
                     {
                       title: "Block-in",
                       subtitle: "Value Shapes",
-                      image: "/images/masterstroke-3.webp",
+                      image: "/images/paintwise-3.webp",
                       icon: Layers,
                       color: "from-purple-500 to-pink-500"
                     },
                     {
                       title: "Edges",
                       subtitle: "PidiNet",
-                      image: "/images/masterstroke-4.webp",
+                      image: "/images/paintwise-4.webp",
                       icon: Box,
                       color: "from-orange-500 to-red-500"
                     },
                     {
                       title: "Sketch",
                       subtitle: "Foundation",
-                      image: "/images/masterstroke-5.webp",
+                      image: "/images/paintwise-5.webp",
                       icon: Brush,
                       color: "from-yellow-500 to-amber-500"
                     }
@@ -1087,12 +1096,12 @@ function AIEngineerSection() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {[
                 {
-                  src: "/gifs/masterstroke-blog1-3.gif",
+                  src: "/images/paintwise-gallery-1.png",
                   title: "Art Education",
-                  description: "Teaching art the way artists learn"
+                  description: "Teaching art like real art teachers, for free"
                 },
                 {
-                  src: "/images/masterstroke-blog1-6.webp",
+                  src: "/images/paintwise-blog1-6.webp",
                   title: "Research",
                   description: "Exploring integrable solutions"
                 }

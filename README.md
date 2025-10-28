@@ -23,7 +23,7 @@
 - **🎬 Animation** - 3D animated films created with Maya and Blender
 - **🎮 Games** - Unity WebGL games with AI-powered NPCs and dynamic gameplay
 - **💻 Hackathons** - NASA Space Apps winner and other competition projects
-- **🤖 MasterStroke AI** - Revolutionary AI-powered art education platform
+- **🤖 Paintwise AI** - Revolutionary AI-powered art education platform
 
 ### 🚀 Technical Highlights
 
@@ -130,7 +130,7 @@ aayushs-portfolio/
 │   │   ├── animation/       # Animation showcase
 │   │   ├── games/          # Game portfolio
 │   │   ├── hackathons/     # Hackathon projects
-│   │   └── masterstroke/   # AI project
+│   │   └── paintwise/      # AI project
 │   ├── components/         # Reusable components
 │   │   ├── Navigation.tsx  # Main navigation
 │   │   └── ui/            # UI components
@@ -169,7 +169,7 @@ Interactive 3D star map visualizing 2000+ exoplanets with real NASA data
 ### 👑 Reign or Ruin - AI NPC Game Jam Winner
 Unity game featuring AI-powered villagers with dynamic decision-making
 
-### 🎨 MasterStroke AI
+### 🎨 Paintwise AI
 Computer vision pipeline for art education using SAM2.1, PidiNet, and custom algorithms
 
 ## 🤝 Contributing

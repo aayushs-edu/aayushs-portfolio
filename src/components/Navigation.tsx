@@ -2,6 +2,7 @@
 "use client"
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -29,7 +30,7 @@ export default function Navigation() {
     { label: "Animation", href: "/animation", icon: Film },
     { label: "Games", href: "/games", icon: Gamepad2 },
     { label: "Hackathons", href: "/hackathons", icon: Code },
-    { label: "MasterStroke", href: "/masterstroke", icon: Sparkles },
+    { label: "Paintwise", href: "/paintwise", icon: Sparkles },
   ];
 
   const isActive = (href: string) => pathname === href;
@@ -49,15 +50,41 @@ export default function Navigation() {
           <div className="hidden items-center gap-1 lg:flex">
             {navLinks.map((link) => {
               const Icon = link.icon;
+              const isPaintwise = link.href === "/paintwise";
               return (
                 <Link key={link.href} href={link.href}>
-                  <Button 
+                  <Button
                     variant={isActive(link.href) ? "secondary" : "ghost"}
                     size="sm"
                     className="gap-2"
                   >
-                    <Icon className="h-4 w-4" />
-                    {link.label}
+                    {isPaintwise ? (
+                      <Image
+                        src="/images/paintwise-logo.png"
+                        alt="Paintwise"
+                        width={24}
+                        height={24}
+                        className="h-6 w-6 object-contain"
+                      />
+                    ) : (
+                      <Icon className="h-4 w-4" />
+                    )}
+                    {isPaintwise ? (
+                      <span
+                        className="font-semibold animate-gradient"
+                        style={{
+                          background: 'linear-gradient(90deg, #22d3ee, #3b82f6, #8b5cf6, #a855f7, #8b5cf6, #3b82f6, #22d3ee)',
+                          backgroundSize: '200% auto',
+                          WebkitBackgroundClip: 'text',
+                          WebkitTextFillColor: 'transparent',
+                          backgroundClip: 'text',
+                        }}
+                      >
+                        {link.label}
+                      </span>
+                    ) : (
+                      link.label
+                    )}
                   </Button>
                 </Link>
               );
@@ -78,18 +105,44 @@ export default function Navigation() {
                 <div className="mt-10 flex flex-col gap-2">
                   {navLinks.map((link) => {
                     const Icon = link.icon;
+                    const isPaintwise = link.href === "/paintwise";
                     return (
-                      <Link 
-                        key={link.href} 
-                        href={link.href} 
+                      <Link
+                        key={link.href}
+                        href={link.href}
                         onClick={() => setOpen(false)}
                       >
-                        <Button 
+                        <Button
                           variant={isActive(link.href) ? "secondary" : "ghost"}
                           className="w-full justify-start gap-3"
                         >
-                          <Icon className="h-5 w-5" />
-                          {link.label}
+                          {isPaintwise ? (
+                            <Image
+                              src="/images/paintwise-logo.png"
+                              alt="Paintwise"
+                              width={28}
+                              height={28}
+                              className="h-7 w-7 object-contain"
+                            />
+                          ) : (
+                            <Icon className="h-5 w-5" />
+                          )}
+                          {isPaintwise ? (
+                            <span
+                              className="font-semibold animate-gradient"
+                              style={{
+                                background: 'linear-gradient(90deg, #22d3ee, #3b82f6, #8b5cf6, #a855f7, #8b5cf6, #3b82f6, #22d3ee)',
+                                backgroundSize: '200% auto',
+                                WebkitBackgroundClip: 'text',
+                                WebkitTextFillColor: 'transparent',
+                                backgroundClip: 'text',
+                              }}
+                            >
+                              {link.label}
+                            </span>
+                          ) : (
+                            link.label
+                          )}
                         </Button>
                       </Link>
                     );

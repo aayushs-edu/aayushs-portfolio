@@ -131,11 +131,50 @@
     }
   }
 
+  @keyframes gradient {
+    0% {
+      background-position: 0% 50%;
+    }
+    100% {
+      background-position: 200% 50%;
+    }
+  }
+
   .animate-infinite-scroll {
     animation: infinite-scroll 60s linear infinite;
   }
 
+  .animate-gradient {
+    animation: gradient 3s linear infinite;
+  }
+
   .hover\:pause-animation:hover {
     animation-play-state: paused;
+  }
+
+  @keyframes scrollDown {
+    0% {
+      transform: translateY(0%);
+    }
+    100% {
+      transform: translateY(-50%);
+    }
+  }
+
+  @keyframes scrollUp {
+    0% {
+      transform: translateY(-50%);
+    }
+    100% {
+      transform: translateY(0%);
+    }
+  }
+
+  .animate-scroll-down {
+    animation: scrollDown 30s linear infinite;
+  }
+
+  .animate-scroll-up {
+    animation: scrollUp 30s linear infinite;
   }
 }

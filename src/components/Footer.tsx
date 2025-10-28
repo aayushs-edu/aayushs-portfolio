@@ -18,7 +18,7 @@ export default function Footer() {
     { name: "Animation", href: "/animation" },
     { name: "AI Projects", href: "/hackathons" },
     { name: "Games", href: "/games" },
-    { name: "MasterStroke AI", href: "/masterstroke" }
+    { name: "Paintwise AI", href: "/paintwise" }
   ];
 
   const socialLinks = [
