@@ -6,7 +6,6 @@ import {
   Github,
   Linkedin,
   Mail,
-  Download,
   ChevronRight
 } from "lucide-react";
 
@@ -93,16 +92,6 @@ export default function Footer() {
                   <Mail className="h-4 w-4" />
                 </div>
                 aayushs2008@gmail.com
-              </a>
-              <a
-                href="/Aayush_Sharma_Resume.pdf"
-                download
-                className="inline-flex items-center gap-2 text-sm text-white/60 hover:text-white transition-colors group"
-              >
-                <div className="h-8 w-8 rounded-lg bg-white/5 group-hover:bg-white/10 border border-white/10 flex items-center justify-center transition-all">
-                  <Download className="h-4 w-4" />
-                </div>
-                Download Resume
               </a>
             </div>
           </div>

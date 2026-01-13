@@ -401,20 +401,9 @@ function HeroSection() {
               Explore My Work
               <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
             </Button>
-            <Button
-              asChild
-              size="lg"
-              variant="outline"
-              className="gap-2 bg-black/50 backdrop-blur-sm border-white/20 text-white hover:bg-white/10 hover:text-white"
-            >
-              <a href="/Aayush_Sharma_Resume.pdf" download>
-                <Download className="h-4 w-4" />
-                Download Resume
-              </a>
-            </Button>
           </div>
 
-          <div className="flex gap-4 justify-center mt-6">
+          <div className="flex gap-4 justify-center mt-4">
             <Button
               asChild
               variant="ghost"
