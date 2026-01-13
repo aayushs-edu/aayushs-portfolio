@@ -1,5 +1,6 @@
-/** @type {import('next').NextConfig} */
-const nextConfig = {
+import type { NextConfig } from 'next';
+
+const nextConfig: NextConfig = {
   // Image optimization
   images: {
     formats: ['image/avif', 'image/webp'],
@@ -75,4 +76,4 @@ const nextConfig = {
   },
 };
 
-module.exports = nextConfig;
+export default nextConfig;

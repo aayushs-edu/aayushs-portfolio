@@ -18,7 +18,9 @@ import {
   Rocket,
   Eye,
   Activity,
-  Award
+  Award,
+  Gamepad2,
+  LucideGamepad
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -246,27 +248,27 @@ function AnalyticsDashboard() {
     {
       icon: Eye,
       value: "1000+",
-      label: "Views",
+      label: "Plays",
       gradient: "from-blue-500 to-cyan-500",
       shadow: "shadow-blue-500/30"
     },
     {
       icon: Download,
-      value: "23",
+      value: "30+",
       label: "Downloads",
       gradient: "from-green-500 to-emerald-500",
       shadow: "shadow-green-500/30"
     },
     {
-      icon: Users,
-      value: "3",
-      label: "Followers",
+      icon: Gamepad2,
+      value: "5",
+      label: "Games",
       gradient: "from-purple-500 to-pink-500",
       shadow: "shadow-purple-500/30"
     },
     {
       icon: Star,
-      value: "30+",
+      value: "50+",
       label: "Reviews",
       gradient: "from-yellow-500 to-orange-500",
       shadow: "shadow-yellow-500/30"

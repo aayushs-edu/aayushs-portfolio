@@ -262,7 +262,58 @@ function ProjectCard({ project, index, onSelect, activeDemoId, setActiveDemoId }
 
         {/* Embedded Website */}
         <CardContent className="px-4 pb-4">
-          <div className="relative aspect-[16/10] w-full overflow-hidden rounded-lg border border-white/10 bg-black mb-4">
+          {/* Action Buttons - Moved Above Demo */}
+          <div className="flex flex-wrap gap-2 mb-4 relative z-10">
+            <Button
+              asChild
+              size="sm"
+              className={`bg-gradient-to-r ${project.accent} hover:opacity-90 cursor-pointer`}
+            >
+              <a href={project.demoUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center">
+                <Rocket className="mr-1.5 h-3.5 w-3.5" />
+                Open Full Site
+              </a>
+            </Button>
+            {project.submissionUrl && (
+              <Button
+                asChild
+                size="sm"
+                variant="secondary"
+                className="cursor-pointer"
+              >
+                <a href={project.submissionUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center">
+                  <Trophy className="mr-1.5 h-3.5 w-3.5" />
+                  Submission
+                </a>
+              </Button>
+            )}
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={onSelect}
+              type="button"
+              className="cursor-pointer"
+            >
+              <Sparkles className="mr-1.5 h-3.5 w-3.5" />
+              Details
+            </Button>
+            {project.githubUrl && (
+              <Button
+                asChild
+                size="sm"
+                variant="ghost"
+                className="cursor-pointer"
+              >
+                <a href={project.githubUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center">
+                  <Github className="mr-1.5 h-3.5 w-3.5" />
+                  Code
+                </a>
+              </Button>
+            )}
+          </div>
+
+          {/* Demo Viewport */}
+          <div className="relative aspect-[16/10] w-full overflow-hidden rounded-lg border border-white/10 bg-black">
             {!isDemoActive ? (
               /* Launch Panel */
               <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-neutral-800 to-neutral-900">
@@ -342,55 +393,6 @@ function ProjectCard({ project, index, onSelect, activeDemoId, setActiveDemoId }
                   </Button>
                 </div>
               </>
-            )}
-          </div>
-
-          <div className="flex flex-wrap gap-2 relative z-10">
-            <Button
-              asChild
-              size="sm"
-              className={`bg-gradient-to-r ${project.accent} hover:opacity-90 cursor-pointer`}
-            >
-              <a href={project.demoUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center">
-                <Rocket className="mr-1.5 h-3.5 w-3.5" />
-                Open Full Site
-              </a>
-            </Button>
-            {project.submissionUrl && (
-              <Button
-                asChild
-                size="sm"
-                variant="secondary"
-                className="cursor-pointer"
-              >
-                <a href={project.submissionUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center">
-                  <Trophy className="mr-1.5 h-3.5 w-3.5" />
-                  Submission
-                </a>
-              </Button>
-            )}
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={onSelect}
-              type="button"
-              className="cursor-pointer"
-            >
-              <Sparkles className="mr-1.5 h-3.5 w-3.5" />
-              Details
-            </Button>
-            {project.githubUrl && (
-              <Button
-                asChild
-                size="sm"
-                variant="ghost"
-                className="cursor-pointer"
-              >
-                <a href={project.githubUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center">
-                  <Github className="mr-1.5 h-3.5 w-3.5" />
-                  Code
-                </a>
-              </Button>
             )}
           </div>
         </CardContent>
@@ -516,7 +518,7 @@ function ProjectModal({ project, isOpen, onClose }: { project: Project | null; i
 export default function HackathonsPage() {
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [activeDemoId, setActiveDemoId] = useState<string | null>(null);
+  const [activeDemoId, setActiveDemoId] = useState<string | null>("exosky");
 
   const openProjectModal = (project: Project) => {
     setSelectedProject(project);
@@ -527,30 +529,6 @@ export default function HackathonsPage() {
     setIsModalOpen(false);
     setSelectedProject(null);
   };
-
-  const stats = [
-    {
-      icon: Clock,
-      value: "200+",
-      label: "Hours of Hacking",
-      gradient: "from-blue-500 to-cyan-500",
-      shadow: "shadow-blue-500/30"
-    },
-    {
-      icon: Code,
-      value: "50K+",
-      label: "Lines of Code",
-      gradient: "from-green-500 to-emerald-500",
-      shadow: "shadow-green-500/30"
-    },
-    {
-      icon: Trophy,
-      value: "3",
-      label: "Hackathons",
-      gradient: "from-yellow-400 to-amber-500",
-      shadow: "shadow-yellow-400/30"
-    }
-  ];
 
   return (
     <div className="min-h-screen bg-neutral-950 text-white [color-scheme:dark]">
@@ -583,53 +561,9 @@ export default function HackathonsPage() {
             Hackathon Projects
           </h1>
           <p className="text-xl text-white/70 max-w-3xl mx-auto">
-            24-48 hour sprints building innovative solutions. From AI applications to healthcare tools,
+            Building innovative solutions to solve global issues. From AI applications to healthcare tools,
             each project represents intense collaboration and creative problem-solving.
           </p>
-        </motion.div>
-
-        {/* Stats Dashboard */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.8 }}
-          className="mb-12 grid gap-4 grid-cols-3 max-w-2xl mx-auto"
-        >
-          {stats.map((stat, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, scale: 0.8 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: i * 0.1 }}
-              whileHover={{ scale: 1.05, y: -3 }}
-            >
-              <Card className="relative overflow-hidden border-white/20 bg-gradient-to-br from-white/10 via-white/5 to-transparent backdrop-blur-lg hover:border-white/40 transition-all duration-300 group">
-                <div className={`absolute inset-0 bg-gradient-to-br ${stat.gradient} opacity-20 group-hover:opacity-30 transition-opacity duration-300`} />
-                <CardContent className="relative py-3 px-4 text-center">
-                  <motion.div
-                    className={`mx-auto mb-1.5 h-9 w-9 rounded-full bg-gradient-to-r ${stat.gradient} flex items-center justify-center shadow-lg ${stat.shadow}`}
-                    whileHover={{ rotate: 360 }}
-                    transition={{ duration: 0.5 }}
-                  >
-                    <stat.icon className="h-4 w-4 text-white" />
-                  </motion.div>
-                  <motion.div
-                    className="text-xl font-bold text-white"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.3 + i * 0.1 }}
-                  >
-                    {stat.value}
-                  </motion.div>
-                  <div className={`text-xs font-medium bg-gradient-to-r ${stat.gradient} bg-clip-text text-transparent`}>
-                    {stat.label}
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          ))}
         </motion.div>
 
         {/* Projects Grid */}

@@ -401,6 +401,17 @@ function HeroSection() {
               Explore My Work
               <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
             </Button>
+            <Button
+              asChild
+              size="lg"
+              className="group gap-2 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white border-0 cursor-pointer"
+            >
+              <a href="mailto:aayushs2008@gmail.com">
+                <Mail className="h-4 w-4" />
+                Contact Me
+                <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </a>
+            </Button>
           </div>
 
           <div className="flex gap-4 justify-center mt-4">
