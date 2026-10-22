@@ -379,7 +379,10 @@ async function processItem(mode, item) {
 
 async function syntaxPalette(artItems) {
   const samples = [];
-  for (const item of artItems) {
+  // Sorted so reordering gallery.json doesn't reshuffle the palette.
+  const sources = [...new Set(artItems.map((item) => item.src))].sort();
+  for (const src of sources) {
+    const item = { src };
     const { data, info } = await sharp(path.join(PUBLIC, item.src)).rotate().resize(96, 96, { fit: "inside" }).removeAlpha().toColorspace("srgb").raw().toBuffer({ resolveWithObject: true });
     for (let i = 0; i < info.width * info.height; i++) {
       const lab = linearToOklab(toLinear(data[i * 3] / 255), toLinear(data[i * 3 + 1] / 255), toLinear(data[i * 3 + 2] / 255));
