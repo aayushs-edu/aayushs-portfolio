@@ -1,0 +1,91 @@
+{
+  "initialMode": "art",
+  "art": {
+    "initial": "snorkeling-hawaii",
+    "items": [
+      { "slug": "snorkeling-hawaii", "src": "/paintings/SeaTurtle.webp" },
+      { "slug": "snowboarding", "src": "/paintings/Snowboarder.webp" },
+      { "slug": "taj-mahal", "src": "/paintings/TajMahal.webp" },
+      { "slug": "safari-kid", "src": "/paintings/SafariKid.webp" },
+      { "slug": "soccer-penalty", "src": "/paintings/PenaltyKick.webp" },
+      { "slug": "red-dead-redemption", "src": "/paintings/RedDeadRedemption.webp" },
+      { "slug": "childhood-toys", "src": "/paintings/StillLifeToys.webp" }
+    ]
+  },
+  "code": {
+    "initial": "paintwise",
+    "items": [
+      {
+        "slug": "paintwise",
+        "title": "Paintwise",
+        "stack": "SAM 2.1, CLIP, PidiNet, DepthAnything V2",
+        "src": "/images/paintwise-2.webp",
+        "href": "/paintwise"
+      },
+      {
+        "slug": "exovision",
+        "title": "ExoVision",
+        "year": "2024",
+        "stack": "Unity, C#, WebGL, NASA Exoplanet API",
+        "src": "/images/exosky-cover.webp",
+        "href": "https://mijosexoskydemo.github.io"
+      },
+      {
+        "slug": "lumina",
+        "title": "Lumina",
+        "year": "2025",
+        "stack": "Flutter, Flask, Firebase, OpenAI GPT-4",
+        "src": "/images/lumina.webp",
+        "href": "https://luminadev.netlify.app"
+      },
+      {
+        "slug": "medai",
+        "title": "MedAI",
+        "year": "2024",
+        "stack": "TensorFlow, Python, OpenAI GPT-4 API",
+        "src": "/images/medai.webp",
+        "href": "https://medai24.netlify.app"
+      },
+      {
+        "slug": "stockapp",
+        "title": "StockApp",
+        "year": "2024",
+        "stack": "React, Node.js, APIs",
+        "src": "/images/stockapp.webp",
+        "href": "/hackathons"
+      },
+      {
+        "slug": "bounce-back",
+        "title": "Bounce Back",
+        "year": "2025",
+        "stack": "Unity 2022.3 LTS, C# Scripting",
+        "src": "/images/bounce-back-cover.webp",
+        "href": "https://aayushs-edu.itch.io/bounce-back"
+      },
+      {
+        "slug": "reign-or-ruin",
+        "title": "Reign or Ruin",
+        "year": "2025",
+        "stack": "Unity 6, Player2 AI SDK, LLM Integration",
+        "src": "/images/reign-or-ruin-cover.webp",
+        "href": "https://aayushs-edu.itch.io/reign-or-ruin"
+      },
+      {
+        "slug": "biscuit-bandit",
+        "title": "Biscuit Bandit",
+        "year": "2025",
+        "stack": "Unity 2022.3, Stealth AI System",
+        "src": "/images/biscuit-bandit-cover.webp",
+        "href": "https://aayushs-edu.itch.io/biscuit-bandit"
+      },
+      {
+        "slug": "murphys-rocket",
+        "title": "Murphy's Rocket",
+        "year": "2025",
+        "stack": "Unity 2023.2, Rigidbody Physics",
+        "src": "/images/murphys-rocket-cover.webp",
+        "href": "https://aayushs-edu.itch.io/murphys-rocket"
+      }
+    ]
+  }
+}

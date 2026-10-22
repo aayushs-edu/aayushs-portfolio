@@ -10,6 +10,8 @@ const compat = new FlatCompat({
 });
 
 const eslintConfig = [
+  // Decorative code shown inside the hero letters; not part of the app.
+  { ignores: ["src/components/hero/code-snippets/**"] },
   ...compat.extends("next/core-web-vitals", "next/typescript"),
 ];
 

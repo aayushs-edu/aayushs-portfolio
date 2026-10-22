@@ -43,3 +43,6 @@ next-env.d.ts
 
 # claude
 .claude/
+
+# hero asset pipeline intermediates
+/scripts/hero/.cache/
