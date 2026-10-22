@@ -292,7 +292,7 @@
   background: none;
   z-index: var(--z, 0);
   transform: translate3d(
-      calc(var(--x, 0) * var(--u) + var(--side, 0) * var(--spread, 0) * 35cqw),
+      calc(var(--x, 0) * var(--u) + var(--side, 0) * var(--spread, 0) * 100cqw),
       calc(var(--y, 0) * var(--u)),
       0
     )

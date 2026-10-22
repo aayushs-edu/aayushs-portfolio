@@ -430,7 +430,12 @@ export default function HeroCanvas({
   const readRest = useCallback(() => {
     const el = frontImageRef.current;
     const sticky = stickyRef.current;
-    if (!el || !sticky || progress.get() >= PHASES.rest) return;
+    if (!el || !sticky) return;
+    // Mid-scroll the DOM card is transformed; fall back to the measured layout.
+    if (progress.get() >= PHASES.rest) {
+      restRect.current = null;
+      return;
+    }
     const a = el.getBoundingClientRect();
     const b = sticky.getBoundingClientRect();
     restRect.current = { cx: a.left - b.left + a.width / 2, cy: a.top - b.top + a.height / 2, w: a.width, h: a.height };
@@ -498,6 +503,8 @@ export default function HeroCanvas({
   useEffect(() => () => onLiveChange(false), [onLiveChange]);
 
   const onRendered = useCallback(() => setRenderedKey(key), [key]);
+  // A remounted plane must draw again before the canvas is shown.
+  useEffect(() => setRenderedKey(null), [key]);
   const pointTier = tier === "full" ? "full" : "lite";
 
   return (

@@ -154,7 +154,8 @@ export default function Hero() {
   // ---- scroll-driven CSS variables ---------------------------------------------
   const sideT = useScrollVar(progress, (p) => range(p, PHASES.rest, PHASES.sideGone));
   const titleT = useScrollVar(progress, (p) => range(p, PHASES.rest, PHASES.titleGone));
-  const spread = useTransform(sideT, (t) => t * t * SCROLL.sideSpread / 0.35);
+  // Side cards slide out by ±35% of the hero width (CSS multiplies by 100cqw).
+  const spread = useTransform(sideT, (t) => t * t * SCROLL.sideSpread);
   const rise = useTransform(titleT, (t) => easeInOut(t));
   const zoomT = useTransform(progress, zoomAmount);
   const canvasLiveMV = useMotionValue(0);
