@@ -4,7 +4,7 @@
 // oil-brush stroke. Strokes are built as filled bristle outlines inside SVG
 // masks and updated imperatively (no React state per pointer move).
 
-import { useEffect, useRef, type RefObject } from "react";
+import { useEffect, useMemo, useRef, type RefObject } from "react";
 import { BRUSH, DESIGN } from "./heroConfig";
 
 type Vec = [number, number];
@@ -417,5 +417,5 @@ export function useBrushStrokes(opts: BrushOptions) {
     };
   }, [intro]);
 
-  return { clear: () => clearAll.current() };
+  return useMemo(() => ({ clear: () => clearAll.current() }), []);
 }

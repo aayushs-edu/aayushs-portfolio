@@ -55,6 +55,12 @@
 /* ----------------------------------------------------------------------- */
 /* Wall light pool (follows the spotlight; the only coloured light)         */
 
+@property --pool-tint {
+  syntax: "<color>";
+  inherits: false;
+  initial-value: rgb(255 244 230 / 0.07);
+}
+
 .pool {
   position: absolute;
   left: 0;
@@ -67,7 +73,7 @@
   opacity: var(--pool-o, 0);
   transform: translate3d(var(--pool-x, 50cqw), var(--pool-y, 50cqh), 0);
   background: radial-gradient(closest-side, var(--pool-tint, rgb(255 244 230 / 0.07)), transparent);
-  transition: background 600ms linear;
+  transition: --pool-tint 600ms linear;
   will-change: transform, opacity;
 }
 
@@ -414,8 +420,6 @@
 .placardLine {
   grid-area: 1 / 1;
   margin: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
 }
 

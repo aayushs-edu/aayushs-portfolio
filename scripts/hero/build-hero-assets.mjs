@@ -39,7 +39,16 @@ const CODE_REQUIRED = ["slug", "title", "stack", "src", "href"];
 const RELIEF_DEFAULT = { art: true, code: false };
 const TUNING_KEYS = ["depthScale", "normalStrength", "lightRest", "neutralChroma", "relief"];
 const HEIGHT_LONG_SIDE = 512;
-const NORMAL_QUALITY = [86, 80, 74, 68, 62, 56];
+/** Normal-map encodings tried in order until the item fits its byte budget. */
+const NORMAL_LADDER = [
+  [1, 86],
+  [1, 78],
+  [1, 70],
+  [0.875, 70],
+  [0.75, 70],
+  [0.75, 60],
+  [0.625, 60],
+];
 
 function fail(message) {
   console.error(`build-hero-assets: ${message}`);
@@ -210,7 +219,8 @@ async function reliefMaps(sourcePath, width, height, byteAllowance) {
   for (let i = 0; i < n; i++) {
     luma[i] = Math.round(0.2126 * data[i * 3] + 0.7152 * data[i * 3 + 1] + 0.0722 * data[i * 3 + 2]);
   }
-  const blurred = await sharp(luma, { raw: { width, height, channels: 1 } }).blur(6).raw().toBuffer();
+  // extractChannel: sharp hands single-channel raw input back as 3 channels otherwise.
+  const blurred = await sharp(luma, { raw: { width, height, channels: 1 } }).blur(6).extractChannel(0).raw().toBuffer();
   const hp = new Float32Array(n);
   let sum2 = 0;
   for (let i = 0; i < n; i++) {
@@ -250,12 +260,16 @@ async function reliefMaps(sourcePath, width, height, byteAllowance) {
     .resize({ width: HEIGHT_LONG_SIDE, height: HEIGHT_LONG_SIDE, fit: "inside", withoutEnlargement: true })
     .webp({ quality: 70 })
     .toBuffer();
-  // Highest normal-map quality that keeps the item inside its byte budget.
-  const encodeNormal = (quality) => sharp(normalBuf, { raw: { width, height, channels: 3 } }).webp({ quality }).toBuffer();
-  let normal = await encodeNormal(NORMAL_QUALITY[0]);
-  for (const quality of NORMAL_QUALITY.slice(1)) {
+  // Largest / highest-quality normal map that keeps the item inside its byte budget.
+  const encodeNormal = ([scale, quality]) =>
+    sharp(normalBuf, { raw: { width, height, channels: 3 } })
+      .resize({ width: Math.round(width * scale), height: Math.round(height * scale), fit: "fill" })
+      .webp({ quality })
+      .toBuffer();
+  let normal = await encodeNormal(NORMAL_LADDER[0]);
+  for (const step of NORMAL_LADDER.slice(1)) {
     if (normal.length + heightMap.length <= byteAllowance) break;
-    normal = await encodeNormal(quality);
+    normal = await encodeNormal(step);
   }
   return { normal, heightMap };
 }
@@ -279,6 +293,8 @@ async function averageColor(sourcePath) {
   const C = Math.min(Math.hypot(A, B), AVG_COLOR_MAX_CHROMA);
   return hex(lchToLinear(L, C, Math.atan2(B, A)));
 }
+
+const cleanups = [];
 
 async function processItem(mode, item) {
   const sourcePath = path.join(PUBLIC, item.src);
@@ -333,7 +349,8 @@ async function processItem(mode, item) {
   if (bytes > ITEM_BYTE_BUDGET) {
     fail(`${mode}/${item.slug} is ${(bytes / 1024).toFixed(0)} KB, over the ${(ITEM_BYTE_BUDGET / 1024).toFixed(0)} KB budget`);
   }
-  await removeExcept(dir, keep);
+  // Superseded files are removed only after the whole run has succeeded.
+  cleanups.push(() => removeExcept(dir, keep));
 
   const aspect = width / height;
   const entry = {
@@ -541,6 +558,7 @@ async function main() {
     items,
   };
   await fs.writeFile(GENERATED, JSON.stringify(generated) + "\n");
+  for (const cleanup of cleanups) await cleanup();
   console.log(`wrote ${rel(GENERATED)} (palette ${Object.values(palette).join(" ")}, ${snippets.length} snippets)`);
 }
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, type MotionStyle } from "framer-motion";
-import { memo, useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
+import { memo, useDeferredValue, useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
 import styles from "./Hero.module.css";
 import { BRUSH, CODE_CELLS, DESIGN, GALLERY, MODE_LABEL, MODES, SNIPPETS, type Mode, type Tier } from "./heroConfig";
 import { bristlePaths, BRISTLE_OPACITY, introStrokes, useBrushStrokes } from "./useBrushStrokes";
@@ -100,7 +100,8 @@ function HeroTitle({ mode, displayMode, selected, tier, interactive, panelId, on
   const layers = BRUSH.maxLayers[tier];
   const paintings = useMemo(() => GALLERY.art.map((item) => item.assets.paint ?? item.assets.color), []);
   const artIndex = selected.art;
-  const codeIndex = selected.code;
+  // The code layer is ~1,400 tspans: let it re-lay out at low priority while browsing.
+  const codeIndex = useDeferredValue(selected.code);
 
   // Each mode's intro plays the first time that mode is on screen.
   useEffect(() => {
@@ -136,16 +137,17 @@ function HeroTitle({ mode, displayMode, selected, tier, interactive, panelId, on
   const showCode = mode === "code";
   const clearBrush = brush.clear;
   const clearCode = code.clear;
+  // (The static tier's fixed reveal is React-rendered and never cleared.)
   useEffect(() => {
-    if (showArt) return;
+    if (showArt || isStatic) return;
     const timer = window.setTimeout(clearBrush, 320);
     return () => window.clearTimeout(timer);
-  }, [showArt, clearBrush]);
+  }, [showArt, isStatic, clearBrush]);
   useEffect(() => {
-    if (showCode) return;
+    if (showCode || isStatic) return;
     const timer = window.setTimeout(clearCode, 320);
     return () => window.clearTimeout(timer);
-  }, [showCode, clearCode]);
+  }, [showCode, isStatic, clearCode]);
 
   // Measure the real word boxes once Poppins is in.
   useEffect(() => {

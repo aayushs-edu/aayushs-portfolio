@@ -4,7 +4,7 @@
 // by cell on a monospace grid, printed left to right along the cursor's path.
 // The mask is hard-edged rects (one merged path per row), updated imperatively.
 
-import { useEffect, useRef, type RefObject } from "react";
+import { useEffect, useMemo, useRef, type RefObject } from "react";
 import { CODE_CELLS, DESIGN, type Snippet, type TokenRun } from "./heroConfig";
 
 export const CELL_W = CODE_CELLS.fontSize * CODE_CELLS.advance;
@@ -319,5 +319,5 @@ export function useCodeReveal(opts: CodeRevealOptions) {
     };
   }, [intro]);
 
-  return { clear: () => clearAll.current() };
+  return useMemo(() => ({ clear: () => clearAll.current() }), []);
 }
