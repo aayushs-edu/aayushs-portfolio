@@ -1,6 +1,6 @@
 // src/app/layout.tsx
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Kalam, Sniglet } from "next/font/google";
+import { Geist, Geist_Mono, Kalam, Poppins, Sniglet } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
@@ -26,6 +26,13 @@ const kalam = Kalam({
   display: "swap",
 });
 
+const poppins = Poppins({
+  weight: ["800"],
+  variable: "--font-poppins",
+  subsets: ["latin"],
+  display: "swap",
+});
+
 const sniglet = Sniglet({
   weight: ["400", "800"],
   variable: "--font-sniglet",
@@ -36,9 +43,6 @@ const sniglet = Sniglet({
 export const metadata: Metadata = {
   title: "Aayush Sharma - Art × Code Portfolio",
   description: "Portfolio showcasing art, animation, games, and creative coding",
-  other: {
-    'preload-images': '/images/portrait.webp',
-  },
 };
 
 export default function RootLayout({
@@ -48,11 +52,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
-      <head>
-        <link rel="preload" href="/images/portrait.webp" as="image" />
-      </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${kalam.variable} ${sniglet.variable} antialiased dark`}
+        className={`${geistSans.variable} ${geistMono.variable} ${kalam.variable} ${poppins.variable} ${sniglet.variable} antialiased dark`}
       >
         <Navigation />
         {children}

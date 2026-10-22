@@ -417,11 +417,12 @@ async function syntaxPalette(artItems) {
   vivid.reverse();
   const roles = { kw: vivid[0], fn: vivid[1], str: vivid[2], num: vivid[3], punct };
 
-  // Lift lightness until the colour reaches 4.5:1 against black (Y >= 0.175).
+  // Lift lightness until the colour reaches 7:1 against black (Y >= 0.30). The spec's floor
+  // is 4.5:1; the code is set at ~6 CSS px, so it gets the stricter AAA ratio.
   const legible = ({ L, C, h }) => {
     let l = L;
     let rgb = lchToLinear(l, C, h);
-    while (luminance(rgb) < 0.175 && l < 0.99) {
+    while (luminance(rgb) < 0.3 && l < 0.99) {
       l += 0.005;
       rgb = lchToLinear(l, C, h);
     }
