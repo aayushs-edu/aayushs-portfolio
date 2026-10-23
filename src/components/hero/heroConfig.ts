@@ -216,6 +216,8 @@ export const WALL = {
   codeFontPx: 12,
   codeLineHeight: 1.5,
   codeCap: { full: 3000, lite: 1200, static: 3000 } as Record<Tier, number>,
+  /** Linen tile size and thread width (CSS px). */
+  weave: { tile: 96, thread: 3 },
 } as const;
 
 export const CODE_CELLS = {

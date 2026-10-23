@@ -75,11 +75,38 @@
 /* ----------------------------------------------------------------------- */
 /* Wall the visitor paints on (behind the name and cards)                   */
 
+/* The wall's surface stays until the next section is revealed; the ink on it
+   leaves with the title as the zoom begins. */
 .wall {
   position: absolute;
   inset: 0;
   pointer-events: none;
+  opacity: calc(1 - var(--clear, 0));
+}
+
+.wallInk {
+  position: absolute;
+  inset: 0;
   opacity: calc(1 - var(--title-fade, 0));
+}
+
+.wallSurface {
+  position: absolute;
+  inset: 0;
+  transition: opacity 450ms cubic-bezier(0.6, 0, 0.2, 1) 250ms;
+}
+
+.wallSurface[data-kind="weave"] {
+  opacity: 0.5;
+}
+
+.wallSurface[data-kind="dots"] {
+  opacity: 1;
+  background-image: radial-gradient(circle at center, rgb(255 255 255 / 0.085) 0.7px, transparent 1.2px);
+}
+
+.wallSurface[data-on="false"] {
+  opacity: 0;
 }
 
 .wallCanvas {

@@ -20,6 +20,44 @@ interface WallPaintProps {
 
 const PAINT = [SYNTAX_PALETTE.num, SYNTAX_PALETTE.kw, SYNTAX_PALETTE.fn, SYNTAX_PALETTE.str, SYNTAX_PALETTE.punct];
 
+/** Code-mode grid: one dot every other character cell, on the same grid code prints into. */
+const CELL_W = WALL.codeFontPx * CODE_CELLS.advance;
+const CELL_H = WALL.codeFontPx * WALL.codeLineHeight;
+const DOTS_STYLE = {
+  backgroundSize: `${CELL_W * 2}px ${CELL_H}px`,
+  backgroundPosition: `${CELL_W / 2 - CELL_W}px 0`,
+};
+
+/**
+ * A primed-linen tile: plain weave, each thread a slightly different tone,
+ * light where a thread passes over and dark in the gaps. Drawn once.
+ */
+function weaveTile(dpr: number): string {
+  const { tile, thread } = WALL.weave;
+  const n = Math.round(tile / thread);
+  const canvas = document.createElement("canvas");
+  canvas.width = canvas.height = Math.round(tile * dpr);
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return "";
+  ctx.scale(dpr, dpr);
+  const tone = (i: number) => {
+    const s = Math.sin(i * 12.9898 + 4.1) * 43758.5453;
+    return 0.55 + 0.9 * (s - Math.floor(s));
+  };
+  for (let j = 0; j < n; j++) {
+    for (let i = 0; i < n; i++) {
+      const x = i * thread;
+      const y = j * thread;
+      ctx.fillStyle = "rgb(0 0 0 / 0.22)";
+      ctx.fillRect(x, y, thread, thread);
+      ctx.fillStyle = `rgb(255 255 255 / ${(0.09 * ((i + j) % 2 === 0 ? tone(j) : tone(i + 500))).toFixed(3)})`;
+      if ((i + j) % 2 === 0) ctx.fillRect(x, y + 0.5, thread, thread - 1);
+      else ctx.fillRect(x + 0.5, y, thread - 1, thread);
+    }
+  }
+  return `url(${canvas.toDataURL()})`;
+}
+
 /** Title geometry in wall (CSS px) coordinates. */
 function titleRect(comp: HTMLElement) {
   const u = comp.offsetWidth / DESIGN.width;
@@ -34,6 +72,15 @@ function titleRect(comp: HTMLElement) {
 export default function WallPaint({ mode, tier, interactive, surfaceRef, compRef, codeIndex }: WallPaintProps) {
   const paintRef = useRef<HTMLCanvasElement | null>(null);
   const codeRef = useRef<HTMLCanvasElement | null>(null);
+  const weaveRef = useRef<HTMLDivElement | null>(null);
+
+  // The linen tile is generated on the client (it needs a canvas), once.
+  useEffect(() => {
+    const el = weaveRef.current;
+    if (!el) return;
+    el.style.backgroundImage = weaveTile(Math.min(WALL.dprCap, window.devicePixelRatio || 1));
+    el.style.backgroundSize = `${WALL.weave.tile}px ${WALL.weave.tile}px`;
+  }, []);
   const engines = useRef<{ brush: BrushEngine; code: CodeEngine } | null>(null);
   const modeRef = useRef(mode);
   const interactiveRef = useRef(interactive);
@@ -150,8 +197,14 @@ export default function WallPaint({ mode, tier, interactive, surfaceRef, compRef
 
   return (
     <div className={styles.wall} aria-hidden="true">
-      <canvas ref={paintRef} className={styles.wallCanvas} data-on={mode === "art"} />
-      <canvas ref={codeRef} className={styles.wallCanvas} data-kind="code" data-on={mode === "code"} />
+      {/* The surface you're painting on: a dot grid for code, linen for paint. */}
+      <div className={styles.wallSurface} data-kind="dots" data-on={mode === "code"} style={DOTS_STYLE} />
+      <div className={styles.wallInk}>
+        <canvas ref={paintRef} className={styles.wallCanvas} data-on={mode === "art"} />
+        <canvas ref={codeRef} className={styles.wallCanvas} data-kind="code" data-on={mode === "code"} />
+      </div>
+      {/* Linen sits over the paint too, so strokes take on the weave. */}
+      <div ref={weaveRef} className={styles.wallSurface} data-kind="weave" data-on={mode === "art"} />
     </div>
   );
 }
