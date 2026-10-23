@@ -2,7 +2,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Kalam, Poppins, Sniglet } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
-import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import "./globals.css";
 import { GoogleAnalytics } from "@next/third-parties/google";
@@ -55,7 +54,6 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${kalam.variable} ${poppins.variable} ${sniglet.variable} antialiased dark`}
       >
-        <Navigation />
         {children}
         <Analytics />
         <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID!} />

@@ -1,3 +1,8 @@
+/* Height of anything sticky above the hero (none today); measured at runtime. */
+.root {
+  --nav-h: 0px;
+}
+
 /* Hero tokens are scoped here; global shadcn tokens are untouched. */
 .hero {
   --wall: #0d0d0d;
@@ -5,7 +10,6 @@
   --name-fill: #000000;
   --ink: #ffffff;
   --ink-muted: rgb(255 255 255 / 0.55);
-  --nav-h: 88px;
   position: relative;
   z-index: 1;
   color: var(--ink);

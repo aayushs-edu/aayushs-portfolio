@@ -267,7 +267,7 @@ export default function Hero({ next }: HeroProps) {
   const otherMode: Mode = displayMode === "art" ? "code" : "art";
 
   return (
-    <div ref={rootRef}>
+    <div ref={rootRef} className={styles.root}>
       <section ref={sectionRef} className={`${styles.hero} ${pinned ? "" : styles.static}`} style={sectionStyle} aria-label="Aayush Sharma: art and code" data-tier={tier}>
         <motion.div ref={stickyRef} className={styles.sticky} style={{ "--clear": clear } as MotionStyle} data-cleared={cleared}>
           <motion.div className={styles.stage} style={stageStyle}>
