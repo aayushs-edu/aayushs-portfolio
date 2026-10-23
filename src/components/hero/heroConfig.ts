@@ -151,14 +151,24 @@ export const PHASES = {
   zoomEnd: 0.2,
   neutralEnd: 0.23,
   handoffEnd: 0.26,
-  depthEnd: 0.52,
-  paletteEnd: 0.82,
-  dimStart: 0.92,
+  /** Dots lift into depth layers. */
+  depthEnd: 0.46,
+  /** The camera pushes through the cloud. */
+  flyEnd: 0.92,
+  /**
+   * The next section is pinned under the hero from here on (CSS sticky, so this
+   * also sets how far it overlaps the hero) and the wall fades to reveal it.
+   */
+  reveal: 0.5,
+  /** The wall starts to fade once the camera is inside the cloud. */
+  clearStart: 0.62,
+  revealEnd: 0.86,
 } as const;
 
 export const SCROLL = {
-  heightFull: "300svh",
-  heightLite: "220svh",
+  /** Hero section height in svh per tier. */
+  heightFull: 300,
+  heightLite: 220,
   smoothing: 8,
   zoomFill: 0.84,
   sideSpread: 0.35,
@@ -219,11 +229,16 @@ export const LIGHT = {
 };
 export const CANVAS_FADE = { outMs: 120, inMs: 300 };
 export const POINTS = {
-  hueColumns: 64,
   depthDelay: 0.15,
-  yawDeg: 16,
-  dolly: 0.06,
   shrink: 0.25,
+  /** Extra depth scatter (× plane height) so the cloud has volume to fly through. */
+  scatter: 0.9,
+  /** Camera z at the end of the fly-through, as a fraction of its rest distance (negative = past the image). */
+  flyTo: -0.25,
+  /** Dots fade as they come within this fraction of the rest distance of the camera. */
+  nearFade: [0.04, 0.3] as [number, number],
+  /** Cap on a dot's on-screen size (device px) as it rushes past. */
+  maxSize: 48,
   pushRadiusPx: 90,
   pushDamping: 5,
 };
@@ -232,13 +247,12 @@ export interface Tuning {
   depthScale: number;
   normalStrength: number;
   lightRest: [number, number];
-  neutralChroma: number;
   relief: boolean;
 }
 
 export const TUNING_DEFAULTS: Record<Mode, Tuning> = {
-  art: { depthScale: 0.35, normalStrength: 1.2, lightRest: [0.3, 0.25], neutralChroma: 0.03, relief: true },
-  code: { depthScale: 0.2, normalStrength: 1.2, lightRest: [0.3, 0.25], neutralChroma: 0.03, relief: false },
+  art: { depthScale: 0.35, normalStrength: 1.2, lightRest: [0.3, 0.25], relief: true },
+  code: { depthScale: 0.2, normalStrength: 1.2, lightRest: [0.3, 0.25], relief: false },
 };
 
 // ---------------------------------------------------------------------------

@@ -77,15 +77,17 @@ export const pointsVertex = /* glsl */ `
   uniform sampler2D uColor;
   uniform sampler2D uDepth;
   uniform vec4 uRect;        // centre xy, size zw (world px)
-  uniform vec4 uField;       // palette field centre xy, size zw
   uniform float uLod;        // colour mip level ~ one texel block per point
   uniform float uDepthT;     // 0..1 through the depth act
-  uniform float uPaletteT;   // 0..1 through the palette act
+  uniform float uFlyT;       // 0..1 through the fly-through
   uniform float uLift;       // depthScale * plane height
+  uniform float uScatter;    // extra depth spread for the fly-through (world px)
   uniform float uDelay;      // per-point delay share of the depth act
   uniform float uPointSize;  // device px at handoff
-  uniform float uCamDist;
+  uniform float uCamDist;    // camera distance at rest
   uniform float uShrink;
+  uniform float uMaxSize;
+  uniform vec2 uNearFade;    // dots fade between these view distances (world px)
   uniform vec3 uMouse;
   uniform vec2 uMouseVel;
   uniform float uPushSigma;
@@ -93,26 +95,24 @@ export const pointsVertex = /* glsl */ `
 
   attribute vec2 aUv;
   attribute float aRand;
-  attribute vec3 aTarget;
 
   varying vec3 vColor;
   varying float vSize;
+  varying float vFade;
 
   float ease(float t) { return t * t * (3.0 - 2.0 * t); }
 
   void main() {
-    vec3 base = vec3(uRect.xy + (aUv - 0.5) * uRect.zw, 0.0);
+    vec3 pos = vec3(uRect.xy + (aUv - 0.5) * uRect.zw, 0.0);
 
+    // Depth act: lift along +z by the estimated depth, each dot a little late.
     float depth = textureLod(uDepth, aUv, 0.0).r;
     float dt = ease(clamp((uDepthT - aRand * uDelay) / (1.0 - uDelay), 0.0, 1.0));
-    vec3 lifted = base + vec3(0.0, 0.0, depth * uLift * dt);
+    pos.z += depth * uLift * dt;
 
-    // Stagger by target column (hue), then a quadratic Bezier lifted on z.
-    float start = aTarget.z * 0.4 + aRand * 0.04;
-    float pt = ease(clamp((uPaletteT - start) / 0.56, 0.0, 1.0));
-    vec3 target = vec3(uField.xy + aTarget.xy * uField.zw, 0.0);
-    vec3 ctrl = mix(lifted, target, 0.5) + vec3(0.0, 0.0, (0.2 + aRand * 0.3) * uRect.w);
-    vec3 pos = mix(mix(lifted, ctrl, pt), mix(ctrl, target, pt), pt);
+    // Fly-through: the layers loosen into a volume so dots stream past one by one.
+    float spread = fract(aRand * 91.37 + 0.123) - 0.5;
+    pos.z += spread * uScatter * ease(clamp(uFlyT * 2.0, 0.0, 1.0));
 
     // Cursor push: a gaussian brush through wet paint, gone when the cursor stops.
     vec2 toPoint = pos.xy - uMouse.xy;
@@ -121,9 +121,11 @@ export const pointsVertex = /* glsl */ `
 
     vec4 mv = modelViewMatrix * vec4(pos, 1.0);
     gl_Position = projectionMatrix * mv;
-    float size = uPointSize * (uCamDist / -mv.z) * (1.0 - uShrink * ease(clamp(uDepthT * 1.4, 0.0, 1.0)));
-    gl_PointSize = size;
-    vSize = size;
+    float viewDist = -mv.z;
+    float size = uPointSize * (uCamDist / max(viewDist, 1.0)) * (1.0 - uShrink * ease(clamp(uDepthT * 1.4, 0.0, 1.0)));
+    gl_PointSize = min(size, uMaxSize);
+    vSize = gl_PointSize;
+    vFade = smoothstep(uNearFade.x, uNearFade.y, viewDist);
     vColor = textureLod(uColor, aUv, uLod).rgb;
   }
 `;
@@ -133,13 +135,14 @@ export const pointsFragment = /* glsl */ `
   uniform float uOpacity;
   varying vec3 vColor;
   varying float vSize;
+  varying float vFade;
   void main() {
     vec2 c = gl_PointCoord - 0.5;
     float d = mix(max(abs(c.x), abs(c.y)), length(c), uRound);
     float aa = mix(0.0, 1.0 / max(vSize, 1.0), uRound);
-    float alpha = 1.0 - smoothstep(0.5 - aa, 0.5, d);
+    float alpha = (1.0 - smoothstep(0.5 - aa, 0.5, d)) * vFade * uOpacity;
     if (alpha <= 0.0) discard;
-    gl_FragColor = vec4(vColor, alpha * uOpacity);
+    gl_FragColor = vec4(vColor, alpha);
     #include <colorspace_fragment>
   }
 `;

@@ -8,7 +8,6 @@
   --nav-h: 88px;
   position: relative;
   z-index: 1;
-  background: var(--wall);
   color: var(--ink);
 }
 
@@ -19,6 +18,23 @@
   min-height: 420px;
   overflow: hidden;
   container-type: size;
+  /* The wall lives here (not on the section) so it can fade to reveal what's underneath. */
+  background: rgb(13 13 13 / calc(1 - var(--clear, 0)));
+}
+
+.sticky[data-cleared="true"] {
+  pointer-events: none;
+}
+
+/* The section after the hero, pinned under its last stretch of scrolling. */
+.underlay {
+  position: relative;
+  z-index: 0;
+}
+
+.underlayPin {
+  position: sticky;
+  top: var(--nav-h);
 }
 
 .static .sticky {
@@ -409,6 +425,7 @@
   font-size: 13.5px;
   line-height: 1.4;
   color: var(--ink-muted);
+  opacity: calc(1 - var(--clear, 0));
 }
 
 .placardText {

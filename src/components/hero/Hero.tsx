@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { motion, useMotionValue, useMotionValueEvent, useTransform, type MotionStyle, type MotionValue } from "framer-motion";
-import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import GalleryStack from "./GalleryStack";
 import HeroTitle from "./HeroTitle";
 import styles from "./Hero.module.css";
@@ -16,7 +16,17 @@ function useScrollVar(source: MotionValue<number>, fn: (v: number) => number) {
   return useTransform(source, fn);
 }
 
-export default function Hero() {
+const smoothstep = (t: number) => t * t * (3 - 2 * t);
+
+export interface HeroProps {
+  /**
+   * What the visitor finds on the other side of the cloud. It is pinned under the
+   * end of the hero (revealed in place as the dots clear), then scrolls on normally.
+   */
+  next?: ReactNode;
+}
+
+export default function Hero({ next }: HeroProps) {
   const [tier, demote] = useHeroTier();
   const [mode, setMode] = useState<Mode>(INITIAL_MODE);
   const [displayMode, setDisplayMode] = useState<Mode>(INITIAL_MODE);
@@ -25,7 +35,9 @@ export default function Hero() {
   const [atRest, setAtRest] = useState(true);
   const [canvasWanted, setCanvasWanted] = useState(false);
   const [canvasLive, setCanvasLive] = useState(false);
+  const [cleared, setCleared] = useState(false);
 
+  const rootRef = useRef<HTMLDivElement | null>(null);
   const sectionRef = useRef<HTMLElement | null>(null);
   const stickyRef = useRef<HTMLDivElement | null>(null);
   const compRef = useRef<HTMLDivElement | null>(null);
@@ -43,11 +55,11 @@ export default function Hero() {
 
   // ---- nav height (Navigation is sticky above the hero) ---------------------
   useLayoutEffect(() => {
-    const section = sectionRef.current;
-    if (!section) return;
+    const root = rootRef.current;
+    if (!root) return;
     const update = () => {
-      const top = section.getBoundingClientRect().top + window.scrollY;
-      section.style.setProperty("--nav-h", `${Math.max(0, Math.round(top))}px`);
+      const top = root.getBoundingClientRect().top + window.scrollY;
+      root.style.setProperty("--nav-h", `${Math.max(0, Math.round(top))}px`);
     };
     update();
     window.addEventListener("resize", update);
@@ -136,6 +148,7 @@ export default function Hero() {
   const suffixRef = useRef("");
   const canvasLiveRef = useRef(false);
   canvasLiveRef.current = canvasLive;
+  const clearedRef = useRef(false);
   const countText = item.tiers[pointTier].count.toLocaleString("en-US");
   useMotionValueEvent(progress, "change", (p) => {
     const rest = p < PHASES.rest;
@@ -144,7 +157,13 @@ export default function Hero() {
       setAtRest(rest);
       if (rest) measure();
     }
-    const suffix = !canvasLiveRef.current || p < PHASES.handoffEnd ? "" : p < PHASES.depthEnd ? ` · ${countText} points` : ` · ${countText} points, sorted by hue`;
+    const suffix = !canvasLiveRef.current || p < PHASES.handoffEnd ? "" : ` · ${countText} points`;
+    // Once the wall has gone, let clicks through to the section underneath.
+    const isCleared = p > PHASES.revealEnd;
+    if (isCleared !== clearedRef.current) {
+      clearedRef.current = isCleared;
+      setCleared(isCleared);
+    }
     if (suffix !== suffixRef.current && detailSuffixRef.current) {
       suffixRef.current = suffix;
       detailSuffixRef.current.textContent = suffix;
@@ -174,7 +193,12 @@ export default function Hero() {
     return l ? 1 + (l.zoom.w / l.card.w - 1) * t : 1;
   });
   const frameO = useTransform(progress, (p) => 1 - range(p, PHASES.rest, PHASES.sideGone));
-  const posterO = useTransform([progress, canvasLiveMV], ([p, live]: number[]) => (live ? 1 - range(p, PHASES.neutralEnd + 0.01, PHASES.handoffEnd) : 1));
+  // The wall fades to reveal the next section. Never ahead of the real scroll position:
+  // the section only holds still (CSS sticky) once the raw progress passes PHASES.reveal.
+  const clear = useTransform([progress, scrollYProgress], ([p, raw]: number[]) => smoothstep(range(Math.min(p, raw), PHASES.clearStart, PHASES.revealEnd)));
+  const posterO = useTransform([progress, canvasLiveMV, clear], ([p, live, c]: number[]) =>
+    (live ? 1 - range(p, PHASES.neutralEnd + 0.01, PHASES.handoffEnd) : 1) * (1 - c),
+  );
   const plx = useTransform([progress, layoutVersion], ([p]: number[]) => (layoutRef.current?.placard.dx ?? 0) * easeInOut(range(p, PHASES.rest, PHASES.zoomEnd)));
   const ply = useTransform([progress, layoutVersion], ([p]: number[]) => (layoutRef.current?.placard.dy ?? 0) * easeInOut(range(p, PHASES.rest, PHASES.zoomEnd)));
 
@@ -222,8 +246,12 @@ export default function Hero() {
   }, []);
 
   const interactive = !pinned || atRest;
+  const heightSvh = tier === "full" ? SCROLL.heightFull : tier === "lite" ? SCROLL.heightLite : 100;
+  // How far the next section overlaps the hero: the viewport under the nav, plus the
+  // stretch of scrolling (from PHASES.reveal to the end) during which it is held in place.
+  const revealSvh = (heightSvh - 100) * (1 - PHASES.reveal);
   const sectionStyle = {
-    height: tier === "full" ? SCROLL.heightFull : tier === "lite" ? SCROLL.heightLite : undefined,
+    height: pinned ? `${heightSvh}svh` : undefined,
     "--syn-kw": SYNTAX_PALETTE.kw,
     "--syn-str": SYNTAX_PALETTE.str,
     "--syn-num": SYNTAX_PALETTE.num,
@@ -239,57 +267,68 @@ export default function Hero() {
   const otherMode: Mode = displayMode === "art" ? "code" : "art";
 
   return (
-    <section ref={sectionRef} className={`${styles.hero} ${pinned ? "" : styles.static}`} style={sectionStyle} aria-label="Aayush Sharma: art and code" data-tier={tier}>
-      <div ref={stickyRef} className={styles.sticky}>
-        <motion.div className={styles.stage} style={stageStyle}>
-          <div ref={poolRef} className={styles.pool} />
-          <div ref={compRef} className={styles.comp}>
-            <HeroTitle
-              mode={mode}
-              displayMode={displayMode}
-              selected={selected}
-              tier={tier}
-              interactive={interactive}
-              panelId="hero-gallery"
-              onSwitch={onSwitch}
-            />
-            <GalleryStack
-              mode={mode}
-              selected={selected}
-              onSelect={onSelect}
-              tier={tier}
-              interactive={interactive}
-              panelId="hero-gallery"
-              wheelTarget={stickyRef}
-              frontImageRef={frontImageRef}
-              onSettledChange={setSettled}
-              onDisplayModeChange={setDisplayMode}
-              frontStyle={frontStyle}
-              placardStyle={placardStyle}
-              placardTextRef={placardTextRef}
-              detailSuffixRef={detailSuffixRef}
-              onFrontTap={onFrontTap}
-            />
-          </div>
-          {canvasWanted && pinned && (
-            <HeroCanvas
-              tier={tier}
-              item={item}
-              prefetch={[...neighbors, GALLERY[otherMode][selected[otherMode]]]}
-              show={settled && mode === displayMode}
-              progress={progress}
-              layoutRef={layoutRef}
-              layoutVersion={layoutVersion}
-              frontImageRef={frontImageRef}
-              stickyRef={stickyRef}
-              poolRef={poolRef}
-              tapRef={tapRef}
-              onLiveChange={setCanvasLive}
-              onContextLost={demote}
-            />
-          )}
+    <div ref={rootRef}>
+      <section ref={sectionRef} className={`${styles.hero} ${pinned ? "" : styles.static}`} style={sectionStyle} aria-label="Aayush Sharma: art and code" data-tier={tier}>
+        <motion.div ref={stickyRef} className={styles.sticky} style={{ "--clear": clear } as MotionStyle} data-cleared={cleared}>
+          <motion.div className={styles.stage} style={stageStyle}>
+            <div ref={poolRef} className={styles.pool} />
+            <div ref={compRef} className={styles.comp}>
+              <HeroTitle
+                mode={mode}
+                displayMode={displayMode}
+                selected={selected}
+                tier={tier}
+                interactive={interactive}
+                panelId="hero-gallery"
+                onSwitch={onSwitch}
+              />
+              <GalleryStack
+                mode={mode}
+                selected={selected}
+                onSelect={onSelect}
+                tier={tier}
+                interactive={interactive}
+                panelId="hero-gallery"
+                wheelTarget={stickyRef}
+                frontImageRef={frontImageRef}
+                onSettledChange={setSettled}
+                onDisplayModeChange={setDisplayMode}
+                frontStyle={frontStyle}
+                placardStyle={placardStyle}
+                placardTextRef={placardTextRef}
+                detailSuffixRef={detailSuffixRef}
+                onFrontTap={onFrontTap}
+              />
+            </div>
+            {canvasWanted && pinned && (
+              <HeroCanvas
+                tier={tier}
+                item={item}
+                prefetch={[...neighbors, GALLERY[otherMode][selected[otherMode]]]}
+                show={settled && mode === displayMode}
+                progress={progress}
+                layoutRef={layoutRef}
+                layoutVersion={layoutVersion}
+                frontImageRef={frontImageRef}
+                stickyRef={stickyRef}
+                poolRef={poolRef}
+                tapRef={tapRef}
+                onLiveChange={setCanvasLive}
+                onContextLost={demote}
+              />
+            )}
+          </motion.div>
         </motion.div>
-      </div>
-    </section>
+      </section>
+      {next && (
+        <div
+          className={pinned ? styles.underlay : undefined}
+          style={pinned ? { marginTop: `calc(-1 * (100svh - var(--nav-h)) - ${revealSvh}svh)` } : undefined}
+        >
+          <div className={pinned ? styles.underlayPin : undefined}>{next}</div>
+          {pinned && <div style={{ height: `${revealSvh}svh` }} aria-hidden="true" />}
+        </div>
+      )}
+    </div>
   );
 }

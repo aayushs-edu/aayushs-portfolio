@@ -1193,8 +1193,7 @@ function GameDesignerSection() {
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-[#020202] text-white overflow-x-clip">
-      <Hero />
-      <PainterSection />
+      <Hero next={<PainterSection />} />
       <AIEngineerSection />
       <AnimatorSection />
       <GameDesignerSection />

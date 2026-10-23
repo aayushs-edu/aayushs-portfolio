@@ -47,9 +47,11 @@ export interface FrameState {
   planeAlpha: number;
   pointsAlpha: number;
   depthT: number;
-  paletteT: number;
+  /** 0..1 through the fly-through */
+  flyT: number;
   round: number;
-  dim: number;
+  /** Remaining opacity of the cloud (clears at the end of the fly-through). */
+  cloud: number;
   light: THREE.Vector3;
   lightRamp: number;
   pointerWorld: THREE.Vector3;
@@ -70,9 +72,9 @@ function createFrameState(): FrameState {
     planeAlpha: 1,
     pointsAlpha: 0,
     depthT: 0,
-    paletteT: 0,
+    flyT: 0,
     round: 0,
-    dim: 1,
+    cloud: 1,
     light: new THREE.Vector3(),
     lightRamp: 0,
     pointerWorld: new THREE.Vector3(1e6, 1e6, 0),
@@ -218,16 +220,15 @@ function Director({ tier, item, frame, progress, layoutRef, restRect, pointer, t
     s.pointsAlpha = smooth(range(p, PHASES.neutralEnd, PHASES.neutralEnd + 0.02));
     s.planeAlpha = 1 - range(p, PHASES.neutralEnd + 0.02, PHASES.handoffEnd);
     s.depthT = range(p, PHASES.handoffEnd, PHASES.depthEnd);
-    s.paletteT = range(p, PHASES.depthEnd, PHASES.paletteEnd);
+    s.flyT = range(p, PHASES.depthEnd, PHASES.flyEnd);
     s.round = smooth(range(p, PHASES.handoffEnd, PHASES.handoffEnd + 0.05));
-    s.dim = 1 - range(p, PHASES.dimStart, 1);
+    s.cloud = 1 - smooth(range(p, PHASES.flyEnd - 0.08, PHASES.flyEnd));
 
-    // Camera: frontal at rest (1 world unit = 1 CSS px on z = 0), yaw + dolly in the depth act.
-    const turn = smooth(s.depthT) * (1 - smooth(s.paletteT));
-    const yaw = ((POINTS.yawDeg * Math.PI) / 180) * turn;
-    const d = s.dist * (1 - POINTS.dolly * turn);
-    camera.position.set(Math.sin(yaw) * d, 0, Math.cos(yaw) * d);
-    camera.lookAt(0, 0, 0);
+    // Camera: head-on throughout (1 world unit = 1 CSS px on z = 0 at rest). In the
+    // fly-through it accelerates straight in, through the cloud and past the image plane.
+    const push = s.flyT ** 1.6;
+    camera.position.set(0, 0, s.dist * (1 + (POINTS.flyTo - 1) * push));
+    camera.rotation.set(0, 0, 0);
     if (lastSize.current.w !== W || lastSize.current.h !== H || camera.fov !== FOV) {
       camera.fov = FOV;
       camera.near = s.dist * 0.02;
@@ -533,7 +534,7 @@ export default function HeroCanvas({
         <Lights frame={frame} relief={item.tuning.relief} />
         {mounted && <FrontCard key={key} item={item} textures={textures} frame={frame} onRendered={onRendered} />}
         {mounted && (
-          <ImagePoints key={`${key}-${pointTier}`} item={item} textures={textures} pointTier={pointTier} push={tier === "full"} settled={show} frame={frame} />
+          <ImagePoints key={`${key}-${pointTier}`} item={item} textures={textures} pointTier={pointTier} push={tier === "full"} frame={frame} />
         )}
       </Canvas>
     </div>

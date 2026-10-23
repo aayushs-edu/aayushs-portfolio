@@ -37,7 +37,7 @@ const DEPTH_CACHE = path.join(ROOT, "scripts/hero/.cache/depth");
 const MODES = ["art", "code"];
 const CODE_REQUIRED = ["slug", "title", "stack", "src", "href"];
 const RELIEF_DEFAULT = { art: true, code: false };
-const TUNING_KEYS = ["depthScale", "normalStrength", "lightRest", "neutralChroma", "relief"];
+const TUNING_KEYS = ["depthScale", "normalStrength", "lightRest", "relief"];
 const HEIGHT_LONG_SIDE = 512;
 /** Normal-map encodings tried in order until the item fits its byte budget. */
 const NORMAL_LADDER = [
