@@ -42,10 +42,11 @@ const nextConfig: NextConfig = {
             key: 'Permissions-Policy',
             value: 'accelerometer=*, gyroscope=*, magnetometer=*, xr-spatial-tracking=*',
           },
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
-          },
+          // Production only: under `next dev` chunk URLs don't change between edits,
+          // so a year-long immutable cache pins stale JavaScript in the browser.
+          ...(process.env.NODE_ENV === 'production'
+            ? [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }]
+            : []),
         ],
       },
       {
