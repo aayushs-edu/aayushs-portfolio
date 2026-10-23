@@ -10,6 +10,7 @@ import {
   CARD_SPRING,
   GALLERY,
   MODE_LABEL,
+  MOUNT,
   SWITCH,
   circularOffset,
   collapsedSlot,
@@ -52,7 +53,8 @@ export interface GalleryStackProps {
 }
 
 function frameVars(item: GalleryItem): CSSVars {
-  return { "--w": item.frame.w, "--h": item.frame.h, "--iw": item.frame.imgW, "--ih": item.frame.imgH };
+  const f = item.frame;
+  return { "--w": f.w, "--h": f.h, "--iw": f.imgW, "--ih": f.imgH, "--inset": f.inset, "--r": f.radius, "--ir": f.innerRadius, "--edge": MOUNT[item.mode].edge };
 }
 
 // ---------------------------------------------------------------------------
@@ -133,6 +135,7 @@ function Card({ item, d, phase, tier, interactive, mountedDuringSpread, priority
       className={styles.card}
       style={style}
       data-front={isFront}
+      data-kind={item.mode}
       data-hoverable={interactive && Math.abs(d) <= 2 && !isFront}
       aria-label={itemLabel(item)}
       aria-current={isFront ? "true" : undefined}
@@ -171,7 +174,7 @@ function Flipper({ from, to, onDone }: { from: GalleryItem; to: GalleryItem; onD
     return () => controls.stop();
   }, [flip]);
   const face = (item: GalleryItem, back: boolean) => (
-    <span className={`${styles.face} ${back ? styles.faceBack : ""}`} style={frameVars(item)}>
+    <span className={`${styles.face} ${back ? styles.faceBack : ""}`} style={frameVars(item)} data-kind={item.mode}>
       <span className={styles.frame} />
       <span className={styles.image}>
         <Image src={item.assets.color} alt="" fill sizes={SIZES} draggable={false} />

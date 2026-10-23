@@ -379,26 +379,82 @@
   }
 }
 
+/* The mount: a screen bezel for projects, nothing but a canvas edge for paintings.
+   Its shadow sits it on the wall; both fade out as the zoom begins. */
 .frame {
   position: absolute;
   inset: 0;
-  border-radius: calc(33 * var(--u));
-  background: var(--card);
+  border-radius: calc(var(--r, 0) * var(--u));
   opacity: var(--frame-o, 1);
+  box-shadow:
+    0 calc(18 * var(--u)) calc(40 * var(--u)) calc(-10 * var(--u)) rgb(0 0 0 / 0.65),
+    0 calc(4 * var(--u)) calc(10 * var(--u)) rgb(0 0 0 / 0.5);
+}
+
+/* Stretched canvas seen a touch from the left and above: a sliver of its
+   right and bottom sides. */
+[data-kind="art"] > .lift > .frame::before,
+[data-kind="art"] > .frame::before,
+[data-kind="art"] > .lift > .frame::after,
+[data-kind="art"] > .frame::after {
+  content: "";
+  position: absolute;
+  background: linear-gradient(var(--edge-dir), #2b2722, #191714);
+}
+
+[data-kind="art"] > .lift > .frame::after,
+[data-kind="art"] > .frame::after {
+  --edge-dir: to right;
+  top: calc(var(--edge) * 0.5 * var(--u));
+  bottom: calc(var(--edge) * -1 * var(--u));
+  right: calc(var(--edge) * -1 * var(--u));
+  width: calc(var(--edge) * var(--u));
+  clip-path: polygon(0 0, 100% calc(var(--edge) * 0.5 * var(--u)), 100% 100%, 0 100%);
+}
+
+[data-kind="art"] > .lift > .frame::before,
+[data-kind="art"] > .frame::before {
+  --edge-dir: to bottom;
+  left: calc(var(--edge) * 0.5 * var(--u));
+  right: 0;
+  bottom: calc(var(--edge) * -1 * var(--u));
+  height: calc(var(--edge) * var(--u));
+  clip-path: polygon(0 0, 100% 0, 100% 100%, calc(var(--edge) * 0.5 * var(--u)) 100%);
+}
+
+/* Screen bezel: near-black with a faint rim so it holds its edge on the dark wall. */
+[data-kind="code"] > .lift > .frame,
+[data-kind="code"] > .frame {
+  background: #141414;
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 0.07),
+    0 calc(18 * var(--u)) calc(40 * var(--u)) calc(-10 * var(--u)) rgb(0 0 0 / 0.65),
+    0 calc(4 * var(--u)) calc(10 * var(--u)) rgb(0 0 0 / 0.5);
 }
 
 .image {
   position: absolute;
-  left: calc(44 * var(--u));
-  top: calc(33 * var(--u));
+  left: calc(var(--inset, 0) * var(--u));
+  top: calc(var(--inset, 0) * var(--u));
   width: calc(var(--iw) * var(--u));
   height: calc(var(--ih) * var(--u));
-  border-radius: calc(33 * var(--u) * (1 - var(--zoom-t, 0)));
+  border-radius: calc(var(--ir, 0) * var(--u) * (1 - var(--zoom-t, 0)));
   overflow: hidden;
   background: var(--card);
   transform: translate3d(calc(var(--zx, 0) * 1px), calc(var(--zy, 0) * 1px), 0) scale(var(--zs, 1));
   transform-origin: 50% 50%;
   opacity: var(--poster-o, 1);
+}
+
+/* Where the screen meets the bezel. */
+[data-kind="code"] > .lift > .image::after,
+[data-kind="code"] > .image::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.08);
+  pointer-events: none;
 }
 
 .image img {

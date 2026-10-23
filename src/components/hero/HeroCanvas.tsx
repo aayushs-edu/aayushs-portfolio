@@ -8,7 +8,7 @@ import FrontCard from "./FrontCard";
 import ImagePoints from "./ImagePoints";
 import styles from "./Hero.module.css";
 import { zoomAmount, type HeroLayout, type Rect } from "./heroLayout";
-import { DESIGN, DPR, FRONT, PHASES, POINTS, type GalleryItem, type Tier } from "./heroConfig";
+import { DPR, FRONT, PHASES, POINTS, type GalleryItem, type Tier } from "./heroConfig";
 
 export interface HeroCanvasProps {
   tier: Tier;
@@ -184,7 +184,7 @@ function Director({ tier, frame, progress, layoutRef, restRect, pointer }: Direc
     s.rect.y = H / 2 - cy;
     s.rect.w = w;
     s.rect.h = h;
-    s.rect.radius = DESIGN.radius * layout.u * (1 - t) * (w / card.w);
+    s.rect.radius = layout.cardRadius * (1 - t) * (w / card.w);
 
     // Acts.
     s.pointsAlpha = smooth(range(p, PHASES.neutralEnd, PHASES.neutralEnd + 0.02));

@@ -16,6 +16,8 @@ export interface HeroLayout {
   u: number;
   /** Front card's inner image at rest */
   card: Rect;
+  /** Its corner radius (CSS px) */
+  cardRadius: number;
   /** Where the zoom act ends */
   zoom: Rect;
   /** Placard text offset to the bottom-left gutter */
@@ -69,5 +71,5 @@ export function measureLayout(sticky: HTMLElement, comp: HTMLElement, item: Gall
   const placard = placardRest
     ? { dx: gutter - (placardRest.left - stickyRect.left), dy: H - gutter - placardRest.height - (placardRest.top - stickyRect.top) }
     : { dx: 0, dy: 0 };
-  return { W, H, u, card, zoom: { cx: W / 2, cy: H / 2, w, h }, placard };
+  return { W, H, u, card, cardRadius: item.frame.innerRadius * u, zoom: { cx: W / 2, cy: H / 2, w, h }, placard };
 }

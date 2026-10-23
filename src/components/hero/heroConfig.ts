@@ -35,9 +35,8 @@ export const DESIGN = {
   titleBox: { x: 0, y: -40, w: 1414, h: 560 },
   /** Centre of the card stack. The front frame's top sits ~45px under "Sharma". */
   stackCy: 896,
-  imageBox: { w: 926, h: 689 },
-  inset: { x: 44, y: 33 },
-  radius: 33,
+  /** Every card fits inside this box (the Figma front frame). */
+  cardBox: { w: 1013, h: 754 },
   /** Half the nominal front frame width (1013 / 2). Side slots are measured from this edge. */
   frontHalfW: 506.5,
   gutter: 48,
@@ -52,15 +51,31 @@ export interface CardFrame {
   /** Image size inside the frame */
   imgW: number;
   imgH: number;
+  /** Bezel width, outer and inner corner radius (design px) */
+  inset: number;
+  radius: number;
+  innerRadius: number;
 }
 
-/** The image is contained in the 926×689 box; the frame adds the 44/33 insets. */
-export function frameFor(aspect: number): CardFrame {
-  const { imageBox, inset } = DESIGN;
-  const boxAspect = imageBox.w / imageBox.h;
-  const imgW = aspect >= boxAspect ? imageBox.w : imageBox.h * aspect;
-  const imgH = aspect >= boxAspect ? imageBox.w / aspect : imageBox.h;
-  return { w: imgW + inset.x * 2, h: imgH + inset.y * 2, imgW, imgH };
+/**
+ * How each side of a card is mounted (design px). Paintings hang as stretched
+ * canvas: square corners, no frame, a sliver of canvas edge for depth. Project
+ * screenshots sit in a slim screen bezel whose inner corner follows the outer one.
+ */
+export const MOUNT = {
+  art: { bezel: 0, radius: 0, edge: 7 },
+  code: { bezel: 14, radius: 18, edge: 0 },
+} as const;
+
+/** The card fits the card box; the image fills it, less the bezel. */
+export function frameFor(aspect: number, mode: Mode): CardFrame {
+  const { cardBox } = DESIGN;
+  const { bezel, radius } = MOUNT[mode];
+  const boxW = cardBox.w - bezel * 2;
+  const boxH = cardBox.h - bezel * 2;
+  const imgW = aspect >= boxW / boxH ? boxW : boxH * aspect;
+  const imgH = aspect >= boxW / boxH ? boxW / aspect : boxH;
+  return { w: imgW + bezel * 2, h: imgH + bezel * 2, imgW, imgH, inset: bezel, radius, innerRadius: Math.max(0, radius - bezel) };
 }
 
 // ---------------------------------------------------------------------------
@@ -372,7 +387,7 @@ function buildItems(mode: Mode): GalleryItem[] {
       tiers: gen.tiers,
       assets: gen.assets,
       tuning: { ...TUNING_DEFAULTS[mode], ...item.tuning },
-      frame: frameFor(gen.aspect),
+      frame: frameFor(gen.aspect, mode),
     };
   });
 }
