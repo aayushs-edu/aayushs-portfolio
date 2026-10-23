@@ -9,36 +9,7 @@ const roundedRect = /* glsl */ `
 `;
 
 // ---------------------------------------------------------------------------
-// Relief plane: injected into MeshPhysicalMaterial via onBeforeCompile.
-
-export const reliefVertexPars = /* glsl */ `
-  varying vec2 vHeroUv;
-`;
-
-export const reliefVertexMain = /* glsl */ `
-  vHeroUv = uv;
-`;
-
-export const reliefFragmentPars = /* glsl */ `
-  uniform vec2 uSize;
-  uniform float uRadius;
-  uniform float uFlat;
-  uniform float uAlpha;
-  varying vec2 vHeroUv;
-  ${roundedRect}
-`;
-
-/** Replaces #include <opaque_fragment>: neutral-light handoff plus the rounded clip. */
-export const reliefFragmentOutput = /* glsl */ `
-  outgoingLight = mix(outgoingLight, diffuseColor.rgb, uFlat);
-  float heroSd = heroRoundedRect((vHeroUv - 0.5) * uSize, 0.5 * uSize, uRadius);
-  float heroAa = max(fwidth(heroSd), 1e-3);
-  diffuseColor.a *= (1.0 - smoothstep(-heroAa, heroAa, heroSd)) * uAlpha;
-  #include <opaque_fragment>
-`;
-
-// ---------------------------------------------------------------------------
-// Flat plane (screenshots): unlit image, soft screen sheen, same rounded clip.
+// Front image plane: the unlit image with the card's rounded clip.
 
 export const flatVertex = /* glsl */ `
   varying vec2 vUv;
@@ -52,20 +23,14 @@ export const flatFragment = /* glsl */ `
   uniform sampler2D uMap;
   uniform vec2 uSize;
   uniform float uRadius;
-  uniform vec2 uSheen;
-  uniform float uSheenAmount;
-  uniform vec3 uSheenColor;
   uniform float uAlpha;
   varying vec2 vUv;
   ${roundedRect}
   void main() {
     vec4 tex = texture2D(uMap, vUv);
-    vec2 d = (vUv - uSheen) * vec2(uSize.x / uSize.y, 1.0);
-    float sheen = exp(-dot(d, d) / (2.0 * 0.22 * 0.22)) * uSheenAmount;
-    vec3 color = tex.rgb + uSheenColor * sheen * 0.22;
     float sd = heroRoundedRect((vUv - 0.5) * uSize, 0.5 * uSize, uRadius);
     float aa = max(fwidth(sd), 1e-3);
-    gl_FragColor = vec4(color, (1.0 - smoothstep(-aa, aa, sd)) * uAlpha);
+    gl_FragColor = vec4(tex.rgb, (1.0 - smoothstep(-aa, aa, sd)) * uAlpha);
     #include <colorspace_fragment>
   }
 `;

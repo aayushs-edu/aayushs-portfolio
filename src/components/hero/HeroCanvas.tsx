@@ -8,7 +8,7 @@ import FrontCard from "./FrontCard";
 import ImagePoints from "./ImagePoints";
 import styles from "./Hero.module.css";
 import { zoomAmount, type HeroLayout, type Rect } from "./heroLayout";
-import { DESIGN, DPR, LIGHT, PHASES, POINTS, type GalleryItem, type Tier } from "./heroConfig";
+import { DESIGN, DPR, FRONT, PHASES, POINTS, type GalleryItem, type Tier } from "./heroConfig";
 
 export interface HeroCanvasProps {
   tier: Tier;
@@ -21,8 +21,6 @@ export interface HeroCanvasProps {
   layoutVersion: MotionValue<number>;
   frontImageRef: RefObject<HTMLElement | null>;
   stickyRef: RefObject<HTMLDivElement | null>;
-  poolRef: RefObject<HTMLDivElement | null>;
-  tapRef: RefObject<{ x: number; y: number; t: number } | null>;
   onLiveChange: (live: boolean) => void;
   onContextLost: () => void;
 }
@@ -30,8 +28,6 @@ export interface HeroCanvasProps {
 export interface ItemTextures {
   color: THREE.Texture;
   depth: THREE.Texture;
-  normal?: THREE.Texture;
-  height?: THREE.Texture;
 }
 
 /** Everything the per-frame components read, written once per frame by the Director. */
@@ -43,7 +39,6 @@ export interface FrameState {
   zoomT: number;
   /** Image plane in world px (centre and size) plus its corner radius. */
   rect: { x: number; y: number; w: number; h: number; radius: number };
-  flat: number;
   planeAlpha: number;
   pointsAlpha: number;
   depthT: number;
@@ -52,12 +47,9 @@ export interface FrameState {
   round: number;
   /** Remaining opacity of the cloud (clears at the end of the fly-through). */
   cloud: number;
-  light: THREE.Vector3;
-  lightRamp: number;
   pointerWorld: THREE.Vector3;
   pointerVel: THREE.Vector2;
   tilt: THREE.Vector2;
-  sheenUv: THREE.Vector2;
 }
 
 function createFrameState(): FrameState {
@@ -68,19 +60,15 @@ function createFrameState(): FrameState {
     p: 0,
     zoomT: 0,
     rect: { x: 0, y: 0, w: 1, h: 1, radius: 0 },
-    flat: 0,
     planeAlpha: 1,
     pointsAlpha: 0,
     depthT: 0,
     flyT: 0,
     round: 0,
     cloud: 1,
-    light: new THREE.Vector3(),
-    lightRamp: 0,
     pointerWorld: new THREE.Vector3(1e6, 1e6, 0),
     pointerVel: new THREE.Vector2(),
     tilt: new THREE.Vector2(),
-    sheenUv: new THREE.Vector2(0.3, 0.75),
   };
 }
 
@@ -114,14 +102,8 @@ class TextureCache {
     const existing = this.entries.get(key);
     if (existing) return existing.promise;
     const { assets } = item;
-    const wantRelief = item.tuning.relief && !!assets.normal;
-    const promise = Promise.all([
-      this.loadOne(assets.color, true),
-      this.loadOne(assets.depth, false),
-      wantRelief && assets.normal ? this.loadOne(assets.normal, false) : Promise.resolve(undefined),
-      wantRelief && assets.height ? this.loadOne(assets.height, false) : Promise.resolve(undefined),
-    ]).then(([color, depth, normal, height]) => {
-      const textures: ItemTextures = { color, depth, normal, height };
+    const promise = Promise.all([this.loadOne(assets.color, true), this.loadOne(assets.depth, false)]).then(([color, depth]) => {
+      const textures: ItemTextures = { color, depth };
       const entry = this.entries.get(key);
       if (entry) entry.textures = textures;
       else Object.values(textures).forEach((t) => t?.dispose());
@@ -160,30 +142,20 @@ class TextureCache {
 
 interface DirectorProps {
   tier: Tier;
-  item: GalleryItem;
   frame: RefObject<FrameState>;
   progress: MotionValue<number>;
   layoutRef: RefObject<HeroLayout | null>;
   restRect: RefObject<Rect | null>;
   pointer: RefObject<{ x: number; y: number; inside: boolean; t: number }>;
-  tapRef: RefObject<{ x: number; y: number; t: number } | null>;
-  poolRef: RefObject<HTMLDivElement | null>;
-  live: boolean;
 }
 
-/** Writes FrameState once per frame: phases, plane rect, camera, light, pointer. */
-function Director({ tier, item, frame, progress, layoutRef, restRect, pointer, tapRef, poolRef, live }: DirectorProps) {
+/** Writes FrameState once per frame: phases, plane rect, camera, pointer. */
+function Director({ tier, frame, progress, layoutRef, restRect, pointer }: DirectorProps) {
   const camera = useThree((state) => state.camera) as THREE.PerspectiveCamera;
   const ndc = useMemo(() => new THREE.Vector3(), []);
   const dir = useMemo(() => new THREE.Vector3(), []);
   const hit = useMemo(() => new THREE.Vector3(), []);
   const lastPointer = useMemo(() => new THREE.Vector3(1e6, 1e6, 0), []);
-  const lightTarget = useMemo(() => new THREE.Vector3(), []);
-  const started = useRef(0);
-  const wasLive = useRef(false);
-  const shownOnce = useRef(false);
-  const rampFrom = useRef(-1);
-  const rampLength = useRef(LIGHT.rampMs / 1000);
   const lastSize = useRef({ w: 0, h: 0, fov: 0 });
 
   useFrame((state, delta) => {
@@ -214,9 +186,7 @@ function Director({ tier, item, frame, progress, layoutRef, restRect, pointer, t
     s.rect.h = h;
     s.rect.radius = DESIGN.radius * layout.u * (1 - t) * (w / card.w);
 
-    // Acts. The plane starts neutral (identical to the DOM poster) and eases into
-    // gallery lighting as the light ramps up, so the fade-in never dims with a pop.
-    s.flat = Math.max(smooth(range(p, PHASES.zoomEnd, PHASES.neutralEnd)), 1 - smooth(s.lightRamp));
+    // Acts.
     s.pointsAlpha = smooth(range(p, PHASES.neutralEnd, PHASES.neutralEnd + 0.02));
     s.planeAlpha = 1 - range(p, PHASES.neutralEnd + 0.02, PHASES.handoffEnd);
     s.depthT = range(p, PHASES.handoffEnd, PHASES.depthEnd);
@@ -260,94 +230,16 @@ function Director({ tier, item, frame, progress, layoutRef, restRect, pointer, t
       lastPointer.set(1e6, 1e6, 0);
     }
 
-    // Light: follows the cursor across the painting (full tier), else rests and drifts.
-    const time = state.clock.elapsedTime;
-    const rest = item.tuning.lightRest;
-    const driftX = Math.sin((2 * Math.PI * time) / LIGHT.driftPeriodS) * LIGHT.driftAmp;
-    const driftY = Math.sin((2 * Math.PI * time) / (LIGHT.driftPeriodS * 1.31) + 1.2) * LIGHT.driftAmp;
-    let restX = rest[0];
-    let restY = rest[1];
-    const tap = tapRef.current;
-    if (tier === "lite" && tap) {
-      restX = clamp01((tap.x - (cx - w / 2)) / w);
-      restY = clamp01((tap.y - (cy - h / 2)) / h);
-    }
-    const restWorld = { x: s.rect.x + (restX + driftX - 0.5) * w, y: s.rect.y + (0.5 - restY - driftY) * h };
-    if (tier === "full" && target && p < PHASES.zoomEnd) {
-      const mx = w * 0.15;
-      const my = h * 0.15;
-      lightTarget.set(
-        Math.min(s.rect.x + w / 2 + mx, Math.max(s.rect.x - w / 2 - mx, target.x)),
-        Math.min(s.rect.y + h / 2 + my, Math.max(s.rect.y - h / 2 - my, target.y)),
-        0,
-      );
-    } else {
-      lightTarget.set(restWorld.x, restWorld.y, 0);
-    }
-    const follow = 1 - Math.exp(-LIGHT.follow * dt);
-    if (!started.current) s.light.copy(lightTarget);
-    s.light.lerp(lightTarget, follow);
-
-    // The light ramps up on first show (1.2s) and again, quicker, each time the canvas returns.
-    if (live && !wasLive.current) {
-      rampFrom.current = time;
-      rampLength.current = shownOnce.current ? 0.5 : LIGHT.rampMs / 1000;
-      shownOnce.current = true;
-    }
-    wasLive.current = live;
-    s.lightRamp = live && rampFrom.current >= 0 ? clamp01((time - rampFrom.current) / rampLength.current) : 0;
-    if (!started.current && live) started.current = time;
-
-    // Flat cards tilt toward the cursor; the sheen sits where the light is.
+    // Project screenshots tilt toward the cursor (full tier, at rest).
+    const follow = 1 - Math.exp(-FRONT.follow * dt);
     const tiltTarget = tier === "full" && target && p < PHASES.rest ? [clamp01((target.x - s.rect.x) / w + 0.5) * 2 - 1, clamp01((target.y - s.rect.y) / h + 0.5) * 2 - 1] : [0, 0];
     s.tilt.set(s.tilt.x + (tiltTarget[0] - s.tilt.x) * follow, s.tilt.y + (tiltTarget[1] - s.tilt.y) * follow);
-    s.sheenUv.set((s.light.x - s.rect.x) / w + 0.5, (s.light.y - s.rect.y) / h + 0.5);
-
-    // The wall pool (DOM, behind the cards) follows the light.
-    const pool = poolRef.current;
-    if (pool) {
-      pool.style.setProperty("--pool-x", `${(s.light.x + W / 2).toFixed(1)}px`);
-      pool.style.setProperty("--pool-y", `${(H / 2 - s.light.y).toFixed(1)}px`);
-      pool.style.setProperty("--pool-o", (s.lightRamp * (1 - s.zoomT)).toFixed(3));
-    }
   }, -1);
 
   return null;
 }
 
 // ---------------------------------------------------------------------------
-
-function Lights({ frame, relief }: { frame: RefObject<FrameState>; relief: boolean }) {
-  const spot = useMemo(() => {
-    const light = new THREE.SpotLight(LIGHT.color, 0, 0, (LIGHT.angleDeg * Math.PI) / 180, LIGHT.penumbra, 0);
-    return light;
-  }, []);
-  const hemi = useMemo(() => new THREE.HemisphereLight("#fff4e6", "#2a2622", 1.1), []);
-  useEffect(() => () => {
-    spot.dispose();
-    hemi.dispose();
-  }, [spot, hemi]);
-
-  useFrame(() => {
-    const s = frame.current;
-    if (!s) return;
-    const h = s.rect.h;
-    // Grazing: up-left of the lit point, low over the canvas.
-    spot.position.set(s.light.x - h * 0.3, s.light.y + h * 0.32, h * LIGHT.heightOfPlane);
-    spot.target.position.copy(s.light);
-    spot.target.updateMatrixWorld();
-    spot.intensity = relief ? 4.2 * s.lightRamp : 0;
-    hemi.intensity = 1.1;
-  });
-
-  return (
-    <>
-      <primitive object={spot} />
-      <primitive object={spot.target} />
-      <primitive object={hemi} />
-    </>
-  );
-}
 
 function Renderer({ cache, onLost }: { cache: TextureCache; onLost: () => void }) {
   const gl = useThree((state) => state.gl);
@@ -384,8 +276,6 @@ export default function HeroCanvas({
   layoutVersion,
   frontImageRef,
   stickyRef,
-  poolRef,
-  tapRef,
   onLiveChange,
   onContextLost,
 }: HeroCanvasProps) {
@@ -484,14 +374,6 @@ export default function HeroCanvas({
     };
   }, [stickyRef]);
 
-  // Wall tint follows the selected item (CSS transitions it over 600ms).
-  useEffect(() => {
-    const pool = poolRef.current;
-    if (!pool) return;
-    const tint = new THREE.Color(LIGHT.color).lerp(new THREE.Color(item.avgColor), 0.55);
-    pool.style.setProperty("--pool-tint", `rgb(${Math.round(tint.r * 255)} ${Math.round(tint.g * 255)} ${Math.round(tint.b * 255)} / 0.075)`);
-  }, [item, poolRef]);
-
   const textures = loaded && loaded.key === key ? loaded.textures : null;
   // WebGL objects for an item are built once the selection settles and kept while it stays selected.
   const [mountedKey, setMountedKey] = useState<string | null>(null);
@@ -521,17 +403,12 @@ export default function HeroCanvas({
         <Renderer cache={cache} onLost={onContextLost} />
         <Director
           tier={tier}
-          item={item}
           frame={frame}
           progress={progress}
           layoutRef={layoutRef}
           restRect={restRect}
           pointer={pointer}
-          tapRef={tapRef}
-          poolRef={poolRef}
-          live={visible}
         />
-        <Lights frame={frame} relief={item.tuning.relief} />
         {mounted && <FrontCard key={key} item={item} textures={textures} frame={frame} onRendered={onRendered} />}
         {mounted && (
           <ImagePoints key={`${key}-${pointTier}`} item={item} textures={textures} pointTier={pointTier} push={tier === "full"} frame={frame} />

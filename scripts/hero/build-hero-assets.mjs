@@ -20,7 +20,6 @@ import {
   MAX_ZOOM_DIVISOR,
   PAINT_WIDTH,
   POINT_BUDGETS,
-  RELIEF_LONG_SIDE,
   STACK_MAX_CHARS,
 } from "../../src/components/hero/heroPipeline.ts";
 
@@ -36,20 +35,7 @@ const DEPTH_CACHE = path.join(ROOT, "scripts/hero/.cache/depth");
 
 const MODES = ["art", "code"];
 const CODE_REQUIRED = ["slug", "title", "stack", "src", "href"];
-const RELIEF_DEFAULT = { art: true, code: false };
-const TUNING_KEYS = ["depthScale", "normalStrength", "lightRest", "relief"];
-const HEIGHT_LONG_SIDE = 512;
-/** Normal-map encodings tried in order until the item fits its byte budget. */
-const NORMAL_LADDER = [
-  [1, 86],
-  [1, 78],
-  [1, 70],
-  [0.875, 70],
-  [0.75, 70],
-  [0.75, 60],
-  [0.625, 60],
-];
-
+const TUNING_KEYS = ["depthScale"];
 function fail(message) {
   console.error(`build-hero-assets: ${message}`);
   process.exit(1);
@@ -205,75 +191,6 @@ function gridForBudget(budget, aspect, maxW, maxH) {
   return { gw, gh, count: gw * gh };
 }
 
-/** Normal + height maps from the luminance high-pass (luma minus a 6px Gaussian blur). */
-async function reliefMaps(sourcePath, width, height, byteAllowance) {
-  const { data } = await sharp(sourcePath)
-    .rotate()
-    .resize({ width, height, fit: "fill" })
-    .removeAlpha()
-    .toColorspace("srgb")
-    .raw()
-    .toBuffer({ resolveWithObject: true });
-  const n = width * height;
-  const luma = Buffer.alloc(n);
-  for (let i = 0; i < n; i++) {
-    luma[i] = Math.round(0.2126 * data[i * 3] + 0.7152 * data[i * 3 + 1] + 0.0722 * data[i * 3 + 2]);
-  }
-  // extractChannel: sharp hands single-channel raw input back as 3 channels otherwise.
-  const blurred = await sharp(luma, { raw: { width, height, channels: 1 } }).blur(6).extractChannel(0).raw().toBuffer();
-  const hp = new Float32Array(n);
-  let sum2 = 0;
-  for (let i = 0; i < n; i++) {
-    hp[i] = (luma[i] - blurred[i]) / 255;
-    sum2 += hp[i] * hp[i];
-  }
-  const std = Math.sqrt(sum2 / n) || 1e-3;
-
-  const heightBuf = Buffer.alloc(n);
-  for (let i = 0; i < n; i++) heightBuf[i] = Math.round(Math.min(1, Math.max(0, 0.5 + hp[i] / (6 * std))) * 255);
-
-  // Sobel on the high-pass; tangent-space normal, +Y up (three.js / OpenGL convention).
-  const at = (x, y) => hp[Math.min(height - 1, Math.max(0, y)) * width + Math.min(width - 1, Math.max(0, x))];
-  const gx = new Float32Array(n);
-  const gy = new Float32Array(n);
-  let g2 = 0;
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
-      const i = y * width + x;
-      gx[i] = at(x + 1, y - 1) + 2 * at(x + 1, y) + at(x + 1, y + 1) - at(x - 1, y - 1) - 2 * at(x - 1, y) - at(x - 1, y + 1);
-      gy[i] = at(x - 1, y + 1) + 2 * at(x, y + 1) + at(x + 1, y + 1) - at(x - 1, y - 1) - 2 * at(x, y - 1) - at(x + 1, y - 1);
-      g2 += gx[i] * gx[i] + gy[i] * gy[i];
-    }
-  }
-  const scale = 0.5 / (Math.sqrt(g2 / n) || 1e-3);
-  const normalBuf = Buffer.alloc(n * 3);
-  for (let i = 0; i < n; i++) {
-    const nx = -gx[i] * scale;
-    const ny = gy[i] * scale; // image y points down, normal-map green points up
-    const len = Math.hypot(nx, ny, 1);
-    normalBuf[i * 3] = Math.round((nx / len) * 127.5 + 127.5);
-    normalBuf[i * 3 + 1] = Math.round((ny / len) * 127.5 + 127.5);
-    normalBuf[i * 3 + 2] = Math.round((1 / len) * 127.5 + 127.5);
-  }
-  // The height map only drives a displacement of ~0.4% of the plane width, so it ships small.
-  const heightMap = await sharp(heightBuf, { raw: { width, height, channels: 1 } })
-    .resize({ width: HEIGHT_LONG_SIDE, height: HEIGHT_LONG_SIDE, fit: "inside", withoutEnlargement: true })
-    .webp({ quality: 70 })
-    .toBuffer();
-  // Largest / highest-quality normal map that keeps the item inside its byte budget.
-  const encodeNormal = ([scale, quality]) =>
-    sharp(normalBuf, { raw: { width, height, channels: 3 } })
-      .resize({ width: Math.round(width * scale), height: Math.round(height * scale), fit: "fill" })
-      .webp({ quality })
-      .toBuffer();
-  let normal = await encodeNormal(NORMAL_LADDER[0]);
-  for (const step of NORMAL_LADDER.slice(1)) {
-    if (normal.length + heightMap.length <= byteAllowance) break;
-    normal = await encodeNormal(step);
-  }
-  return { normal, heightMap };
-}
-
 /** Mean colour in OKLab, chroma clamped, as hex. */
 async function averageColor(sourcePath) {
   const { data, info } = await sharp(sourcePath).rotate().resize(64, 64, { fit: "inside" }).removeAlpha().toColorspace("srgb").raw().toBuffer({ resolveWithObject: true });
@@ -337,14 +254,6 @@ async function processItem(mode, item) {
   if (!(await exists(depthPath))) fail(`no depth map for ${mode}/${item.slug}; run python3 scripts/hero/depth.py first`);
   const depth = await sharp(depthPath).resize({ width, height, fit: "fill" }).greyscale().webp({ lossless: true }).toBuffer();
   add("depth", await writeHashed(dir, "depth", depth, keep));
-
-  const relief = item.tuning?.relief ?? RELIEF_DEFAULT[mode];
-  if (relief) {
-    const s = Math.min(1, RELIEF_LONG_SIDE / Math.max(width, height));
-    const { normal, heightMap } = await reliefMaps(sourcePath, Math.round(width * s), Math.round(height * s), ITEM_BYTE_BUDGET - bytes);
-    add("normal", await writeHashed(dir, "normal", normal, keep));
-    add("height", await writeHashed(dir, "height", heightMap, keep));
-  }
 
   if (bytes > ITEM_BYTE_BUDGET) {
     fail(`${mode}/${item.slug} is ${(bytes / 1024).toFixed(0)} KB, over the ${(ITEM_BYTE_BUDGET / 1024).toFixed(0)} KB budget`);

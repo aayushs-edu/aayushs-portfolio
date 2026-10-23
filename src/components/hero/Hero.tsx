@@ -42,12 +42,10 @@ export default function Hero({ next }: HeroProps) {
   const sectionRef = useRef<HTMLElement | null>(null);
   const stickyRef = useRef<HTMLDivElement | null>(null);
   const compRef = useRef<HTMLDivElement | null>(null);
-  const poolRef = useRef<HTMLDivElement | null>(null);
   const frontImageRef = useRef<HTMLElement | null>(null);
   const placardTextRef = useRef<HTMLDivElement | null>(null);
   const detailSuffixRef = useRef<HTMLSpanElement | null>(null);
   const layoutRef = useRef<HeroLayout | null>(null);
-  const tapRef = useRef<{ x: number; y: number; t: number } | null>(null);
   const placardRestRef = useRef<DOMRect | null>(null);
 
   const pinned = tier !== "static";
@@ -242,9 +240,6 @@ export default function Hero({ next }: HeroProps) {
     },
     [mode, displayMode],
   );
-  const onFrontTap = useCallback((x: number, y: number) => {
-    tapRef.current = { x, y, t: performance.now() };
-  }, []);
 
   const interactive = !pinned || atRest;
   const heightSvh = tier === "full" ? SCROLL.heightFull : tier === "lite" ? SCROLL.heightLite : 100;
@@ -272,7 +267,6 @@ export default function Hero({ next }: HeroProps) {
       <section ref={sectionRef} className={`${styles.hero} ${pinned ? "" : styles.static}`} style={sectionStyle} aria-label="Aayush Sharma: art and code" data-tier={tier}>
         <motion.div ref={stickyRef} className={styles.sticky} style={{ "--clear": clear } as MotionStyle} data-cleared={cleared}>
           <motion.div className={styles.stage} style={stageStyle}>
-            <div ref={poolRef} className={styles.pool} />
             <WallPaint mode={mode} tier={tier} interactive={interactive} surfaceRef={stickyRef} compRef={compRef} codeIndex={selected.code} />
             <div ref={compRef} className={styles.comp}>
               <HeroTitle
@@ -299,7 +293,6 @@ export default function Hero({ next }: HeroProps) {
                 placardStyle={placardStyle}
                 placardTextRef={placardTextRef}
                 detailSuffixRef={detailSuffixRef}
-                onFrontTap={onFrontTap}
               />
             </div>
             {canvasWanted && pinned && (
@@ -313,8 +306,6 @@ export default function Hero({ next }: HeroProps) {
                 layoutVersion={layoutVersion}
                 frontImageRef={frontImageRef}
                 stickyRef={stickyRef}
-                poolRef={poolRef}
-                tapRef={tapRef}
                 onLiveChange={setCanvasLive}
                 onContextLost={demote}
               />

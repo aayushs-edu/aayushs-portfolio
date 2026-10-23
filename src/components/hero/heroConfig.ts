@@ -238,17 +238,12 @@ export const HOVER_PREVIEW_MS = 350;
 
 export const BUDGETS = POINT_BUDGETS;
 export const DPR = { full: [1, 1.75] as [number, number], lite: [1, 1.5] as [number, number] };
-export const LIGHT = {
-  color: "#fff4e6",
-  angleDeg: 35,
-  penumbra: 0.8,
-  heightOfPlane: 0.35,
-  follow: 6,
-  rampMs: 1200,
-  driftPeriodS: 24,
-  driftAmp: 0.07,
-  sheen: 0.3,
+/** The front image plane. */
+export const FRONT = {
+  /** Project screenshots tilt toward the cursor by up to this much. */
   tiltDeg: 3,
+  /** Easing rate of the tilt (1/s). */
+  follow: 6,
 };
 export const CANVAS_FADE = { outMs: 120, inMs: 300 };
 export const POINTS = {
@@ -268,14 +263,11 @@ export const POINTS = {
 
 export interface Tuning {
   depthScale: number;
-  normalStrength: number;
-  lightRest: [number, number];
-  relief: boolean;
 }
 
 export const TUNING_DEFAULTS: Record<Mode, Tuning> = {
-  art: { depthScale: 0.35, normalStrength: 1.2, lightRest: [0.3, 0.25], relief: true },
-  code: { depthScale: 0.2, normalStrength: 1.2, lightRest: [0.3, 0.25], relief: false },
+  art: { depthScale: 0.35 },
+  code: { depthScale: 0.2 },
 };
 
 // ---------------------------------------------------------------------------
@@ -304,7 +296,7 @@ export interface GalleryItem {
   maxZoom: number;
   avgColor: string;
   tiers: Record<PointTier, TierGrid>;
-  assets: { color: string; paint?: string; depth: string; normal?: string; height?: string };
+  assets: { color: string; paint?: string; depth: string };
   tuning: Tuning;
   frame: CardFrame;
 }

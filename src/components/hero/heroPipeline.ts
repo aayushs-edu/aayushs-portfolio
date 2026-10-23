@@ -10,8 +10,6 @@ export const POINT_BUDGETS = { full: 210_000, lite: 82_000 } as const;
 export const COLOR_LONG_SIDE = 1024;
 /** Width of the letter paint layers. */
 export const PAINT_WIDTH = 800;
-/** Long side of the normal / height maps for relief items. */
-export const RELIEF_LONG_SIDE = 1024;
 /** Sharpness rule for the zoom act: CSS px on the long side at DPR 2. */
 export const MAX_ZOOM_DIVISOR = 1.25;
 /** avgColor chroma ceiling (OKLCH) so the wall tint stays a tint. */

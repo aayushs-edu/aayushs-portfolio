@@ -49,8 +49,6 @@ export interface GalleryStackProps {
   placardStyle?: MotionStyle;
   placardTextRef: RefObject<HTMLDivElement | null>;
   detailSuffixRef: RefObject<HTMLSpanElement | null>;
-  /** Tap on the front card (lite tier moves the light). */
-  onFrontTap?: (clientX: number, clientY: number) => void;
 }
 
 function frameVars(item: GalleryItem): CSSVars {
@@ -69,7 +67,7 @@ interface CardProps {
   priority: boolean;
   frontStyle?: MotionStyle;
   imageRef?: RefObject<HTMLElement | null>;
-  onActivate: (d: number, event: { clientX: number; clientY: number }) => void;
+  onActivate: (d: number) => void;
   onSettled?: () => void;
   onFocusFront?: (el: HTMLButtonElement | null) => void;
 }
@@ -141,7 +139,7 @@ function Card({ item, d, phase, tier, interactive, mountedDuringSpread, priority
       aria-hidden={Math.abs(d) > 2 ? true : undefined}
       tabIndex={isFront ? 0 : -1}
       ref={isFront ? onFocusFront : undefined}
-      onClick={(event) => onActivate(d, event)}
+      onClick={() => onActivate(d)}
     >
       <span className={styles.lift}>
         <span className={styles.frame} />
@@ -205,7 +203,6 @@ export default function GalleryStack({
   placardStyle,
   placardTextRef,
   detailSuffixRef,
-  onFrontTap,
 }: GalleryStackProps) {
   const [displayMode, setDisplayMode] = useState<Mode>(mode);
   const [phase, setPhase] = useState<Phase>("idle");
@@ -392,13 +389,9 @@ export default function GalleryStack({
   }, [dragX]);
 
   const twiceTimer = useRef(0);
-  const onActivate = (d: number, event?: { clientX: number; clientY: number }) => {
+  const onActivate = (d: number) => {
     if (suppressClick.current) return;
-    if (d === 0) {
-      if (event) onFrontTap?.(event.clientX, event.clientY);
-      return;
-    }
-    if (Math.abs(d) > 2 || !canBrowse) return;
+    if (d === 0 || Math.abs(d) > 2 || !canBrowse) return;
     step(Math.sign(d));
     if (Math.abs(d) === 2) {
       window.clearTimeout(twiceTimer.current);
