@@ -96,8 +96,8 @@ export interface SlotTransform {
  * rotated card's outer edge reaches past the nominal front frame edge.
  */
 export const SLOTS = {
-  side1: { s: 0.85, r: 8, y: -25, protrude: 200 },
-  side2: { s: 0.78, r: 13, y: -45, protrude: 228 },
+  side1: { s: 0.85, r: 8, y: -25, protrude: 380 },
+  side2: { s: 0.78, r: 13, y: -45, protrude: 640 },
   collapsed: { s: 0.9, y: 0 },
 } as const;
 
