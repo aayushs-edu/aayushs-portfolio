@@ -1,21 +1,18 @@
 "use client";
 
-import { motion, type MotionStyle } from "framer-motion";
-import { memo, useDeferredValue, useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
+import { memo, useDeferredValue, useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type Ref } from "react";
 import styles from "./Hero.module.css";
-import { BRUSH, CODE_CELLS, DESIGN, GALLERY, MODE_LABEL, MODES, SNIPPETS, type Mode, type Tier } from "./heroConfig";
-import { bristlePaths, BRISTLE_OPACITY, introStrokes, useBrushStrokes } from "./useBrushStrokes";
-import { CELL_H, CELL_W, GRID_COLS, GRID_ROWS, GRID_X0, GRID_Y0, codeRows, staticCodePaths, useCodeReveal } from "./useCodeReveal";
+import { bristlePaths, CORE_BRISTLES, type Vec } from "./brushGeometry";
+import { codeRows } from "./codeLayout";
+import { CODE_CELLS, DESIGN, GALLERY, MODE_LABEL, MODES, NAME, SNIPPETS, type Mode, type Tier } from "./heroConfig";
 
 const { titleBox: box, cx } = DESIGN;
 const VIEWBOX = `${box.x} ${box.y} ${box.w} ${box.h}`;
 const ID = {
-  nameClip: "hero-name-clip",
+  rough: "hero-name-rough",
+  paintMask: "hero-name-paint",
   wordClip: (m: Mode) => `hero-word-${m}`,
   wipe: (m: Mode) => `hero-wipe-${m}`,
-  bristle: "hero-bristle",
-  paint: (i: number) => `hero-paint-${i}`,
-  codeMask: "hero-code-mask",
   codeText: "hero-code-text",
 };
 
@@ -26,8 +23,139 @@ const WORD_GUESS: Record<Mode, Box> = {
   code: { x: 704, y: 218, w: 338, h: 104 },
 };
 
+/** The title's code grid (used by the "Code" hover preview). */
+const CELL_W = CODE_CELLS.fontSize * CODE_CELLS.advance;
+const CELL_H = CODE_CELLS.fontSize * CODE_CELLS.lineHeight;
+const GRID_COLS = Math.floor(box.w / CELL_W);
+const GRID_ROWS = Math.ceil(box.h / CELL_H);
+
+function hash(n: number): number {
+  const s = Math.sin(n * 91.345 + 47.853) * 43758.5453;
+  return s - Math.floor(s);
+}
+
+function tint(hex: string, k: number): string {
+  const n = parseInt(hex.slice(1), 16);
+  const ch = (v: number) => Math.round(Math.min(255, Math.max(0, k >= 0 ? v + (255 - v) * k : v * (1 + k))));
+  return `rgb(${ch((n >> 16) & 255)} ${ch((n >> 8) & 255)} ${ch(n & 255)})`;
+}
+
+/**
+ * Brush strokes laid across each line of the name at slightly different
+ * angles and lengths: mostly the off-white paint in lighter and darker
+ * tints, with a few soft palette accents (warm on the first line, cool on
+ * the second). The letterforms mask them, so the name reads as painted.
+ */
+function buildNameStrokes() {
+  const strokes: { d: string; fill: string; op: number }[] = [];
+  const lines = [
+    { baseline: DESIGN.baseline1, span: 262, accents: ["var(--syn-kw)", "var(--syn-str)", "var(--syn-fn)"] },
+    { baseline: DESIGN.baseline2, span: 212, accents: ["var(--syn-num)", "var(--syn-punct)", "var(--syn-num)"] },
+  ];
+  const count = 10;
+  let k = 0;
+  lines.forEach(({ baseline, span, accents }) => {
+    for (let j = 0; j < count; j++) {
+      const y = baseline - 196 + (j / (count - 1)) * span;
+      const angle = (hash(k * 3 + 1) - 0.5) * 0.24;
+      const x0 = 110 + (hash(k * 5 + 2) - 0.3) * 260;
+      const x1 = 1304 - (hash(k * 7 + 3) - 0.3) * 260;
+      const pts: Vec[] = [];
+      const steps = 36;
+      for (let i = 0; i <= steps; i++) {
+        const t = i / steps;
+        const x = x0 + (x1 - x0) * t;
+        pts.push([x, y + (x - cx) * Math.tan(angle) + Math.sin(t * 8 + j) * 4]);
+      }
+      const accent = j % 4 === 1;
+      const fill = accent ? accents[Math.floor(j / 4) % accents.length] : tint(NAME.paint, (hash(k * 11 + 4) - 0.5) * 0.16);
+      const width = NAME.strokeWidth * (0.85 + hash(k * 13 + 5) * 0.35);
+      bristlePaths(pts, 200 + k, width, CORE_BRISTLES).forEach((d, b) => strokes.push({ d, fill, op: CORE_BRISTLES[b].op * (accent ? 0.5 : 1) }));
+      k++;
+    }
+  });
+  return strokes;
+}
+
+const NAME_STROKES = buildNameStrokes();
+
+interface BinaryRow {
+  /** Text baseline, cell top and cell height (design px) */
+  y: number;
+  top: number;
+  h: number;
+  runs: { x: number; w: number; text: string }[];
+}
+
+/** The tagline drawn thick in black: cut out of the name so "Art x Code" stays legible. */
+function TaglineGap() {
+  return (
+    <text
+      className={styles.tagText}
+      x={cx}
+      y={DESIGN.tagBaseline}
+      fill="#000"
+      stroke="#000"
+      strokeWidth={NAME.taglineGap}
+      strokeLinejoin="round"
+    >
+      Art x Code
+    </text>
+  );
+}
+
+/**
+ * The name as binary: the letterforms are rasterized onto a character grid
+ * and every cell inside a letter gets a 0 or a 1.
+ */
+function buildBinaryName(fontFamily: string): BinaryRow[] {
+  const cw = NAME.binaryFont * CODE_CELLS.advance;
+  const ch = NAME.binaryFont * NAME.binaryLineHeight;
+  const cols = Math.floor(box.w / cw);
+  const rows = Math.ceil(box.h / ch);
+  const S = 4; // samples per cell side
+  const canvas = document.createElement("canvas");
+  canvas.width = cols * S;
+  canvas.height = rows * S;
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  if (!ctx) return [];
+  ctx.scale(S / cw, S / ch);
+  ctx.translate(-box.x, -box.y);
+  ctx.font = `800 ${DESIGN.nameSize}px ${fontFamily}`;
+  ctx.textAlign = "center";
+  ctx.fillText("Aayush", cx, DESIGN.baseline1);
+  ctx.fillText("Sharma", cx, DESIGN.baseline2);
+  // Leave the cells under the tagline (plus a gap) empty.
+  ctx.globalCompositeOperation = "destination-out";
+  ctx.font = `800 ${DESIGN.tagSize}px ${fontFamily}`;
+  ctx.lineWidth = NAME.taglineGap;
+  ctx.lineJoin = "round";
+  ctx.strokeText("Art x Code", cx, DESIGN.tagBaseline);
+  ctx.fillText("Art x Code", cx, DESIGN.tagBaseline);
+  const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+  const inside = (c: number, r: number) => data[((r * S + S / 2) * canvas.width + c * S + S / 2) * 4 + 3] > 110;
+
+  const out: BinaryRow[] = [];
+  for (let r = 0; r < rows; r++) {
+    const runs: BinaryRow["runs"] = [];
+    let start = -1;
+    for (let c = 0; c <= cols; c++) {
+      const on = c < cols && inside(c, r);
+      if (on && start < 0) start = c;
+      if (!on && start >= 0) {
+        let text = "";
+        for (let k = start; k < c; k++) text += hash(r * 997 + k) > 0.5 ? "1" : "0";
+        runs.push({ x: box.x + start * cw, w: (c - start) * cw, text });
+        start = -1;
+      }
+    }
+    if (runs.length) out.push({ y: box.y + r * ch + (ch - NAME.binaryFont) / 2 + NAME.binaryFont * 0.8, top: box.y + r * ch, h: ch, runs });
+  }
+  return out;
+}
+
 export interface HeroTitleProps {
-  /** Requested mode: drives the Art / Code word styles. */
+  /** Requested mode: drives the Art / Code word styles and which name shows. */
   mode: Mode;
   /** Mode on screen (the stack lags during a flip). */
   displayMode: Mode;
@@ -36,35 +164,35 @@ export interface HeroTitleProps {
   interactive: boolean;
   panelId: string;
   onSwitch: (mode: Mode) => void;
-  /** Scroll-driven CSS variables (--rise, --title-fade). */
-  scrollStyle?: MotionStyle;
 }
 
-function NameText({ className }: { className?: string }) {
+function NameText({ textRef }: { textRef?: Ref<SVGTextElement> }) {
   return (
     <>
-      <text className={`${styles.nameText} ${className ?? ""}`} x={cx} y={DESIGN.baseline1}>
+      <text ref={textRef} className={styles.nameText} x={cx} y={DESIGN.baseline1}>
         Aayush
       </text>
-      <text className={`${styles.nameText} ${className ?? ""}`} x={cx} y={DESIGN.baseline2}>
+      <text className={styles.nameText} x={cx} y={DESIGN.baseline2}>
         Sharma
       </text>
     </>
   );
 }
 
-/** The code block that fills the title, set on the cell grid. */
-const CodeText = memo(function CodeText({ snippetIndex }: { snippetIndex: number }) {
-  const rows = useMemo(() => codeRows(SNIPPETS[snippetIndex % SNIPPETS.length]), [snippetIndex]);
+/** Code for the "Code" hover preview: only the rows that cross the tagline. */
+const PreviewCode = memo(function PreviewCode({ snippetIndex, band }: { snippetIndex: number; band: Box }) {
+  const rows = useMemo(() => codeRows(SNIPPETS[snippetIndex % SNIPPETS.length], GRID_COLS, GRID_ROWS), [snippetIndex]);
   const baseline = (CELL_H - CODE_CELLS.fontSize) / 2 + CODE_CELLS.fontSize * 0.8;
+  const r0 = Math.max(0, Math.floor((band.y - 8 - box.y) / CELL_H));
+  const r1 = Math.min(GRID_ROWS - 1, Math.ceil((band.y + band.h + 8 - box.y) / CELL_H));
   return (
     <g id={ID.codeText}>
-      {rows.map((runs, r) => (
+      {rows.slice(r0, r1 + 1).map((runs, i) => (
         <text
-          key={r}
+          key={r0 + i}
           className={styles.codeLine}
-          x={GRID_X0}
-          y={GRID_Y0 + r * CELL_H + baseline}
+          x={box.x}
+          y={box.y + (r0 + i) * CELL_H + baseline}
           textLength={GRID_COLS * CELL_W}
           lengthAdjust="spacing"
           xmlSpace="preserve"
@@ -80,76 +208,21 @@ const CodeText = memo(function CodeText({ snippetIndex }: { snippetIndex: number
   );
 });
 
-const STATIC_STROKES = introStrokes().map((points, i) => bristlePaths(points, 11 + i));
-const STATIC_CODE = staticCodePaths();
-
-function HeroTitle({ mode, displayMode, selected, tier, interactive, panelId, onSwitch, scrollStyle }: HeroTitleProps) {
-  const surfaceRef = useRef<HTMLDivElement | null>(null);
-  const svgRef = useRef<SVGSVGElement | null>(null);
-  const maskGroups = useRef<(SVGGElement | null)[]>([]);
-  const images = useRef<(SVGImageElement | null)[]>([]);
-  const rowPaths = useRef<(SVGPathElement | null)[]>([]);
+function HeroTitle({ mode, displayMode, selected, tier, interactive, panelId, onSwitch }: HeroTitleProps) {
+  const nameRef = useRef<SVGTextElement | null>(null);
   const strokeRefs = useRef<Record<Mode, SVGTSpanElement | null>>({ art: null, code: null });
   const tabRefs = useRef<Record<Mode, HTMLButtonElement | null>>({ art: null, code: null });
   const [words, setWords] = useState<Record<Mode, Box>>(WORD_GUESS);
   const [preview, setPreview] = useState(false);
-  const [seen, setSeen] = useState<Record<Mode, boolean>>({ art: false, code: false });
+  const [binary, setBinary] = useState<BinaryRow[] | null>(null);
 
   const isStatic = tier === "static";
-  const live = !isStatic;
-  const layers = BRUSH.maxLayers[tier];
   const paintings = useMemo(() => GALLERY.art.map((item) => item.assets.paint ?? item.assets.color), []);
   const artIndex = selected.art;
-  // The code layer is ~1,400 tspans: let it re-lay out at low priority while browsing.
+  // The preview code re-lays out at low priority while browsing.
   const codeIndex = useDeferredValue(selected.code);
 
-  // Each mode's intro plays the first time that mode is on screen.
-  useEffect(() => {
-    if (!live) return;
-    setSeen((prev) => (prev[displayMode] ? prev : { ...prev, [displayMode]: true }));
-  }, [displayMode, live]);
-
-  const artActive = live && interactive && displayMode === "art" && mode === "art";
-  const codeActive = live && interactive && displayMode === "code" && mode === "code";
-
-  const brush = useBrushStrokes({
-    surfaceRef,
-    svgRef,
-    maskGroups,
-    images,
-    paintings,
-    startIndex: artIndex,
-    layers,
-    active: artActive,
-    intro: live && seen.art,
-  });
-  const code = useCodeReveal({
-    surfaceRef,
-    svgRef,
-    rowPaths,
-    active: codeActive,
-    intro: live && seen.code,
-    cap: CODE_CELLS.cap[tier],
-  });
-
-  // Live reveals from the old mode fade out (300ms), then clear.
-  const showArt = mode === "art";
-  const showCode = mode === "code";
-  const clearBrush = brush.clear;
-  const clearCode = code.clear;
-  // (The static tier's fixed reveal is React-rendered and never cleared.)
-  useEffect(() => {
-    if (showArt || isStatic) return;
-    const timer = window.setTimeout(clearBrush, 320);
-    return () => window.clearTimeout(timer);
-  }, [showArt, isStatic, clearBrush]);
-  useEffect(() => {
-    if (showCode || isStatic) return;
-    const timer = window.setTimeout(clearCode, 320);
-    return () => window.clearTimeout(timer);
-  }, [showCode, isStatic, clearCode]);
-
-  // Measure the real word boxes once Poppins is in.
+  // Once Poppins is in: measure the tagline words and rasterize the binary name.
   useEffect(() => {
     let cancelled = false;
     document.fonts.ready.then(() => {
@@ -166,6 +239,8 @@ function HeroTitle({ mode, displayMode, selected, tier, interactive, panelId, on
         }
       }
       setWords(next);
+      const family = nameRef.current ? getComputedStyle(nameRef.current).fontFamily : "sans-serif";
+      setBinary(buildBinaryName(family));
     });
     return () => {
       cancelled = true;
@@ -183,18 +258,28 @@ function HeroTitle({ mode, displayMode, selected, tier, interactive, panelId, on
     }
   };
 
-  const staticPainting = paintings[artIndex];
   const wordStyleVars = { "--word-delay": isStatic ? "0ms" : `${250}ms` } as CSSProperties;
 
   return (
-    <motion.div ref={surfaceRef} className={styles.titleWrap} style={scrollStyle}>
+    <div className={styles.titleWrap}>
       <div className={styles.titleIn}>
         <h1 className="sr-only">Aayush Sharma</h1>
-        <svg ref={svgRef} className={styles.titleSvg} viewBox={VIEWBOX} aria-hidden="true" focusable="false" style={wordStyleVars}>
+        <svg className={styles.titleSvg} viewBox={VIEWBOX} aria-hidden="true" focusable="false" style={wordStyleVars}>
           <defs>
-            <clipPath id={ID.nameClip}>
-              <NameText />
-            </clipPath>
+            {/* Soft waver plus a fine grain: letter edges read as brushed, not cut. */}
+            <filter id={ID.rough} filterUnits="userSpaceOnUse" x={box.x - 20} y={box.y - 20} width={box.w + 40} height={box.h + 40}>
+              <feTurbulence type="fractalNoise" baseFrequency={NAME.waverFrequency} numOctaves={2} seed={4} result="warp" />
+              <feDisplacementMap in="SourceGraphic" in2="warp" scale={NAME.waver} xChannelSelector="R" yChannelSelector="G" result="soft" />
+              <feTurbulence type="fractalNoise" baseFrequency={NAME.grainFrequency} numOctaves={1} seed={9} result="grain" />
+              <feDisplacementMap in="soft" in2="grain" scale={NAME.grain} xChannelSelector="R" yChannelSelector="G" />
+            </filter>
+            <mask id={ID.paintMask} maskUnits="userSpaceOnUse" x={box.x - 20} y={box.y - 20} width={box.w + 40} height={box.h + 40}>
+              <g filter={`url(#${ID.rough})`} fill="#fff">
+                <NameText textRef={nameRef} />
+              </g>
+              {/* Keep the paint clear of the tagline. */}
+              <TaglineGap />
+            </mask>
             {MODES.map((m) => (
               <clipPath key={m} id={ID.wordClip(m)}>
                 {/* The word alone, started at its measured pen position. */}
@@ -203,31 +288,7 @@ function HeroTitle({ mode, displayMode, selected, tier, interactive, panelId, on
                 </text>
               </clipPath>
             ))}
-            <filter id={ID.bristle} filterUnits="userSpaceOnUse" x={box.x} y={box.y} width={box.w} height={box.h} colorInterpolationFilters="sRGB">
-              <feTurbulence type="fractalNoise" baseFrequency={BRUSH.turbulence.baseFrequency} numOctaves={BRUSH.turbulence.octaves} seed={7} result="noise" />
-              <feDisplacementMap in="SourceGraphic" in2="noise" scale={BRUSH.turbulence.scale} xChannelSelector="R" yChannelSelector="G" />
-            </filter>
-            {Array.from({ length: layers }, (_, i) => (
-              <mask key={i} id={ID.paint(i)} maskUnits="userSpaceOnUse" x={box.x} y={box.y} width={box.w} height={box.h}>
-                <g ref={(el) => void (maskGroups.current[i] = el)} filter={`url(#${ID.bristle})`}>
-                  {isStatic &&
-                    i === 0 &&
-                    STATIC_STROKES.map((paths, k) => (
-                      <g key={k}>
-                        {paths.map((d, j) => (
-                          <path key={j} d={d} fill="#fff" fillOpacity={BRISTLE_OPACITY[j]} />
-                        ))}
-                      </g>
-                    ))}
-                </g>
-              </mask>
-            ))}
-            <mask id={ID.codeMask} maskUnits="userSpaceOnUse" x={box.x} y={box.y} width={box.w} height={box.h}>
-              {Array.from({ length: GRID_ROWS }, (_, r) => (
-                <path key={r} ref={(el) => void (rowPaths.current[r] = el)} fill="#fff" d={isStatic ? STATIC_CODE[r] : ""} />
-              ))}
-            </mask>
-            <CodeText snippetIndex={codeIndex} />
+            <PreviewCode snippetIndex={codeIndex} band={words.code} />
             {MODES.map((m) => (
               <mask key={m} id={ID.wipe(m)} maskUnits="userSpaceOnUse" x={box.x} y={box.y} width={box.w} height={box.h}>
                 <rect
@@ -243,39 +304,40 @@ function HeroTitle({ mode, displayMode, selected, tier, interactive, panelId, on
             ))}
           </defs>
 
-          {/* 1. Name fill */}
-          <g className={styles.nameFill}>
-            <NameText />
+          {/* 1. The name, painted (Art) */}
+          <g className={styles.nameLayer} style={{ opacity: mode === "art" ? 1 : 0 }} mask={`url(#${ID.paintMask})`}>
+            <rect x={box.x} y={box.y} width={box.w} height={box.h} style={{ fill: NAME.paint }} />
+            {NAME_STROKES.map((s, i) => (
+              <path key={i} d={s.d} style={{ fill: s.fill }} fillOpacity={s.op} />
+            ))}
           </g>
 
-          {/* 2. Reveal layers, clipped to the letterforms */}
-          <g clipPath={`url(#${ID.nameClip})`}>
-            <g className={styles.revealGroup} style={{ opacity: showArt ? 1 : 0 }}>
-              {Array.from({ length: layers }, (_, i) => (
-                <image
-                  key={i}
-                  ref={(el) => void (images.current[i] = el)}
-                  href={isStatic && i === 0 ? staticPainting : undefined}
-                  x={box.x}
-                  y={box.y}
-                  width={box.w}
-                  height={box.h}
-                  preserveAspectRatio="xMidYMid slice"
-                  mask={`url(#${ID.paint(i)})`}
-                />
-              ))}
-            </g>
-            <g className={styles.revealGroup} style={{ opacity: showCode ? 1 : 0 }} mask={`url(#${ID.codeMask})`}>
-              <use href={`#${ID.codeText}`} />
-            </g>
+          {/* 1'. The name, in binary (Code) */}
+          <g className={styles.nameLayer} style={{ opacity: mode === "code" ? 1 : 0 }}>
+            {binary ? (
+              <>
+                {/* Solid backing: code on the wall never shows through the letters. */}
+                <g className={styles.binaryBacking}>
+                  {binary.map((row) => row.runs.map((run, k) => <rect key={`${row.y}-${k}`} x={run.x} y={row.top} width={run.w} height={row.h} />))}
+                </g>
+                {binary.map((row, r) => (
+                  <text key={r} className={styles.binaryLine} y={row.y} xmlSpace="preserve">
+                    {row.runs.map((run, k) => (
+                      <tspan key={k} x={run.x}>
+                        {run.text}
+                      </tspan>
+                    ))}
+                  </text>
+                ))}
+              </>
+            ) : (
+              <g className={styles.punct}>
+                <NameText />
+              </g>
+            )}
           </g>
 
-          {/* 3. Crisp outline over everything */}
-          <g className={styles.nameStroke}>
-            <NameText />
-          </g>
-
-          {/* 4. Tagline / mode switch: fills, hover previews, then outlines */}
+          {/* 2. Tagline / mode switch: fills, hover previews, then outlines */}
           <text className={styles.tagText} x={cx} y={DESIGN.tagBaseline}>
             <tspan className={styles.word} data-active={mode === "art"}>
               Art
@@ -353,7 +415,7 @@ function HeroTitle({ mode, displayMode, selected, tier, interactive, panelId, on
           })}
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }
 

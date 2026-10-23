@@ -5,6 +5,7 @@ import { motion, useMotionValue, useMotionValueEvent, useTransform, type MotionS
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import GalleryStack from "./GalleryStack";
 import HeroTitle from "./HeroTitle";
+import WallPaint from "./WallPaint";
 import styles from "./Hero.module.css";
 import { GALLERY, INITIAL_INDEX, INITIAL_MODE, PHASES, SCROLL, SYNTAX_PALETTE, type Mode } from "./heroConfig";
 import { clamp01, easeInOut, measureLayout, range, zoomAmount, type HeroLayout } from "./heroLayout";
@@ -272,6 +273,7 @@ export default function Hero({ next }: HeroProps) {
         <motion.div ref={stickyRef} className={styles.sticky} style={{ "--clear": clear } as MotionStyle} data-cleared={cleared}>
           <motion.div className={styles.stage} style={stageStyle}>
             <div ref={poolRef} className={styles.pool} />
+            <WallPaint mode={mode} tier={tier} interactive={interactive} surfaceRef={stickyRef} compRef={compRef} codeIndex={selected.code} />
             <div ref={compRef} className={styles.comp}>
               <HeroTitle
                 mode={mode}

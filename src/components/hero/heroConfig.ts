@@ -179,30 +179,53 @@ export const SCROLL = {
 // Letters
 
 export const BRUSH = {
+  /** Core brush width in design px (the wall brush scales it by --u). */
   coreWidth: 70,
-  bristles: 5,
   minPointDist: 6,
   pauseMs: 250,
   dryDelayMs: 6000,
   dryFadeMs: 2500,
+  /** Past this many strokes on the wall, the oldest dry out quickly. */
   maxStrokes: 40,
-  maxLayers: { full: 4, lite: 2, static: 2 } as Record<Tier, number>,
-  taper: 90,
-  turbulence: { baseFrequency: 0.035, octaves: 2, scale: 14 },
   introMs: 1400,
+} as const;
+
+/** The painted / binary name. */
+export const NAME = {
+  /** Art mode: warm off-white paint, streaked with tints and a few soft palette accents. */
+  paint: "#ece4d4",
+  /** Width of the brush strokes that fill the letters (design px). */
+  strokeWidth: 78,
+  /** Gap kept clear of paint around the tagline, so "Art x Code" reads over the name. */
+  taglineGap: 16,
+  /** Letter edges: a soft waver plus a fine grain (SVG displacement, design px). */
+  waver: 10,
+  waverFrequency: 0.016,
+  grain: 4,
+  grainFrequency: 0.11,
+  /** Code mode: the letters as 0s and 1s on this grid. */
+  binaryFont: 14,
+  binaryLineHeight: 1.15,
+} as const;
+
+/** The wall the visitor paints on (CSS px). */
+export const WALL = {
+  brushScale: 1.15,
+  minBrushPx: 18,
+  dprCap: 2,
+  codeFontPx: 12,
+  codeLineHeight: 1.5,
+  codeCap: { full: 3000, lite: 1200, static: 3000 } as Record<Tier, number>,
 } as const;
 
 export const CODE_CELLS = {
   fontSize: 11,
   lineHeight: 1.5,
-  /** Geist Mono advance is 0.6em. Each line is also set with textLength so the grid is exact. */
+  /** Geist Mono advance is 0.6em. */
   advance: 0.6,
   radius: 3,
   perCellMs: 12,
   fadeAfterMs: 6000,
-  cap: { full: 1500, lite: 600, static: 1500 } as Record<Tier, number>,
-  introMs: 1200,
-  introCoverage: 0.4,
   /** Code is laid out as side-by-side panes this many characters wide (longer lines are cut at the pane edge). */
   columnChars: 52,
   columnGap: 2,

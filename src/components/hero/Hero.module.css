@@ -98,6 +98,33 @@
 }
 
 /* ----------------------------------------------------------------------- */
+/* Wall the visitor paints on (behind the name and cards)                   */
+
+.wall {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: calc(1 - var(--title-fade, 0));
+}
+
+.wallCanvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transition: opacity 300ms linear;
+}
+
+.wallCanvas[data-on="false"] {
+  opacity: 0;
+}
+
+/* Code on the wall sits back a little so the binary name stays the loudest thing. */
+.wallCanvas[data-kind="code"][data-on="true"] {
+  opacity: 0.6;
+}
+
+/* ----------------------------------------------------------------------- */
 /* Title                                                                    */
 
 .titleWrap {
@@ -160,15 +187,22 @@
   font-size: 128px;
 }
 
-.nameFill {
-  fill: var(--name-fill);
+/* Painted name (Art) and binary name (Code) crossfade with the tagline words. */
+.nameLayer {
+  transition: opacity 450ms cubic-bezier(0.6, 0, 0.2, 1) var(--word-delay, 250ms);
 }
 
-.nameStroke {
-  fill: none;
-  stroke: var(--ink);
-  stroke-width: 2.5px;
-  stroke-linejoin: round;
+.binaryLine {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: pre;
+  fill: #ece4d4;
+}
+
+/* Letter cells sit a shade lighter than the wall, so the name reads as blocks of binary. */
+.binaryBacking {
+  fill: #191817;
 }
 
 .word,
@@ -227,10 +261,6 @@
 }
 .com {
   fill: var(--syn-com);
-}
-
-.revealGroup {
-  transition: opacity 300ms linear;
 }
 
 .previewWipe {
