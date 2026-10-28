@@ -143,8 +143,9 @@ export const TOUCH = {
     settle: 4.5,
     reform: 3.5,
     pressureIterations: 16,
-    /** Stop simulating this long after the last push (s). */
+    /** Stop simulating this long after the last push (s), fading the flow out over the last `fadeOut` s (no snap). */
     idle: 6,
+    fadeOut: 1.5,
   },
   /** Binary letters: the cells under the moving cursor come loose and fly off. */
   knock: {

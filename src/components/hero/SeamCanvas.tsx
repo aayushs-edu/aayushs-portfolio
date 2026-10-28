@@ -196,7 +196,7 @@ class SeamRenderer {
     gl.uniform1i(loc.uPopCount, state.pops.count);
     gl.uniform4fv(loc.uPop, state.pops.p);
     gl.uniform1f(loc.uNameOn, nameOn ? 1 : 0);
-    gl.uniform1f(loc.uFlowOn, nameOn && name!.flowOn ? 1 : 0);
+    gl.uniform1f(loc.uFlowOn, nameOn ? name!.flowAmount : 0);
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, this.atlas);
     if (nameOn) name!.bindTextures();

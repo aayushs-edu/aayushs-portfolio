@@ -69,7 +69,7 @@ uniform vec4 uBitTime;        // burst decay (s), life min/max (s), cooling time
 uniform float uOpen;          // how far each half has moved away from the line (CSS px)
 // The name
 uniform float uNameOn;        // 0 until the name's textures are ready (the DOM name shows meanwhile)
-uniform float uFlowOn;        // 1 while the fluid is moving
+uniform float uFlowOn;        // how much of the fluid's flow shows, 0..1 (fades out before it stops)
 uniform vec4 uBox;            // title box on the canvas (CSS px): x, y, w, h
 uniform vec3 uGridInfo;       // binary grid: first column, columns, rows
 uniform vec3 uNameInk;        // binary digits
@@ -317,8 +317,8 @@ vec2 boxUv(vec2 p) {
 
 // Where the paint at uv came from, after the fluid has had its way.
 vec2 flowFrom(vec2 uv) {
-  if (uFlowOn < 0.5 || any(lessThan(uv, vec2(0.0))) || any(greaterThan(uv, vec2(1.0)))) return uv;
-  return texture(uFlow, uv).xy;
+  if (uFlowOn <= 0.0 || any(lessThan(uv, vec2(0.0))) || any(greaterThan(uv, vec2(1.0)))) return uv;
+  return mix(uv, texture(uFlow, uv).xy, uFlowOn);
 }
 
 // The painted name, carried by the flow, with brushed edges (as the SVG name's

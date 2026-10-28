@@ -62,7 +62,12 @@ uniform float uDt;
 uniform float uReform;
 void main() {
   vec2 back = vUv - uDt * texture(uVelocity, vUv).xy / uBoxPx;
-  o = vec4(mix(texture(uSource, back).xy, vUv, uReform), 0.0, 1.0);
+  vec2 from = texture(uSource, back).xy;
+  // Ease back toward where it belongs, but always by at least a step the
+  // half-float target can hold: a plain mix stalls a few pixels short of home.
+  vec2 d = vUv - from;
+  vec2 step = sign(d) * min(abs(d), max(abs(d * uReform), vec2(1.0 / 1024.0)));
+  o = vec4(from + step, 0.0, 1.0);
 }
 `;
 
@@ -369,7 +374,8 @@ export class NameGL {
   private fluid: Fluid | null = null;
   private fluidFailed = false;
   private lastPush = -Infinity;
-  private flowing = false;
+  /** How much the flow shows, 0..1: it fades out before the simulation stops. */
+  private flow = 0;
   private family: string | null = null;
   private scale = 0;
   private bitsProgram: Program;
@@ -395,9 +401,9 @@ export class NameGL {
     gl.bindVertexArray(null);
   }
 
-  /** Is the flow moving (so the shader should read it)? */
-  get flowOn() {
-    return this.flowing && !!this.fluid;
+  /** How much of the flow the shader should apply, 0..1 (0: the name as drawn). */
+  get flowAmount() {
+    return this.fluid ? this.flow : 0;
   }
 
   /** Builds (or rebuilds, when the scale changes) the name's textures and the fluid. Returns the binary grid. */
@@ -453,8 +459,9 @@ export class NameGL {
     }
     const pushes = touch?.pushes ?? [];
     if (pushes.length) this.lastPush = t;
-    this.flowing = t - this.lastPush < TOUCH.fluid.idle;
-    if (this.fluid && this.flowing && dt > 0) this.fluid.step(dt, pushes, this.box(layout), layout.u);
+    const { idle, fadeOut } = TOUCH.fluid;
+    this.flow = Math.min(1, Math.max(0, (idle - (t - this.lastPush)) / fadeOut));
+    if (this.fluid && this.flow > 0 && dt > 0) this.fluid.step(dt, pushes, this.box(layout), layout.u);
     if (touch) touch.pushes.length = 0;
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
   }
