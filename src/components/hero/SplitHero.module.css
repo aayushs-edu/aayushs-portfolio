@@ -1,0 +1,100 @@
+/* The split hero. Tokens (--wall, --ink …) come from Hero.module.css's .hero. */
+
+.stage {
+  /* Each side of the seam's fluid line; the seam's frame loop keeps these current. */
+  --seam-left: inset(0 50% 0 0);
+  --seam-right: inset(0 0 0 50%);
+  position: relative;
+  height: 100svh;
+  min-height: 420px;
+  overflow: hidden;
+  container-type: size;
+  background: var(--wall);
+}
+
+/* --u: CSS px per design px, the same scale as the gallery hero's title. */
+.layer {
+  --gutter: 48px;
+  --u: min(calc((100cqw - 2 * var(--gutter)) / 1414), calc((100cqh - 84px) / 1271));
+  position: absolute;
+  inset: 0;
+}
+
+@media (max-width: 639px) {
+  .layer {
+    --gutter: 16px;
+    --u: calc((100cqw - 2 * var(--gutter)) / 1100);
+  }
+}
+
+/* The title box (design 1414 × 560), centred a touch above the middle. */
+.title {
+  position: absolute;
+  left: 50%;
+  top: calc((100cqh - 560 * var(--u)) * 0.46);
+  width: calc(1414 * var(--u));
+  height: calc(560 * var(--u));
+  margin-left: calc(-707 * var(--u));
+}
+
+.tagline {
+  fill: var(--ink);
+}
+
+/* ----------------------------------------------------------------------- */
+/* Wall                                                                     */
+
+.wall {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* Clipped to one side of the line. */
+.artSide,
+.codeSide {
+  position: absolute;
+  inset: 0;
+}
+
+.artSide {
+  clip-path: var(--seam-left);
+}
+
+.codeSide {
+  clip-path: var(--seam-right);
+}
+
+/* The DOM name is the fallback: once the canvas draws the name, it hides. */
+.stage[data-gl-name="true"] .domName {
+  visibility: hidden;
+}
+
+/* Its own layer, so the clip moving every frame doesn't repaint what's inside. */
+.cached {
+  will-change: transform;
+}
+
+.weave {
+  opacity: 0.5;
+}
+
+.dots {
+  background-image: radial-gradient(circle at center, rgb(255 255 255 / 0.085) 0.7px, transparent 1.2px);
+}
+
+/* ----------------------------------------------------------------------- */
+/* Seam                                                                     */
+
+.seam {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.seam[data-on="false"] {
+  visibility: hidden;
+}
