@@ -63,20 +63,6 @@ function buildNameStrokes(): NameStroke[] {
 
 export const NAME_STROKES = buildNameStrokes();
 
-/**
- * "Art x Code" as three runs (design px) so the "x" sits on the centre line,
- * the seam, with a space either side. `measure` gives a string's width at the
- * tagline's size.
- */
-export function taglineRuns(measure: (text: string) => number): { text: string; x: number; align: "right" | "center" | "left" }[] {
-  const gap = measure("x") / 2 + measure(" ");
-  return [
-    { text: "Art", x: cx - gap, align: "right" },
-    { text: "x", x: cx, align: "center" },
-    { text: "Code", x: cx + gap, align: "left" },
-  ];
-}
-
 /** Draws the name's letters in white (and cuts the tagline's gap) in design px, using the current transform. */
 function letterforms(ctx: CanvasRenderingContext2D, fontFamily: string) {
   ctx.fillStyle = "#fff";
@@ -89,12 +75,8 @@ function letterforms(ctx: CanvasRenderingContext2D, fontFamily: string) {
   ctx.font = `800 ${DESIGN.tagSize}px ${fontFamily}`;
   ctx.lineWidth = NAME.taglineGap;
   ctx.lineJoin = "round";
-  for (const run of taglineRuns((text) => ctx.measureText(text).width)) {
-    ctx.textAlign = run.align;
-    ctx.strokeText(run.text, run.x, DESIGN.tagBaseline);
-    ctx.fillText(run.text, run.x, DESIGN.tagBaseline);
-  }
-  ctx.textAlign = "center";
+  ctx.strokeText("Art x Code", cx, DESIGN.tagBaseline);
+  ctx.fillText("Art x Code", cx, DESIGN.tagBaseline);
   ctx.globalCompositeOperation = "source-over";
 }
 

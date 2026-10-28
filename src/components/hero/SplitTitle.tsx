@@ -1,10 +1,10 @@
 "use client";
 
-import { memo, useEffect, useRef, useState, type Ref, type SVGProps } from "react";
+import { memo, useEffect, useRef, useState, type Ref } from "react";
 import styles from "./Hero.module.css";
 import split from "./SplitHero.module.css";
 import { DESIGN, NAME } from "./heroConfig";
-import { buildBinaryGrid, NAME_STROKES, taglineRuns } from "./nameRaster";
+import { buildBinaryGrid, NAME_STROKES } from "./nameRaster";
 import { GRID, SEAM_X } from "./splitConfig";
 
 // The DOM name: what shows before the WebGL name is ready, and without WebGL.
@@ -50,47 +50,13 @@ function binaryRows(fontFamily: string): BinaryRow[] {
   return out;
 }
 
-const ANCHOR = { right: "end", center: "middle", left: "start" } as const;
-/** Rough Poppins 800 widths (em) of "x" and a space, until the font is in and can be measured. */
-const ESTIMATE: Record<string, number> = { x: 0.6, " ": 0.26 };
-
-/** "Art x Code" with the "x" on the centre line: measured in Poppins once it has loaded. */
-function useTaglineRuns() {
-  const [runs, setRuns] = useState(() => taglineRuns((text) => (ESTIMATE[text] ?? 0) * DESIGN.tagSize));
-  useEffect(() => {
-    const family = getComputedStyle(document.body).getPropertyValue("--font-poppins").trim() || "sans-serif";
-    const font = `800 ${DESIGN.tagSize}px ${family}`;
-    let cancelled = false;
-    document.fonts.load(font).finally(() => {
-      const ctx = document.createElement("canvas").getContext("2d");
-      if (cancelled || !ctx) return;
-      ctx.font = font;
-      setRuns(taglineRuns((text) => ctx.measureText(text).width));
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-  return runs;
-}
-
-/** The tagline as SVG text, one chunk per run. */
-function TaglineText(props: SVGProps<SVGTextElement>) {
-  const runs = useTaglineRuns();
-  return (
-    <text {...props} y={DESIGN.tagBaseline}>
-      {runs.map((run) => (
-        <tspan key={run.text} x={run.x} textAnchor={ANCHOR[run.align]}>
-          {run.text}
-        </tspan>
-      ))}
-    </text>
-  );
-}
-
 /** The tagline drawn thick in black: cut out of the name so "Art x Code" stays legible. */
 function TaglineGap() {
-  return <TaglineText className={styles.tagText} fill="#000" stroke="#000" strokeWidth={NAME.taglineGap} strokeLinejoin="round" />;
+  return (
+    <text className={styles.tagText} x={cx} y={DESIGN.tagBaseline} fill="#000" stroke="#000" strokeWidth={NAME.taglineGap} strokeLinejoin="round">
+      Art x Code
+    </text>
+  );
 }
 
 function NameText({ textRef }: { textRef?: Ref<SVGTextElement> }) {
@@ -190,7 +156,9 @@ export const Tagline = memo(function Tagline() {
     <div className={styles.titleIn}>
       <h1 className="sr-only">Aayush Sharma</h1>
       <svg className={styles.titleSvg} viewBox={VIEWBOX} aria-hidden="true" focusable="false">
-        <TaglineText className={`${styles.tagText} ${split.tagline}`} />
+        <text className={`${styles.tagText} ${split.tagline}`} x={cx} y={DESIGN.tagBaseline}>
+          Art x Code
+        </text>
       </svg>
     </div>
   );
