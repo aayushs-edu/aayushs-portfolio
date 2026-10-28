@@ -1,6 +1,6 @@
 // The camera's path: one Catmull-Rom spline for where it is, another for where
-// it looks. Control point k sits at t = k / (count − 1), so a layout's stops
-// and titles are exact control points.
+// it looks. Control point k sits at t = k / (count − 1), so the layout's stops
+// are exact control points.
 
 import * as THREE from "three";
 import type { PathPoint } from "./layouts/types";

@@ -6,14 +6,13 @@ import SplitHero from "../hero/SplitHero";
 import { useHeroTier } from "../hero/useHeroTier";
 import Captions from "./Captions";
 import DetailPanel from "./DetailPanel";
-import { CHAPTERS } from "./layouts/chapters";
-import { beatsFor, LAYOUTS, parseLayout, type LayoutName } from "./layouts";
+import { beatsFor, splitLayout } from "./layouts";
 import type { Viewport } from "./layouts/types";
 import { createScrollMap, progressForBeat, sampleScroll, type ScrollSample } from "./scrollMap";
 import css from "./Showcase.module.css";
 import { SHOWCASE } from "./showcaseConfig";
 import WorkList, { workButtonId, type WorkListGroup } from "./WorkList";
-import { WORKS, type Work } from "./works";
+import { KIND_TITLES, WORKS, type Work, type WorkKind } from "./works";
 
 // three, R3F and the scene code: loaded once the hero is up (or at the first scroll).
 const Scene = dynamic(() => import("./Scene"), { ssr: false });
@@ -30,9 +29,11 @@ function slugFromHash(): string | null {
 const groupWorks = (groups: { title: string; slugs: string[] }[]): WorkListGroup[] =>
   groups.map((group) => ({ title: group.title, works: group.slugs.map((slug) => BY_SLUG.get(slug)!) }));
 
-/** The fallback page groups works by chapter, whatever the layout. */
-const CHAPTER_GROUPS = groupWorks(
-  CHAPTERS.map((chapter) => ({ title: chapter.title, slugs: WORKS.filter((w) => w.kind === chapter.kind).map((w) => w.slug) })).filter((g) => g.slugs.length),
+/** The fallback page groups works by kind, under a heading each. */
+const KIND_GROUPS = groupWorks(
+  (Object.keys(KIND_TITLES) as WorkKind[])
+    .map((kind) => ({ title: KIND_TITLES[kind], slugs: WORKS.filter((w) => w.kind === kind).map((w) => w.slug) }))
+    .filter((g) => g.slugs.length),
 );
 
 function currentViewport(): Viewport {
@@ -51,10 +52,6 @@ export default function Showcase() {
   const [tier, demote, detected] = useHeroTier();
   const threeD = tier !== "static";
 
-  // ?layout=chapters tries the chapters layout. Read after mount, so the page itself stays static.
-  const [layoutName, setLayoutName] = useState<LayoutName>("split");
-  useEffect(() => setLayoutName(parseLayout(new URLSearchParams(window.location.search).get("layout") ?? undefined)), []);
-
   // ---- layout and scroll map ---------------------------------------------------
   const [viewport, setViewport] = useState<Viewport>({ width: 1440, height: 900 });
   useEffect(() => {
@@ -69,9 +66,9 @@ export default function Showcase() {
     window.addEventListener("resize", update);
     return () => window.removeEventListener("resize", update);
   }, []);
-  const layout = useMemo(() => LAYOUTS[layoutName](WORKS, viewport), [layoutName, viewport]);
-  const map = useMemo(() => createScrollMap(beatsFor(layout, SHOWCASE.units), SHOWCASE.units.entrance, SHOWCASE.dwell), [layout]);
-  const groups = useMemo(() => (threeD ? groupWorks(layout.groups) : CHAPTER_GROUPS), [threeD, layout]);
+  const layout = useMemo(() => splitLayout(WORKS, viewport), [viewport]);
+  const map = useMemo(() => createScrollMap(beatsFor(layout, SHOWCASE.units.work), SHOWCASE.units.entrance, SHOWCASE.dwell), [layout]);
+  const groups = useMemo(() => (threeD ? groupWorks(layout.groups) : KIND_GROUPS), [threeD, layout]);
   const beats = useMemo(() => new Map(map.beats.map((b, i) => [b.key, i])), [map]);
   const pathWorks = useMemo(() => layout.stops.map((stop) => BY_SLUG.get(stop.slug)!), [layout]);
 
@@ -291,7 +288,6 @@ export default function Showcase() {
         className={css.section}
         data-mode={threeD ? "scene" : "static"}
         style={{ "--units": map.units } as CSSProperties}
-        data-layout={layoutName}
       >
         <div className={css.sticky}>
           {threeD && (
@@ -314,7 +310,7 @@ export default function Showcase() {
           )}
           {threeD && (
             <div ref={overlayRef} className={css.overlay} aria-hidden="true">
-              {wantScene && <Captions works={pathWorks} titles={layout.titles} focusSlug={focusSlug} onOpen={openWork} />}
+              {wantScene && <Captions works={pathWorks} focusSlug={focusSlug} onOpen={openWork} />}
             </div>
           )}
           <div className={css.hero} data-gone={heroGone} data-opening={opening}>

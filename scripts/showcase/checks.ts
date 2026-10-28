@@ -6,8 +6,8 @@ import { BITS, CURVE, SEAM } from "../../src/components/hero/splitConfig";
 import { createCameraPath } from "../../src/components/showcase/cameraPath";
 import { detailPose } from "../../src/components/showcase/cameraPose";
 import { freeArea, SHOWCASE } from "../../src/components/showcase/showcaseConfig";
-import { beatsFor, LAYOUTS, type LayoutName } from "../../src/components/showcase/layouts";
-import { FOV_Y, type Placement, type SceneLayout, type Vec3, type Viewport } from "../../src/components/showcase/layouts/types";
+import { beatsFor, splitLayout } from "../../src/components/showcase/layouts";
+import { FOV_Y, type Placement, type Vec3, type Viewport } from "../../src/components/showcase/layouts/types";
 import { createScrollMap, progressForBeat, sampleScroll, type Beat } from "../../src/components/showcase/scrollMap";
 import type { Work, WorkKind, WorkSide } from "../../src/components/showcase/works";
 
@@ -122,7 +122,7 @@ for (const [w, h, seamX, u] of [
 }
 
 // ---------------------------------------------------------------------------
-// Layouts and the camera path
+// The layout and the camera path
 
 const fake = (slug: string, kind: WorkKind, side: WorkSide, aspect: number): Work => ({
   slug,
@@ -187,17 +187,10 @@ function fill(placement: Placement, eye: THREE.Vector3, target: THREE.Vector3, v
   return [(maxX - minX) / 2, (maxY - minY) / 2];
 }
 
-function floorSide(layout: SceneLayout, x: number, z: number): "art" | "code" {
-  if (layout.floor.spine) return x < 0 ? "art" : "code";
-  let k = 0;
-  for (const [px, pz, nx, nz] of layout.floor.planes) if ((x - px) * nx + (z - pz) * nz > 0) k++;
-  return layout.floor.sides[k];
-}
-
-for (const name of Object.keys(LAYOUTS) as LayoutName[]) {
+{
   for (const viewport of VIEWPORTS) {
-    const label = `${name} ${viewport.width}×${viewport.height}`;
-    const layout = LAYOUTS[name](WORKS_16, viewport);
+    const label = `layout ${viewport.width}×${viewport.height}`;
+    const layout = splitLayout(WORKS_16, viewport);
     const path = createCameraPath(layout.cameraPath);
     const byslug = new Map(layout.placements.map((p) => [p.slug, p]));
     const eye = new THREE.Vector3();
@@ -212,10 +205,9 @@ for (const name of Object.keys(LAYOUTS) as LayoutName[]) {
       }
     });
 
-    check(`${label}: stops are in order, titles and passages inside the path`, () => {
+    check(`${label}: stops are in order, inside the path`, () => {
       layout.stops.forEach((s, i) => assert(i === 0 || s.t > layout.stops[i - 1].t, `stop ${i} out of order`));
       for (const s of layout.stops) assert(s.t > 0 && s.t < 1, `stop ${s.slug} at ${s.t}`);
-      for (const x of [...layout.titles, ...layout.passages]) assert(x.t > 0 && x.t < 1, `${x.key} at ${x.t}`);
     });
 
     check(`${label}: the camera is at each stop's point, looking at the work`, () => {
@@ -268,30 +260,21 @@ for (const name of Object.keys(LAYOUTS) as LayoutName[]) {
       for (const work of WORKS_16) {
         if (work.side === "both") continue;
         const p = byslug.get(work.slug)!;
-        const side = name === "split" ? work.side : work.kind === "painting" ? "art" : "code";
-        assert(floorSide(layout, p.position[0], p.position[2]) === side, `${work.slug} on the wrong side`);
+        // The spine runs down x = 0: art to its left, code to its right.
+        assert((p.position[0] < 0 ? "art" : "code") === work.side, `${work.slug} on the wrong side`);
       }
     });
 
-    check(`${label}: beats cover every stop and title, in order`, () => {
-      const beats = beatsFor(layout, { work: 1, title: 0.8 });
-      assert(beats.length === layout.stops.length + layout.titles.length, `${beats.length} beats`);
+    check(`${label}: a beat for every stop, in order`, () => {
+      const beats = beatsFor(layout, 1);
+      assert(beats.length === layout.stops.length, `${beats.length} beats`);
       beats.forEach((b, i) => assert(i === 0 || b.t > beats[i - 1].t, `beat ${b.key} out of order`));
     });
 
-    if (name === "split") {
-      check(`${label}: works that are both sit on the spine`, () => {
-        const p = byslug.get("both-0")!;
-        assert(p.position[0] === 0, `both-0 at x ${p.position[0]}`);
-      });
-    } else {
-      check(`${label}: one title per chapter, a passage between chapters`, () => {
-        assert(layout.titles.length === 2, `${layout.titles.length} titles`);
-        assert(layout.passages.length === 1, `${layout.passages.length} passages`);
-        assert(layout.floor.sides.join() === "art,code", `sides ${layout.floor.sides.join()}`);
-        assert(layout.groups.map((g) => g.title).join() === "Paintings,Projects", `groups ${layout.groups.map((g) => g.title).join()}`);
-      });
-    }
+    check(`${label}: works that are both sit on the spine`, () => {
+      const p = byslug.get("both-0")!;
+      assert(p.position[0] === 0, `both-0 at x ${p.position[0]}`);
+    });
   }
 }
 

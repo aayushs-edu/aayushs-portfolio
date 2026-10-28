@@ -1,6 +1,6 @@
 # Showcase: scrolling from the split hero into a 3D scene of the work
 
-Branch `hero-split`. Builds on the split hero (`docs/superpowers/specs/2026-10-27-split-hero-seam-design.md`), previewed at `/split`.
+Branch `hero-split`. Builds on the split hero (`docs/superpowers/specs/2026-10-27-split-hero-seam-design.md`), first previewed at `/split`, now the home page.
 
 ## Intent
 
@@ -9,7 +9,8 @@ After the split hero, the visitor scrolls down into a 3D scene that holds the wh
 ## Decisions (made with the user)
 
 - **Role**: the whole portfolio, built in stages (below).
-- **Organisation**: try two layouts on the same scene and compare: **split** (the hero's line continues as the spine; art on one side, code on the other) and **chapters** (one space per medium, one after another).
+- **Organisation**: **split**: the hero's line continues as the spine, with art on one side and code on the other. (Stage 1 also built a **chapters** layout, one space per medium, to compare. On 2026-10-28 the user chose split, and chapters was removed.)
+- **Home page**: on 2026-10-28 the user locked in the split hero and this scene as the one-page site at `/`. The gallery hero was retired.
 - **Movement**: scroll drives the camera along a path that lingers at each piece; the cursor turns the view slightly (look-around). On phones the camera simply follows the path.
 - **Detail**: a short caption appears with each piece as you pass; clicking flies the camera in and opens a panel with the full story. Scroll or Esc returns.
 - **Entrance**: "the line opens": scrolling tears the hero apart along its fluid line and the camera moves through the gap.
@@ -19,7 +20,7 @@ After the split hero, the visitor scrolls down into a 3D scene that holds the wh
 
 Each stage gets its own plan and build.
 
-1. **Scene and entrance**, with **paintings** (the 7 portfolio paintings) and **projects** (the 9 from the hero gallery), captions, the detail view, keyboard and screen-reader access, the reduced-motion / no-WebGL fallback, performance tiers. Both layouts.
+1. **Scene and entrance**, with **paintings** (the 7 portfolio paintings) and **projects** (the 9 from the hero gallery), captions, the detail view, keyboard and screen-reader access, the reduced-motion / no-WebGL fallback, performance tiers.
 2. **Games** (itch.io links; clips where available).
 3. **Animation** (videos from the GitHub release `videos-v1.0`).
 4. **Hackathons**.
@@ -29,7 +30,7 @@ This spec covers the whole design; stage 1 is what gets planned first.
 
 ## 1. Structure and the entrance
 
-**Page.** `/split` renders `<SplitHero />` followed by `<Showcase />`. They share one tall scroll section with one pinned (CSS sticky) viewport. Layers, back to front: the 3D canvas; the hero (until it has opened); DOM overlays (captions, detail panel, chapter titles). One scroll progress value, exponentially smoothed (as the gallery hero did), drives everything in two segments: the **entrance** (about one viewport of scrolling) and the **path** (about one viewport per piece, plus chapter titles in the chapters layout).
+**Page.** `/` renders `<Showcase />`, which holds the split hero and the scene in one tall scroll section with one pinned (CSS sticky) viewport. `/split`, where it was first previewed, redirects to `/`. Layers, back to front: the 3D canvas; the hero (until it has opened); DOM overlays (captions, detail panel). One scroll progress value, exponentially smoothed (as the gallery hero did), drives everything in two segments: the **entrance** (about one viewport of scrolling) and the **path** (about one viewport per piece).
 
 **The line opens.** The tear is done in the seam shader, not by moving DOM:
 
@@ -42,14 +43,11 @@ This spec covers the whole design; stage 1 is what gets planned first.
 
 **Loading.** The showcase chunk (three, R3F, scene code) loads on idle after the hero is up, or at the first scroll, whichever comes first. Textures stream in by distance along the path.
 
-**Layouts.** Scene, camera, pieces, captions and details are shared. A layout is a pure module: `(works, viewport) → { placements, cameraPath, stops, titles }`:
+**Layout.** The layout is a pure module: `(works, viewport) → { placements, cameraPath, stops }`:
 
 - `placements`: per work, position, rotation and scale in the scene.
 - `cameraPath`: spline control points plus look targets.
 - `stops`: the path parameter at which each work is presented, in order.
-- `titles`: chapter titles and where they appear (chapters layout).
-
-Two layouts: `split` and `chapters`, chosen with `/split?layout=chapters` (default `split`).
 
 **Content.** One typed list of works (`src/components/showcase/works.ts`):
 
@@ -75,18 +73,12 @@ Stage 1 builds it from `gallery.json` + `gallery.generated.json` (images and dep
 - One warm key light from the upper left (the same light as the hero's paint).
 - Colour comes from the work itself and the six seam pigments only. No glows, particles or gradients.
 
-**Layout: split.**
+**Layout.**
 
 - The hero's line continues as the spine: a fluid off-white seam down the middle of the floor; the camera travels along it.
 - Paintings hang on the art side, projects stand on the code side. They alternate sides, angled toward the path, so about every scroll a piece comes alongside.
 - Works that are `both` sit on the spine itself.
 - (Full tier) thin paint strokes and bits flow off the spine on their sides, a light version of the hero effect.
-
-**Layout: chapters.**
-
-- One space per medium in order: Paintings, then Projects (later Games, Animation, Hackathons).
-- Each opens with its title set large in Poppins, then arranges its works around a gentle curve the camera sweeps along.
-- Between chapters, a short passage where the line opens again into the next space.
 
 **Camera.**
 
@@ -114,7 +106,7 @@ Stage 1 builds it from `gallery.json` + `gallery.generated.json` (images and dep
 
 **Keyboard and screen readers.**
 
-- All the works also exist as semantic DOM: a list with a heading per chapter, a heading and text per work, real links. Screen readers and search engines read that, not the canvas.
+- All the works also exist as semantic DOM: a list with a heading per group, a heading and text per work, real links. Screen readers and search engines read that, not the canvas.
 - Tab moves through the works in path order. Focusing one scrolls to its stop and shows its caption; Enter opens its detail.
 - Visible focus rings. The panel traps focus while open; closing returns focus to the work.
 
@@ -137,7 +129,7 @@ Stage 1 builds it from `gallery.json` + `gallery.generated.json` (images and dep
 | Unit | Role |
 |---|---|
 | `src/components/showcase/works.ts` | The typed list of works (stage 1: paintings, projects) |
-| `src/components/showcase/layouts/split.ts`, `chapters.ts` | Pure: works → placements, camera path, stops, titles |
+| `src/components/showcase/layouts/split.ts` | Pure: works → placements, camera path, stops |
 | `src/components/showcase/scrollMap.ts` | Pure: scroll progress → entrance amount and path position, with dwell at stops |
 | `src/components/showcase/Showcase.tsx` | Scroll section, sticky viewport, tier, lazy scene, DOM overlays |
 | `src/components/showcase/Scene.tsx` | The R3F canvas: environment, works, camera rig, look-around, picking |
@@ -150,7 +142,7 @@ Stage 1 builds it from `gallery.json` + `gallery.generated.json` (images and dep
 - Unit-check the pure modules (layouts, scroll map) by running them in Node: stops are ordered, every work has a placement, the camera path passes each stop.
 - `npx tsc --noEmit`, `npm run lint`, and `npm run build` (with the dev server stopped).
 - Playwright:
-  - screenshots at each stop in both layouts
+  - screenshots at each stop
   - the tear mid-entrance
   - the fly-in and panel
   - Tab through the works

@@ -3,8 +3,8 @@
 export type SceneTier = "full" | "lite";
 
 export const SHOWCASE = {
-  /** Scrolling, in viewports: the hero tearing open, then each work and each chapter title. */
-  units: { entrance: 1, work: 1, title: 0.8 },
+  /** Scrolling, in viewports: the hero tearing open, then each work. */
+  units: { entrance: 1, work: 1 },
   /** How much the camera slows at each beat (0 = not at all, 1 = it stops). */
   dwell: 0.82,
   /** Scroll smoothing rate (1/s), as the gallery hero. */
@@ -25,7 +25,6 @@ export const SHOWCASE = {
   relief: { scale: 0.035, segments: 160, bump: 0.5 },
   /** A caption is fully in within fade[0] beats of its work's stop and gone by fade[1]. */
   caption: { fade: [0.3, 0.5] as [number, number] },
-  title: { fade: [0.35, 0.6] as [number, number] },
   /** A work's textures load once it is this many beats away. */
   streamBeats: 3,
   /**

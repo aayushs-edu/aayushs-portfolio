@@ -1,4 +1,4 @@
-// What a layout produces, and the geometry both layouts share. World units are
+// What the layout produces, and the geometry it's built from. World units are
 // metres; y is up; the camera starts at the origin looking down −z.
 
 import type { Work } from "../works";
@@ -30,29 +30,8 @@ export interface Stop {
   t: number;
 }
 
-/** A chapter title: shown at path parameter t, anchored at `position`. */
-export interface Title {
-  key: string;
-  text: string;
-  t: number;
-  position: Vec3;
-}
-
-/** Between chapters: a wall split on a fluid line that opens as the camera nears. */
-export interface Passage {
-  key: string;
-  t: number;
-  /** Bottom centre of the wall */
-  position: Vec3;
-  rotationY: number;
-}
-
+/** A fluid line (the spine) runs down x = 0: art to its left, code to its right. */
 export interface FloorPlan {
-  /** Split layout: a fluid line runs down x = 0; art to its left, code to its right. */
-  spine: boolean;
-  /** Otherwise: dividing lines on the floor, [x, z, nx, nz]; each one crossed moves on to the next side. */
-  planes: [number, number, number, number][];
-  sides: ("art" | "code")[];
   /** minX, maxX, minZ, maxZ */
   bounds: [number, number, number, number];
 }
@@ -67,8 +46,6 @@ export interface SceneLayout {
   placements: Placement[];
   cameraPath: PathPoint[];
   stops: Stop[];
-  titles: Title[];
-  passages: Passage[];
   floor: FloorPlan;
   groups: WorkGroup[];
 }

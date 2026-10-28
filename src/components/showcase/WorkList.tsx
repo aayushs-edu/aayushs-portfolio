@@ -22,7 +22,7 @@ interface WorkListProps {
 export const workButtonId = (slug: string) => `work-open-${slug}`;
 
 /**
- * Every work as semantic DOM: a heading per chapter, a heading, text and real
+ * Every work as semantic DOM: a heading per group, a heading, text and real
  * links per work, and one button per work that opens its detail view (the
  * only tab stop per work, in path order). Screen readers and search engines
  * read this, not the canvas. Without 3D it is the page itself: a grid.

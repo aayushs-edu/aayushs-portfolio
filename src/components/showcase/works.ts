@@ -38,6 +38,15 @@ export interface Work {
 
 export const isExternal = (href: string) => /^https?:\/\//.test(href);
 
+/** Each kind's heading, in the order the fallback page lists them. */
+export const KIND_TITLES: Record<WorkKind, string> = {
+  painting: "Paintings",
+  project: "Projects",
+  game: "Games",
+  animation: "Animation",
+  hackathon: "Hackathons",
+};
+
 interface Extra {
   side?: WorkSide;
   year?: string;

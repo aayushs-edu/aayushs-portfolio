@@ -1,4 +1,4 @@
-// Layout "split": the hero's line carries on as a spine down the middle of the
+// The layout: the hero's line carries on as a spine down the middle of the
 // floor and the camera travels along it. Paintings hang on the art side (left),
 // projects stand on the code side (right), alternating, each turned toward the
 // spot the camera presents it from. Works that are both art and code sit on the
@@ -106,12 +106,7 @@ export const splitLayout: LayoutFn = (works, viewport) => {
     placements,
     cameraPath,
     stops,
-    titles: [],
-    passages: [],
     floor: {
-      spine: true,
-      planes: [],
-      sides: ["art", "code"],
       bounds: boundsOf([...placements.map((p) => p.position), ...cameraPath.map((p) => p.position)], 10),
     },
     groups: [{ title: "Paintings and projects", slugs: order.map((w) => w.slug) }],

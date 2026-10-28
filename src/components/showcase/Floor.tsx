@@ -5,23 +5,28 @@ import { useEffect, useMemo } from "react";
 import * as THREE from "three";
 import { NAME } from "../hero/heroConfig";
 import { VIVID } from "../hero/splitConfig";
-import type { FloorPlan, Passage } from "./layouts/types";
+import type { FloorPlan } from "./layouts/types";
 import { SHOWCASE } from "./showcaseConfig";
 
 // The floor: linen on the art side, the dot grid on the code side, as on the
-// hero's wall. In the split layout a fluid off-white line (the hero's seam)
-// runs down the middle and, on the full tier, thin strokes of paint flow off
-// its art side and packets of bits off its code side. In the chapters layout
-// the floor changes side at each passage, where a wall split on the same kind
-// of line opens as the camera nears.
-
-const MAX_PLANES = 4;
+// hero's wall. A fluid off-white line (the hero's seam) runs down the middle
+// and, on the full tier, thin strokes of paint flow off its art side and
+// packets of bits off its code side.
 
 /** Raw sRGB components: these shaders write display values straight out (no colour management), like the scene's background. */
 const color = (hex: string) => new THREE.Color(hex).convertLinearToSRGB();
 
-/** Shared GLSL: hashing, the two surfaces, fog. Lengths are metres. */
-const COMMON = /* glsl */ `
+const FLOOR_VERTEX = /* glsl */ `
+varying vec3 vWorld;
+void main() {
+  vec4 w = modelMatrix * vec4(position, 1.0);
+  vWorld = w.xyz;
+  gl_Position = projectionMatrix * viewMatrix * w;
+}
+`;
+
+/** Lengths are metres. */
+const FLOOR_FRAGMENT = /* glsl */ `
 uniform vec3 uFogColor;
 uniform float uFogDensity;
 uniform float uTime;
@@ -62,24 +67,7 @@ vec3 fog(vec3 col, vec3 world) {
   float d = length(world - cameraPosition) * uFogDensity;
   return mix(col, uFogColor, 1.0 - exp(-d * d));
 }
-`;
 
-const FLOOR_VERTEX = /* glsl */ `
-varying vec3 vWorld;
-void main() {
-  vec4 w = modelMatrix * vec4(position, 1.0);
-  vWorld = w.xyz;
-  gl_Position = projectionMatrix * viewMatrix * w;
-}
-`;
-
-const FLOOR_FRAGMENT = /* glsl */ `
-#define MAX_PLANES ${MAX_PLANES}
-${COMMON}
-uniform float uSpine;           // 1: split by the spine
-uniform vec4 uPlanes[MAX_PLANES];
-uniform int uPlaneCount;
-uniform float uSides[MAX_PLANES + 1]; // 0 art, 1 code
 uniform float uEffects;
 uniform vec3 uPalette[6];
 uniform vec3 uSpineColor;
@@ -139,112 +127,39 @@ vec4 bits(vec2 p, float q) {
 
 void main() {
   vec2 p = vWorld.xz;
-  bool art;
   float spine = spineX(p.y);
-  if (uSpine > 0.5) {
-    art = p.x < spine;
-  } else {
-    int k = 0;
-    for (int i = 0; i < MAX_PLANES; i++) {
-      if (i >= uPlaneCount) break;
-      if (dot(p - uPlanes[i].xy, uPlanes[i].zw) > 0.0) k++;
-    }
-    float side = uSides[0];
-    for (int i = 1; i <= MAX_PLANES; i++) if (i == k) side = uSides[i];
-    art = side < 0.5;
-  }
+  bool art = p.x < spine;
   vec3 col = art ? linen(p) : dots(p);
-  if (uSpine > 0.5) {
-    if (uEffects > 0.5) {
-      vec4 s = art ? strokes(p, spine - p.x) : bits(p, p.x - spine);
-      col = mix(col, s.rgb, s.a);
-    }
-    float aa = fwidth(p.x) * 1.2;
-    float line = 1.0 - smoothstep(0.016 - aa, 0.016 + aa, abs(p.x - spine));
-    col = mix(col, uSpineColor, line * 0.9);
+  if (uEffects > 0.5) {
+    vec4 s = art ? strokes(p, spine - p.x) : bits(p, p.x - spine);
+    col = mix(col, s.rgb, s.a);
   }
-  gl_FragColor = vec4(fog(col, vWorld), 1.0);
-}
-`;
-
-const GATE_VERTEX = /* glsl */ `
-varying vec3 vWorld;
-varying vec2 vLocal;
-void main() {
-  vLocal = position.xy;
-  vec4 w = modelMatrix * vec4(position, 1.0);
-  vWorld = w.xyz;
-  gl_Position = projectionMatrix * viewMatrix * w;
-}
-`;
-
-const GATE_FRAGMENT = /* glsl */ `
-${COMMON}
-uniform float uOpen;  // how far each half has moved away from the line (m)
-uniform vec3 uEdge;
-varying vec3 vWorld;
-varying vec2 vLocal;
-
-float seamX(float y) {
-  return 0.12 * sin(y * 1.3 + uTime * 0.45) + 0.06 * sin(y * 3.1 - uTime * 0.8);
-}
-
-void main() {
-  float x = vLocal.x;
-  float line = seamX(vLocal.y);
-  vec2 p;
-  bool art;
-  if (x < line - uOpen) {
-    p = vec2(x + uOpen, vLocal.y);
-    art = true;
-  } else if (x > line + uOpen) {
-    p = vec2(x - uOpen, vLocal.y);
-    art = false;
-  } else {
-    discard;
-  }
-  vec3 col = art ? linen(p) : dots(p);
   float aa = fwidth(p.x) * 1.2;
-  float edge = 1.0 - smoothstep(0.012 - aa, 0.012 + aa, abs(p.x - line));
-  col = mix(col, uEdge, edge * 0.9);
+  float line = 1.0 - smoothstep(0.016 - aa, 0.016 + aa, abs(p.x - spine));
+  col = mix(col, uSpineColor, line * 0.9);
   gl_FragColor = vec4(fog(col, vWorld), 1.0);
 }
 `;
 
-/**
- * A shader material built here rather than through R3F props: R3F copies
- * uniforms into new objects, and these are written every frame.
- */
-function useShader(vertexShader: string, fragmentShader: string, uniforms: Record<string, THREE.IUniform>, side: THREE.Side = THREE.FrontSide) {
+export function Floor({ plan, effects }: { plan: FloorPlan; effects: boolean }) {
+  // Built here rather than through R3F props: R3F copies uniforms into new objects, and uTime is written every frame.
   const material = useMemo(
     () =>
       new THREE.ShaderMaterial({
-        vertexShader,
-        fragmentShader,
-        uniforms: { uFogColor: { value: color(SHOWCASE.background) }, uFogDensity: { value: SHOWCASE.fog }, uTime: { value: 0 }, ...uniforms },
-        side,
+        vertexShader: FLOOR_VERTEX,
+        fragmentShader: FLOOR_FRAGMENT,
+        uniforms: {
+          uFogColor: { value: color(SHOWCASE.background) },
+          uFogDensity: { value: SHOWCASE.fog },
+          uTime: { value: 0 },
+          uEffects: { value: effects ? 1 : 0 },
+          uPalette: { value: VIVID.map(color) },
+          uSpineColor: { value: color(NAME.paint) },
+        },
       }),
-    [vertexShader, fragmentShader, uniforms, side],
+    [effects],
   );
   useEffect(() => () => material.dispose(), [material]);
-  return material;
-}
-
-export function Floor({ plan, effects }: { plan: FloorPlan; effects: boolean }) {
-  const uniforms = useMemo(() => {
-    const planes = Array.from({ length: MAX_PLANES }, (_, i) => new THREE.Vector4(...(plan.planes[i] ?? [0, 0, 0, 0])));
-    const sides = Array.from({ length: MAX_PLANES + 1 }, (_, i) => (plan.sides[Math.min(i, plan.sides.length - 1)] === "code" ? 1 : 0));
-    return {
-      uSpine: { value: plan.spine ? 1 : 0 },
-      uPlanes: { value: planes },
-      uPlaneCount: { value: Math.min(MAX_PLANES, plan.planes.length) },
-      uSides: { value: sides },
-      uEffects: { value: effects ? 1 : 0 },
-      uPalette: { value: VIVID.map(color) },
-      uSpineColor: { value: color(NAME.paint) },
-    };
-  }, [plan, effects]);
-  const material = useShader(FLOOR_VERTEX, FLOOR_FRAGMENT, uniforms);
 
   useFrame((_, delta) => {
     material.uniforms.uTime.value += Math.min(delta, 0.05);
@@ -254,28 +169,6 @@ export function Floor({ plan, effects }: { plan: FloorPlan; effects: boolean }) 
   return (
     <mesh rotation-x={-Math.PI / 2} position={[(minX + maxX) / 2, 0, (minZ + maxZ) / 2]} material={material}>
       <planeGeometry args={[maxX - minX, maxZ - minZ]} />
-    </mesh>
-  );
-}
-
-/** Gate size (m), wide and tall enough that its edges are lost in the fog; it starts opening this far from the camera and is open by `openAt`. */
-const GATE = { width: 16, height: 8, opensFrom: 5.5, openAt: 1.5 };
-
-/** A passage's wall, split on a fluid line; it opens as the camera nears. */
-export function Gate({ passage }: { passage: Passage }) {
-  const uniforms = useMemo(() => ({ uOpen: { value: 0 }, uEdge: { value: color(NAME.paint) } }), []);
-  const material = useShader(GATE_VERTEX, GATE_FRAGMENT, uniforms, THREE.DoubleSide);
-  const [x, , z] = passage.position;
-
-  useFrame(({ camera }, delta) => {
-    material.uniforms.uTime.value += Math.min(delta, 0.05);
-    const t = THREE.MathUtils.clamp((GATE.opensFrom - Math.hypot(camera.position.x - x, camera.position.z - z)) / (GATE.opensFrom - GATE.openAt), 0, 1);
-    material.uniforms.uOpen.value = t * t * (3 - 2 * t) * (GATE.width / 2 + 0.5);
-  });
-
-  return (
-    <mesh position={[x, GATE.height / 2, z]} rotation-y={passage.rotationY} material={material}>
-      <planeGeometry args={[GATE.width, GATE.height]} />
     </mesh>
   );
 }

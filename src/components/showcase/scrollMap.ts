@@ -1,10 +1,10 @@
 // Scroll progress → where the showcase is (pure, no DOM).
 //
 // The scroll is measured in units of one viewport. The first `entranceUnits`
-// tear the hero open. After that, each beat (a work, or a chapter title) gets
-// its own chunk of scrolling. Across a chunk the camera moves from halfway
-// after the previous beat to halfway before the next one, slowing right down
-// at the beat itself, so each piece holds centre for a moment.
+// tear the hero open. After that, each beat (a work) gets its own chunk of
+// scrolling. Across a chunk the camera moves from halfway after the previous
+// beat to halfway before the next one, slowing right down at the beat itself,
+// so each piece holds centre for a moment.
 
 export interface Beat {
   key: string;

@@ -1,5 +1,5 @@
 /* The showcase: one tall scroll section, one pinned viewport.
-   Layers, back to front: the 3D scene, the DOM overlay (captions, titles), the hero. */
+   Layers, back to front: the 3D scene, the DOM overlay (captions), the hero. */
 
 .section {
   --units: 1;
@@ -55,7 +55,7 @@
 }
 
 /* ----------------------------------------------------------------------- */
-/* Captions and chapter titles: the scene positions and fades them.         */
+/* Captions: the scene positions and fades them.                            */
 
 .caption {
   position: absolute;
@@ -97,29 +97,8 @@
   color: rgb(255 255 255 / 0.55);
 }
 
-.chapterTitle {
-  position: absolute;
-  left: 0;
-  top: 0;
-  font-family: var(--font-poppins), sans-serif;
-  font-weight: 800;
-  font-size: 128px;
-  line-height: 1;
-  letter-spacing: -0.01em;
-  white-space: nowrap;
-  color: #ece4d4;
-  opacity: 0;
-  visibility: hidden;
-  transform-origin: 50% 50%;
-  will-change: transform, opacity;
-}
-
 @media (max-width: 639px) {
   .captionTitle {
     font-size: 19px;
-  }
-
-  .chapterTitle {
-    font-size: 72px;
   }
 }

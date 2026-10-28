@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import * as THREE from "three";
 import { createCameraPath } from "./cameraPath";
 import { detailPose } from "./cameraPose";
-import { Floor, Gate } from "./Floor";
+import { Floor } from "./Floor";
 import { EYE, FOV_Y, type SceneLayout } from "./layouts/types";
 import PaintingMesh from "./PaintingMesh";
 import ScreenMesh from "./ScreenMesh";
@@ -18,14 +18,14 @@ export interface SceneProps {
   tier: SceneTier;
   layout: SceneLayout;
   works: ReadonlyMap<string, Work>;
-  /** Beat index by key ("work:<slug>", "title:<key>") */
+  /** Beat index by key ("work:<slug>") */
   beatOf: ReadonlyMap<string, number>;
   /** Where the scroll is (written by the showcase every frame) */
   scroll: RefObject<ScrollSample>;
   openSlug: string | null;
   /** Run the frame loop (the scene is on screen and showing) */
   active: boolean;
-  /** Holds the captions and titles (data-caption / data-title) the scene positions */
+  /** Holds the captions (data-caption) the scene positions */
   overlay: RefObject<HTMLDivElement | null>;
   onOpen: (slug: string) => void;
   onContextLost: () => void;
@@ -49,7 +49,7 @@ function Rig({ tier, layout, beatOf, scroll, openSlug, overlay, onBeat }: Pick<S
   const look = useRef({ x: 0, y: 0, tx: 0, ty: 0 });
   const key = useRef<THREE.DirectionalLight | null>(null);
   const nearBeat = useRef(Number.NaN);
-  const elements = useRef<{ captions: [string, HTMLElement][]; titles: [string, HTMLElement][] } | null>(null);
+  const elements = useRef<[string, HTMLElement][] | null>(null);
   const shown = useRef(new Map<HTMLElement, number>());
 
   // Look-around toward the cursor (fine pointers on the full tier only).
@@ -72,7 +72,7 @@ function Rig({ tier, layout, beatOf, scroll, openSlug, overlay, onBeat }: Pick<S
     };
   }, [tier]);
 
-  // The overlay's elements, found again whenever the layout changes.
+  // The overlay's captions, found again whenever the layout changes.
   useEffect(() => {
     elements.current = null;
   }, [layout]);
@@ -125,14 +125,9 @@ function Rig({ tier, layout, beatOf, scroll, openSlug, overlay, onBeat }: Pick<S
       light.target.updateMatrixWorld();
     }
 
-    // Captions and titles.
+    // Captions.
     const root = overlay.current;
-    if (root && !elements.current) {
-      elements.current = {
-        captions: [...root.querySelectorAll<HTMLElement>("[data-caption]")].map((el) => [el.dataset.caption!, el]),
-        titles: [...root.querySelectorAll<HTMLElement>("[data-title]")].map((el) => [el.dataset.title!, el]),
-      };
-    }
+    if (root && !elements.current) elements.current = [...root.querySelectorAll<HTMLElement>("[data-caption]")].map((el) => [el.dataset.caption!, el]);
     const set = (el: HTMLElement, opacity: number, transform: string) => {
       const was = shown.current.get(el) ?? -1;
       if (opacity <= 0.001) {
@@ -152,7 +147,7 @@ function Rig({ tier, layout, beatOf, scroll, openSlug, overlay, onBeat }: Pick<S
     };
     const W = size.width;
     const H = size.height;
-    for (const [slug, el] of elements.current?.captions ?? []) {
+    for (const [slug, el] of elements.current ?? []) {
       const p = placements.get(slug);
       const beat = beatOf.get(`work:${slug}`);
       if (!p || beat === undefined) continue;
@@ -160,18 +155,6 @@ function Rig({ tier, layout, beatOf, scroll, openSlug, overlay, onBeat }: Pick<S
       v.a.set(p.position[0], p.position[1] - p.height / 2 - 0.1, p.position[2]).project(camera);
       if (v.a.z > 1) opacity = 0;
       set(el, opacity, `translate3d(${(((v.a.x + 1) / 2) * W).toFixed(1)}px, ${Math.min(H - 76, ((1 - v.a.y) / 2) * H).toFixed(1)}px, 0) translate(-50%, 0)`);
-    }
-    for (const [keyName, el] of elements.current?.titles ?? []) {
-      const title = layout.titles.find((t) => t.key === keyName);
-      const beat = beatOf.get(`title:${keyName}`);
-      if (!title || beat === undefined) continue;
-      v.a.set(...title.position);
-      const distance = v.a.distanceTo(camera.position);
-      v.a.project(camera);
-      let opacity = (1 - smoothstep(SHOWCASE.title.fade[0], SHOWCASE.title.fade[1], Math.abs(s.beat - beat))) * (1 - fly);
-      if (v.a.z > 1) opacity = 0;
-      const scale = Math.min(2.2, Math.max(0.25, 6 / Math.max(0.1, distance)));
-      set(el, opacity, `translate3d(${(((v.a.x + 1) / 2) * W).toFixed(1)}px, ${(((1 - v.a.y) / 2) * H).toFixed(1)}px, 0) translate(-50%, -50%) scale(${scale.toFixed(3)})`);
     }
 
     // Which works should have their textures (React state, changes once per beat).
@@ -220,9 +203,6 @@ function SceneContents({ tier, layout, works, beatOf, scroll, openSlug, overlay,
     <InteractionContext.Provider value={interaction}>
       <ambientLight color="#fff4e6" intensity={1.05} />
       <Floor plan={layout.floor} effects={tier === "full"} />
-      {layout.passages.map((passage) => (
-        <Gate key={passage.key} passage={passage} />
-      ))}
       {layout.placements.map((placement) => {
         const work = works.get(placement.slug);
         if (!work) return null;
