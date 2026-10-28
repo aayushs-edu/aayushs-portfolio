@@ -7,7 +7,7 @@ import { useHeroTier } from "../hero/useHeroTier";
 import Captions from "./Captions";
 import DetailPanel from "./DetailPanel";
 import { CHAPTERS } from "./layouts/chapters";
-import { beatsFor, LAYOUTS, type LayoutName } from "./layouts";
+import { beatsFor, LAYOUTS, parseLayout, type LayoutName } from "./layouts";
 import type { Viewport } from "./layouts/types";
 import { createScrollMap, progressForBeat, sampleScroll, type ScrollSample } from "./scrollMap";
 import css from "./Showcase.module.css";
@@ -47,9 +47,13 @@ function currentViewport(): Viewport {
  * WebGL2, or with reduced motion, the hero stays whole and the works are a
  * calm grid with the same detail panel.
  */
-export default function Showcase({ layout: layoutName }: { layout: LayoutName }) {
+export default function Showcase() {
   const [tier, demote, detected] = useHeroTier();
   const threeD = tier !== "static";
+
+  // ?layout=chapters tries the chapters layout. Read after mount, so the page itself stays static.
+  const [layoutName, setLayoutName] = useState<LayoutName>("split");
+  useEffect(() => setLayoutName(parseLayout(new URLSearchParams(window.location.search).get("layout") ?? undefined)), []);
 
   // ---- layout and scroll map ---------------------------------------------------
   const [viewport, setViewport] = useState<Viewport>({ width: 1440, height: 900 });

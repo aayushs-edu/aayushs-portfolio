@@ -18,6 +18,11 @@ const nextConfig: NextConfig = {
   // Optimize production builds
   swcMinify: true,
 
+  // The split hero and showcase were previewed at /split before they became the home page.
+  async redirects() {
+    return [{ source: '/split', destination: '/', permanent: false }];
+  },
+
   async headers() {
     return [
       {
