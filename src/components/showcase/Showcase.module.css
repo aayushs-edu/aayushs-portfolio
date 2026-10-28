@@ -1,0 +1,55 @@
+/* The showcase: one tall scroll section, one pinned viewport.
+   Layers, back to front: the 3D scene, the DOM overlay (captions, titles), the hero. */
+
+.section {
+  --units: 1;
+  position: relative;
+  height: calc((var(--units) + 1) * 100svh);
+  background: #0d0d0d;
+  color: #fff;
+}
+
+.sticky {
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  min-height: 420px;
+  overflow: hidden;
+}
+
+.scene,
+.overlay,
+.hero {
+  position: absolute;
+  inset: 0;
+}
+
+.overlay {
+  pointer-events: none;
+}
+
+/* Once the hero starts to open, clicks go through the gap to the scene. */
+.hero[data-opening="true"] {
+  pointer-events: none;
+}
+
+/* Fully open: the hero is off screen; drop it from the page's layers. */
+.hero[data-gone="true"] {
+  visibility: hidden;
+}
+
+/* Without the scene: the hero, then the fallback page. */
+.section[data-mode="static"] {
+  height: auto;
+}
+
+.section[data-mode="static"] .sticky {
+  position: relative;
+  height: auto;
+  min-height: 0;
+  overflow: visible;
+}
+
+.section[data-mode="static"] .hero {
+  position: relative;
+}

@@ -4,7 +4,7 @@
 // short straight passage runs through a wall split on a fluid line, which opens
 // as the camera nears (the hero's line opening again).
 
-import type { Work, WorkKind } from "../works";
+import type { WorkKind } from "../works";
 import {
   AHEAD,
   boundsOf,

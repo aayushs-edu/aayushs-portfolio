@@ -34,19 +34,24 @@ function detectTier(): Tier {
  * 'static' | 'lite' | 'full'. SSR and the first client render are 'static';
  * the real tier is picked after mount. Reduced motion is followed live, and
  * `demote()` drops to static for the rest of the session (WebGL context loss).
+ * The third value turns true once the real tier has been picked.
  */
-export function useHeroTier(): [Tier, () => void] {
+export function useHeroTier(): [Tier, () => void, boolean] {
   const [tier, setTier] = useState<Tier>("static");
   const [demoted, setDemoted] = useState(false);
+  const [detected, setDetected] = useState(false);
 
   useEffect(() => {
     const query = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const update = () => setTier(demoted ? "static" : detectTier());
+    const update = () => {
+      setTier(demoted ? "static" : detectTier());
+      setDetected(true);
+    };
     update();
     query.addEventListener("change", update);
     return () => query.removeEventListener("change", update);
   }, [demoted]);
 
   const demote = useCallback(() => setDemoted(true), []);
-  return [tier, demote];
+  return [tier, demote, detected];
 }

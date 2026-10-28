@@ -1,0 +1,183 @@
+/* The detail view. Sizes match SHOWCASE.panel in showcaseConfig.ts:
+   a side panel 440px wide (at most 42vw) from 768px up, a 58svh bottom sheet below. */
+
+.root {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  pointer-events: none;
+  color: #fff;
+}
+
+.scrim {
+  position: absolute;
+  inset: 0;
+  background: rgb(13 13 13 / 0.72);
+  opacity: 0;
+  transition: opacity 300ms ease;
+}
+
+.root[data-open="true"] .scrim {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.panel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(440px, 42vw);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 72px 40px 48px;
+  background: #121212;
+  box-shadow:
+    inset 1px 0 0 rgb(255 255 255 / 0.08),
+    -24px 0 48px -24px rgb(0 0 0 / 0.8);
+  transform: translate3d(100%, 0, 0);
+  visibility: hidden;
+  transition:
+    transform 520ms cubic-bezier(0.2, 0.7, 0.2, 1),
+    visibility 0s linear 520ms;
+}
+
+.root[data-open="true"] .panel {
+  transform: none;
+  visibility: visible;
+  pointer-events: auto;
+  transition:
+    transform 520ms cubic-bezier(0.2, 0.7, 0.2, 1) 120ms,
+    visibility 0s;
+}
+
+@media (max-width: 767px) {
+  .panel {
+    top: auto;
+    left: 0;
+    width: auto;
+    height: 58svh;
+    padding: 56px 20px 40px;
+    border-radius: 16px 16px 0 0;
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.08),
+      0 -24px 48px -24px rgb(0 0 0 / 0.8);
+    transform: translate3d(0, 100%, 0);
+  }
+}
+
+.close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: rgb(255 255 255 / 0.7);
+  font-size: 28px;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background-color 160ms ease,
+    color 160ms ease;
+}
+
+.close:hover {
+  background: rgb(255 255 255 / 0.08);
+  color: #fff;
+}
+
+.close:focus-visible,
+.links a:focus-visible {
+  outline: 2px solid #ece4d4;
+  outline-offset: 2px;
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-poppins), sans-serif;
+  font-weight: 800;
+  font-size: clamp(28px, 3.2vw, 40px);
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+  color: #ece4d4;
+}
+
+.meta {
+  margin: 12px 0 0;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  color: rgb(255 255 255 / 0.55);
+}
+
+.story {
+  margin-top: 28px;
+  font-size: 15px;
+  line-height: 1.65;
+  color: rgb(255 255 255 / 0.82);
+}
+
+.story p {
+  margin: 0;
+  max-width: 60ch;
+}
+
+.story p + p {
+  margin-top: 14px;
+}
+
+.video {
+  display: block;
+  width: 100%;
+  margin-top: 28px;
+  border-radius: 8px;
+  background: #000;
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 32px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.links a {
+  display: inline-block;
+  padding: 9px 14px;
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.2);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 12px;
+  color: #fff;
+  text-decoration: none;
+  transition: box-shadow 160ms ease;
+}
+
+.links a:hover {
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.55);
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel,
+  .root[data-open="true"] .panel,
+  .scrim {
+    transition: none;
+  }
+}
