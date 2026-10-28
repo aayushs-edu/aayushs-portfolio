@@ -8,7 +8,7 @@
 
 import { DESIGN } from "./heroConfig";
 import { MAX_POPS, MAX_STREAMS } from "./seamField";
-import { CURVE } from "./splitConfig";
+import { BITS, CURVE } from "./splitConfig";
 
 /** The line: its samples, and where it is at height y (x from the centre, CSS px). */
 export const CURVE_GLSL = /* glsl */ `
@@ -42,6 +42,7 @@ precision highp float;
 
 #define MAX_STREAMS ${MAX_STREAMS}
 #define MAX_POPS ${MAX_POPS}
+#define BIT_COLORS ${BITS.palette.length}
 
 uniform vec2 uRes;            // canvas size (device px)
 uniform float uDpr;
@@ -55,6 +56,7 @@ uniform vec4 uA[MAX_STREAMS]; // the line's x at the ribbon's height, centre y, 
 uniform vec4 uB[MAX_STREAMS]; // body radius, leading-edge radius, wave amplitude, wave number
 uniform vec4 uC[MAX_STREAMS]; // colour index, seed, flow, wave phase
 uniform vec3 uPalette[7];     // six pigments, then the seam's own paint
+uniform vec3 uBitPalette[BIT_COLORS]; // the bits: hacker green and greys
 uniform float uBead;          // seam bead half-width (CSS px)
 uniform float uBeadSwell;
 uniform float uBlend;         // smooth-union radius (CSS px)
@@ -266,8 +268,8 @@ vec4 paint(vec2 p) {
 
 // Each pop spits packets of digits along a few neighbouring rows. A packet
 // bursts out of the line, brakes, then drifts; it leaves white-hot and cools to
-// the pop's pigment; a digit flips now and again; it fades out at the end of
-// the pop's life.
+// the pop's colour (green or grey); a digit flips now and again; it fades out
+// at the end of the pop's life.
 vec4 bits(vec2 p) {
   float row = floor((p.y - uGridY) / uCell.y);
   float top = uGridY + row * uCell.y;
@@ -298,8 +300,7 @@ vec4 bits(vec2 p) {
     float life = mix(uBitTime.y, uBitTime.z, hash11(pop.z * 5.9));
     float a = glyph * (1.0 - smoothstep(0.55 * life, life, age));
     if (a <= 0.0) continue;
-    // Mostly the six pigments; now and then the name's off-white.
-    vec3 col = uPalette[int(min(6.0, floor(hash11(pop.z * 2.3) * 6.5)))];
+    vec3 col = uBitPalette[int(min(float(BIT_COLORS - 1), floor(hash11(pop.z * 2.3) * float(BIT_COLORS))))];
     col = mix(vec3(1.0, 0.98, 0.94), col, smoothstep(0.0, uBitTime.w, age));
     return vec4(col * a, a);
   }

@@ -29,7 +29,7 @@ export interface SplitLayout {
 export const VIVID = ["#ff3b2f", "#ff8f1f", "#ffd21f", "#12c48b", "#2f6bff", "#ff2f8e"] as const;
 
 export const SEAM = {
-  /** Paint and bit colours; the last entry is the seam's own bead (the name's paint). */
+  /** Paint colours; the last entry is the seam's own bead (the name's paint). */
   palette: [...VIVID, NAME.paint],
   /** Paint ribbons on the left. */
   ribbons: { full: 16, lite: 10, static: 16 } as Record<Tier, number>,
@@ -90,10 +90,12 @@ export const CURVE = {
  * The right side: bits popping out of the line. Spots along the line pop every
  * few seconds; each pop spits a small splash of digit packets across a few
  * neighbouring rows. They burst out fast, brake, drift and fade, leaving the
- * line white-hot and cooling to the pop's pigment. Each pop kicks the line
- * toward the code side for a moment.
+ * line white-hot and cooling to the pop's colour (green or grey). Each pop
+ * kicks the line toward the code side for a moment.
  */
 export const BITS = {
+  /** A terminal's colours, not the paint's: hacker green (bright, then dimmer) and greys. */
+  palette: ["#00ff41", "#00b02d", "#ededed", "#a3a3a3", "#666666"],
   /** Spots along the line that pop; each pops again every `period`. */
   emitters: { full: 26, lite: 14, static: 26 } as Record<Tier, number>,
   period: [1.6, 3.6] as [number, number],

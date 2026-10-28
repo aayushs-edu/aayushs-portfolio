@@ -4,7 +4,7 @@ import { useFrame } from "@react-three/fiber";
 import { useEffect, useMemo } from "react";
 import * as THREE from "three";
 import { NAME } from "../hero/heroConfig";
-import { VIVID } from "../hero/splitConfig";
+import { BITS, VIVID } from "../hero/splitConfig";
 import type { FloorPlan } from "./layouts/types";
 import { SHOWCASE } from "./showcaseConfig";
 
@@ -69,7 +69,8 @@ vec3 fog(vec3 col, vec3 world) {
 }
 
 uniform float uEffects;
-uniform vec3 uPalette[6];
+uniform vec3 uPalette[6];      // the paint's pigments
+uniform vec3 uBitPalette[${BITS.palette.length}];   // the bits: hacker green and greys
 uniform vec3 uSpineColor;
 varying vec3 vWorld;
 
@@ -120,7 +121,7 @@ vec4 bits(vec2 p, float q) {
     ? (1.0 - smoothstep(0.07, 0.07 + aa, abs(c.y))) * (1.0 - smoothstep(0.28, 0.28 + aa, abs(c.x)))
     : (1.0 - smoothstep(0.08, 0.08 + aa, abs(length(c / vec2(0.32, 0.22)) - 0.85) * 0.25));
   float life = 1.0 - smoothstep(0.6 * period, 0.9 * period, age);
-  vec3 col = uPalette[int(min(5.0, floor(hash11(j * 3.3) * 6.0)))];
+  vec3 col = uBitPalette[int(min(${BITS.palette.length - 1}.0, floor(hash11(j * 3.3) * ${BITS.palette.length}.0)))];
   col = mix(vec3(1.0, 0.98, 0.94), col, smoothstep(0.0, 0.4, age));
   return vec4(col, glyph * life);
 }
@@ -154,6 +155,7 @@ export function Floor({ plan, effects }: { plan: FloorPlan; effects: boolean }) 
           uTime: { value: 0 },
           uEffects: { value: effects ? 1 : 0 },
           uPalette: { value: VIVID.map(color) },
+          uBitPalette: { value: BITS.palette.map(color) },
           uSpineColor: { value: color(NAME.paint) },
         },
       }),

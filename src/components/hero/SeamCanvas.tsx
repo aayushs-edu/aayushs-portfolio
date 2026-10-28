@@ -20,7 +20,7 @@ const NAME_BACKING = "#191817";
 
 const UNIFORMS = [
   "uRes", "uDpr", "uSeam", "uUnit", "uCell", "uGridY", "uTime", "uCount", "uCurve", "uHeight",
-  "uA", "uB", "uC", "uPalette", "uBead", "uBeadSwell", "uBlend",
+  "uA", "uB", "uC", "uPalette", "uBitPalette", "uBead", "uBeadSwell", "uBlend",
   "uGlyphs", "uGlyphRes", "uGlyphSlot", "uPopCount", "uPop", "uBitShape", "uBurst", "uBitTime", "uOpen",
   "uNameOn", "uFlowOn", "uBox", "uGridInfo", "uNameInk", "uNameBacking", "uNamePaint", "uNameMask", "uNameHoles", "uFlow",
 ] as const;
@@ -70,6 +70,7 @@ class SeamRenderer {
 
     gl.useProgram(program);
     gl.uniform3fv(this.loc.uPalette, SEAM.palette.flatMap(rgb));
+    gl.uniform3fv(this.loc.uBitPalette, BITS.palette.flatMap(rgb));
     gl.uniform4f(this.loc.uBitShape, BITS.spread, BITS.rowChance, BITS.maxLength, BITS.flipRate);
     gl.uniform4f(this.loc.uBitTime, BITS.burstTime, BITS.life[0], BITS.life[1], BITS.cool);
     gl.uniform1i(this.loc.uGlyphs, 0);
