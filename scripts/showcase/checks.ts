@@ -4,6 +4,8 @@ import * as THREE from "three";
 import { openFor } from "../../src/components/hero/seamField";
 import { BITS, CURVE, SEAM } from "../../src/components/hero/splitConfig";
 import { createCameraPath } from "../../src/components/showcase/cameraPath";
+import { detailPose } from "../../src/components/showcase/cameraPose";
+import { freeArea, SHOWCASE } from "../../src/components/showcase/showcaseConfig";
 import { beatsFor, LAYOUTS, type LayoutName } from "../../src/components/showcase/layouts";
 import { FOV_Y, type Placement, type SceneLayout, type Vec3, type Viewport } from "../../src/components/showcase/layouts/types";
 import { createScrollMap, progressForBeat, sampleScroll, type Beat } from "../../src/components/showcase/scrollMap";
@@ -290,6 +292,36 @@ for (const name of Object.keys(LAYOUTS) as LayoutName[]) {
         assert(layout.groups.map((g) => g.title).join() === "Paintings,Projects", `groups ${layout.groups.map((g) => g.title).join()}`);
       });
     }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Flying in to a work
+
+for (const viewport of VIEWPORTS) {
+  const placements: Placement[] = [
+    { slug: "wide", position: [-1.95, 1.6, -8], rotationY: 0.6, width: 1.6, height: 1.19 },
+    { slug: "tall", position: [1.95, 1.4, -12], rotationY: -0.6, width: 0.87, height: 1.1 },
+    { slug: "flat", position: [4, 1.4, -20], rotationY: 2.4, width: 1.7, height: 0.77 },
+  ];
+  for (const p of placements) {
+    check(`detail ${viewport.width}×${viewport.height} ${p.slug}: centred in the free area, filling about ${SHOWCASE.flight.fill}`, () => {
+      const pose = detailPose(p, viewport, SHOWCASE.flight.fill);
+      const eye = v3(pose.position);
+      const target = v3(pose.target);
+      const camera = new THREE.PerspectiveCamera(FOV_Y, viewport.width / viewport.height, 0.05, 1000);
+      camera.position.copy(eye);
+      camera.lookAt(target);
+      camera.updateMatrixWorld();
+      const centre = v3(p.position).project(camera);
+      const [fx, fy, fw, fh] = freeArea(viewport.width, viewport.height);
+      const want = [((fx + fw / 2) / viewport.width) * 2 - 1, 1 - ((fy + fh / 2) / viewport.height) * 2];
+      assert(Math.abs(centre.x - want[0]) < 0.02 && Math.abs(centre.y - want[1]) < 0.02, `centre at ${centre.x.toFixed(3)}, ${centre.y.toFixed(3)}; want ${want.map((v) => v.toFixed(3))}`);
+      const [w, h] = fill(p, eye, target, viewport);
+      const share = Math.max((w * viewport.width) / fw, (h * viewport.height) / fh);
+      assert(share > SHOWCASE.flight.fill - 0.03 && share < SHOWCASE.flight.fill + 0.03, `fills ${share.toFixed(3)} of the free area`);
+      assert(eye.distanceTo(v3(p.position)) > 0.5, "too close");
+    });
   }
 }
 

@@ -46,7 +46,7 @@ const MAX_STEP = 0.3;
 /** Space between neighbouring works, edge to edge (m). */
 const GAP = 1.3;
 /** The passage between chapters, and the run-out after the last one (m). */
-const PASSAGE = 7;
+const PASSAGE = 12;
 const TAIL = 5;
 
 type V2 = [number, number];

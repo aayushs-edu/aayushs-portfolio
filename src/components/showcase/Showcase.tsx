@@ -1,8 +1,10 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import SplitHero from "../hero/SplitHero";
 import { useHeroTier } from "../hero/useHeroTier";
+import Captions from "./Captions";
 import DetailPanel from "./DetailPanel";
 import { CHAPTERS } from "./layouts/chapters";
 import { beatsFor, LAYOUTS, type LayoutName } from "./layouts";
@@ -12,6 +14,9 @@ import css from "./Showcase.module.css";
 import { SHOWCASE } from "./showcaseConfig";
 import WorkList, { workButtonId, type WorkListGroup } from "./WorkList";
 import { WORKS, type Work } from "./works";
+
+// three, R3F and the scene code: loaded once the hero is up (or at the first scroll).
+const Scene = dynamic(() => import("./Scene"), { ssr: false });
 
 const BY_SLUG = new Map(WORKS.map((work) => [work.slug, work]));
 const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
@@ -43,7 +48,7 @@ function currentViewport(): Viewport {
  * calm grid with the same detail panel.
  */
 export default function Showcase({ layout: layoutName }: { layout: LayoutName }) {
-  const [tier, , detected] = useHeroTier();
+  const [tier, demote, detected] = useHeroTier();
   const threeD = tier !== "static";
 
   // ---- layout and scroll map ---------------------------------------------------
@@ -63,6 +68,8 @@ export default function Showcase({ layout: layoutName }: { layout: LayoutName })
   const layout = useMemo(() => LAYOUTS[layoutName](WORKS, viewport), [layoutName, viewport]);
   const map = useMemo(() => createScrollMap(beatsFor(layout, SHOWCASE.units), SHOWCASE.units.entrance, SHOWCASE.dwell), [layout]);
   const groups = useMemo(() => (threeD ? groupWorks(layout.groups) : CHAPTER_GROUPS), [threeD, layout]);
+  const beats = useMemo(() => new Map(map.beats.map((b, i) => [b.key, i])), [map]);
+  const pathWorks = useMemo(() => layout.stops.map((stop) => BY_SLUG.get(stop.slug)!), [layout]);
 
   // ---- scroll: native, exponentially smoothed, never in React state --------------
   const sectionRef = useRef<HTMLElement | null>(null);
@@ -138,7 +145,31 @@ export default function Showcase({ layout: layoutName }: { layout: LayoutName })
     };
   }, [threeD, map]);
 
-  const beatOf = useCallback((key: string) => map.beats.findIndex((b) => b.key === key), [map]);
+  const beatOf = useCallback((key: string) => beats.get(key) ?? -1, [beats]);
+
+  // ---- the scene: loaded on idle after the hero is up, or at the first scroll; drawing only while it shows.
+  const [wantScene, setWantScene] = useState(false);
+  useEffect(() => {
+    if (!threeD || wantScene) return;
+    const want = () => setWantScene(true);
+    const idle = typeof window.requestIdleCallback === "function" ? window.requestIdleCallback(want, { timeout: 2500 }) : window.setTimeout(want, 1200);
+    window.addEventListener("scroll", want, { once: true, passive: true });
+    return () => {
+      if (typeof window.cancelIdleCallback === "function") window.cancelIdleCallback(idle);
+      else window.clearTimeout(idle);
+      window.removeEventListener("scroll", want);
+    };
+  }, [threeD, wantScene]);
+
+  const [onScreen, setOnScreen] = useState(true);
+  useEffect(() => {
+    const section = sectionRef.current;
+    if (!threeD || !section) return;
+    const observer = new IntersectionObserver(([entry]) => setOnScreen(entry.isIntersecting));
+    observer.observe(section);
+    return () => observer.disconnect();
+  }, [threeD]);
+  const overlayRef = useRef<HTMLDivElement | null>(null);
 
   // ---- the detail view ---------------------------------------------------------
   const [openSlug, setOpenSlug] = useState<string | null>(null);
@@ -259,8 +290,29 @@ export default function Showcase({ layout: layoutName }: { layout: LayoutName })
         data-layout={layoutName}
       >
         <div className={css.sticky}>
-          {threeD && <div className={css.scene} />}
-          {threeD && <div className={css.overlay} aria-hidden="true" data-focus={focusSlug ?? undefined} />}
+          {threeD && (
+            <div className={css.scene}>
+              {wantScene && (
+                <Scene
+                  tier={tier === "full" ? "full" : "lite"}
+                  layout={layout}
+                  works={BY_SLUG}
+                  beatOf={beats}
+                  scroll={scrollRef}
+                  openSlug={openSlug}
+                  active={onScreen && (opening || !!openSlug)}
+                  overlay={overlayRef}
+                  onOpen={openWork}
+                  onContextLost={demote}
+                />
+              )}
+            </div>
+          )}
+          {threeD && (
+            <div ref={overlayRef} className={css.overlay} aria-hidden="true">
+              {wantScene && <Captions works={pathWorks} titles={layout.titles} focusSlug={focusSlug} onOpen={openWork} />}
+            </div>
+          )}
           <div className={css.hero} data-gone={heroGone} data-opening={opening}>
             <SplitHero entrance={threeD ? entranceRef : undefined} paused={threeD && heroGone} />
           </div>
