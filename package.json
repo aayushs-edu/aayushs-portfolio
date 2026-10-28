@@ -9,7 +9,8 @@
     "lint": "next lint",
     "optimize:images": "node scripts/convert-images-to-webp.js",
     "analyze": "cross-env ANALYZE=true next build",
-    "hero:assets": "python3 scripts/hero/depth.py && node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/hero/build-hero-assets.mjs"
+    "hero:assets": "python3 scripts/hero/depth.py && node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/hero/build-hero-assets.mjs",
+    "showcase:check": "node scripts/showcase/check.mjs"
   },
   "dependencies": {
     "@google/model-viewer": "^4.1.0",
