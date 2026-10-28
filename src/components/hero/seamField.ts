@@ -236,6 +236,17 @@ export function writeCurve(
   seen.forEach((v, k) => origins.set(k, v));
 }
 
+/**
+ * How far each half has moved away from the line (CSS px) when the hero is
+ * `entrance` (0..1) of the way through tearing open. Eases in as the line first
+ * parts; at 1 both halves, and everything the line can swing to, are off screen.
+ */
+export function openFor(entrance: number, layout: SplitLayout): number {
+  const e = clamp01(entrance);
+  const full = Math.max(layout.seamX, layout.w - layout.seamX) + (CURVE.amp + 40) * layout.u;
+  return e * e * (3 - 2 * e) * full;
+}
+
 /** clip-path polygons for the two sides of the line, in the hero's own coordinates. */
 export function clipPaths(curve: Float32Array, layout: SplitLayout): { left: string; right: string } {
   const { w, h, seamX } = layout;

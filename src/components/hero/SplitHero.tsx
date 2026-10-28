@@ -30,8 +30,12 @@ function sameLayout(a: SplitLayout, b: SplitLayout) {
  * its left side and bits out of its right. The name is fluid to the touch:
  * moving through it pushes the letters around and bits come loose from the
  * binary ones; grab it to pull the line through it.
+ *
+ * Under the showcase, `entrance` (0..1) tears it open along the line: the
+ * halves part, the tagline lifts away, and the name stops responding to touch.
+ * `paused` stops its frame loop once it is gone.
  */
-export default function SplitHero() {
+export default function SplitHero({ entrance, paused = false }: { entrance?: { readonly current: number }; paused?: boolean }) {
   const [tier] = useHeroTier();
   const [layout, setLayout] = useState<SplitLayout | null>(null);
   const stageRef = useRef<HTMLDivElement | null>(null);
@@ -66,10 +70,16 @@ export default function SplitHero() {
     return () => observer.disconnect();
   }, []);
 
-  // Pointer input for touching the name.
+  // Pointer input for touching the name (until the hero starts to open).
   useEffect(() => {
     const stage = stageRef.current;
     if (!stage) return;
+    const opening = () => {
+      if ((entrance?.current ?? 0) <= 0) return false;
+      touch.leave();
+      stage.style.cursor = "";
+      return true;
+    };
     const local = (event: PointerEvent) => {
       const rect = stage.getBoundingClientRect();
       return [event.clientX - rect.left, event.clientY - rect.top] as const;
@@ -78,11 +88,13 @@ export default function SplitHero() {
       stage.style.cursor = touch.holding ? "grabbing" : touch.overName(x, y) ? "grab" : "";
     };
     const onMove = (event: PointerEvent) => {
+      if (opening()) return;
       const [x, y] = local(event);
       touch.move(x, y, event.pointerType === "touch");
       cursor(x, y);
     };
     const onDown = (event: PointerEvent) => {
+      if (opening()) return;
       const [x, y] = local(event);
       touch.down(x, y, event.pointerType === "touch");
       cursor(x, y);
@@ -108,14 +120,22 @@ export default function SplitHero() {
       stage.removeEventListener("pointerleave", onLeave);
       stage.removeEventListener("pointercancel", onLeave);
     };
-  }, [touch]);
+  }, [touch, entrance]);
 
   return (
     <section className={styles.hero} style={SECTION_STYLE} aria-label="Aayush Sharma: art and code" data-tier={tier}>
       <div ref={stageRef} className={split.stage} data-gl-name={glName}>
         <div className={split.layer}>
           <SplitWall layout={layout} />
-          <SeamCanvas tier={tier} layout={layout} clipRef={stageRef} touch={touch} onNameReady={() => setGlName(true)} />
+          <SeamCanvas
+            tier={tier}
+            layout={layout}
+            clipRef={stageRef}
+            touch={touch}
+            onNameReady={() => setGlName(true)}
+            entrance={entrance}
+            paused={paused}
+          />
           {/* The name twice, each clipped to its side of the line; the tagline over both. */}
           <div className={`${split.artSide} ${split.domName}`}>
             <div ref={titleRef} className={split.title}>
@@ -127,7 +147,7 @@ export default function SplitHero() {
               <BinaryName />
             </div>
           </div>
-          <div className={split.title}>
+          <div className={`${split.title} ${split.taglineLift}`}>
             <Tagline />
           </div>
         </div>

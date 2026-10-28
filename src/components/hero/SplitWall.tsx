@@ -34,7 +34,8 @@ function weaveTile(dpr: number): string {
 
 /**
  * The wall: linen on the art side of the line, a dot grid (the title's grid) on
- * the code side. Both cover the hero; each is clipped to its side of the line.
+ * the code side. Both cover the hero; each is clipped to its side of the line
+ * and carries the wall colour, so when the halves part the gap is open.
  */
 export default function SplitWall({ layout }: { layout: SplitLayout | null }) {
   const weaveRef = useRef<HTMLDivElement | null>(null);
@@ -57,7 +58,9 @@ export default function SplitWall({ layout }: { layout: SplitLayout | null }) {
 
   return (
     <div className={split.wall} aria-hidden="true">
-      <div ref={weaveRef} className={`${split.artSide} ${split.weave}`} />
+      <div className={`${split.artSide} ${split.wallFill}`}>
+        <div ref={weaveRef} className={split.weave} />
+      </div>
       <div className={`${split.codeSide} ${split.dots}`} style={dots} />
     </div>
   );

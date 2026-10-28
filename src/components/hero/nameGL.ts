@@ -117,6 +117,7 @@ layout(location = 0) in vec4 aBit; // x, y (canvas CSS px, top-left), digit, opa
 uniform vec2 uRes;
 uniform float uDpr;
 uniform vec2 uCell;
+uniform float uOpen; // the code half has moved right this far (CSS px)
 out vec2 vLocal;
 out vec2 vPos;
 flat out float vDigit;
@@ -126,6 +127,7 @@ void main() {
   vec2 corner = vec2(v == 1 || v == 4 || v == 5 ? 1.0 : 0.0, v == 2 || v == 3 || v == 5 ? 1.0 : 0.0);
   vec2 pos = aBit.xy + corner * uCell;
   vPos = pos;
+  pos.x += uOpen;
   vLocal = corner * uCell * uDpr;
   vDigit = aBit.z;
   vAlpha = aBit.w;
@@ -479,7 +481,15 @@ export class NameGL {
   }
 
   /** Draws the loose digits over the binary side (glyph atlas on unit 0). */
-  drawBits(touch: NameTouch, curve: Float32Array, layout: SplitLayout, canvas: { width: number; height: number }, dpr: number, glyph: { w: number; h: number; slot: number }) {
+  drawBits(
+    touch: NameTouch,
+    curve: Float32Array,
+    layout: SplitLayout,
+    canvas: { width: number; height: number },
+    dpr: number,
+    glyph: { w: number; h: number; slot: number },
+    open = 0,
+  ) {
     if (!touch.bitCount) return;
     const { gl } = this;
     const { program: prog, loc } = this.bitsProgram;
@@ -488,6 +498,7 @@ export class NameGL {
     gl.uniform1f(loc("uDpr"), dpr);
     gl.uniform2f(loc("uCell"), layout.cellW, layout.cellH);
     gl.uniform1f(loc("uSeam"), layout.seamX);
+    gl.uniform1f(loc("uOpen"), open);
     gl.uniform1f(loc("uHeight"), layout.h);
     gl.uniform4fv(loc("uCurve"), curve);
     gl.uniform3f(loc("uInk"), ...rgb(NAME.paint));

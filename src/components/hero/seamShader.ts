@@ -3,7 +3,8 @@
 // paint), and over them the painted name. Right of it: bits pop out of the
 // line (splashes of digit packets along the binary grid's rows that burst out,
 // brake, drift and fade), and over them the binary name. Both halves of the
-// name are drawn through the fluid flow of nameGL.ts.
+// name are drawn through the fluid flow of nameGL.ts. When the showcase opens,
+// the two halves part along the line (uOpen) and the gap between is left clear.
 
 import { DESIGN } from "./heroConfig";
 import { MAX_POPS, MAX_STREAMS } from "./seamField";
@@ -65,6 +66,7 @@ uniform vec4 uPop[MAX_POPS];  // centre row, age (s), seed (negative: flies left
 uniform vec4 uBitShape;       // rows either side, row chance, max packet length, flip rate
 uniform vec4 uBurst;          // burst speed min/max, drift speed min/max (CSS px/s)
 uniform vec4 uBitTime;        // burst decay (s), life min/max (s), cooling time (s)
+uniform float uOpen;          // how far each half has moved away from the line (CSS px)
 // The name
 uniform float uNameOn;        // 0 until the name's textures are ready (the DOM name shows meanwhile)
 uniform float uFlowOn;        // 1 while the fluid is moving
@@ -351,17 +353,38 @@ vec4 binaryName(vec2 p) {
   return vec4(mix(uNameBacking, uNameInk, glyph), 1.0);
 }
 
+// ---- The tear ----------------------------------------------------------------
+
+// Once the halves part, the code half gets the other side of the line's bead as its raw edge.
+vec4 rawEdge(vec2 p) {
+  float a = clamp(0.5 - bead(p) * uDpr, 0.0, 1.0) * clamp(uOpen / (4.0 * uUnit), 0.0, 1.0);
+  return vec4(uPalette[6] * 0.92 * a, a);
+}
+
 void main() {
   vec2 frag = vec2(gl_FragCoord.x, uRes.y - gl_FragCoord.y); // device px, y down
   vec2 p = vec2(frag.x / uDpr - uSeam, frag.y / uDpr);
+  float line = curveAt(p.y);
   vec4 under;
   vec4 name = vec4(0.0);
-  if (p.x < curveAt(p.y)) {
+  if (p.x < line - uOpen) {
+    // The art half, moved left by uOpen.
+    p.x += uOpen;
     under = paint(p);
     if (uNameOn > 0.5) name = paintedName(p);
-  } else {
+  } else if (p.x >= line + uOpen) {
+    // The code half, moved right by uOpen.
+    p.x -= uOpen;
     under = bits(p);
+    if (uOpen > 0.0) {
+      vec4 edge = rawEdge(p);
+      under = edge + under * (1.0 - edge.a);
+    }
     if (uNameOn > 0.5) name = binaryName(p);
+  } else {
+    // The gap: what's behind the hero shows through.
+    outColor = vec4(0.0);
+    return;
   }
   outColor = name + under * (1.0 - name.a);
 }

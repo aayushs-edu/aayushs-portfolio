@@ -1,6 +1,8 @@
 // Checks for the showcase's pure modules. Run with `npm run showcase:check`.
 
 import * as THREE from "three";
+import { openFor } from "../../src/components/hero/seamField";
+import { BITS, CURVE, SEAM } from "../../src/components/hero/splitConfig";
 import { createCameraPath } from "../../src/components/showcase/cameraPath";
 import { beatsFor, LAYOUTS, type LayoutName } from "../../src/components/showcase/layouts";
 import { FOV_Y, type Placement, type SceneLayout, type Vec3, type Viewport } from "../../src/components/showcase/layouts/types";
@@ -91,6 +93,31 @@ check("scroll: the camera dwells at each beat", () => {
 check("scroll: progress outside 0..1 is clamped", () => {
   assert(sampleScroll(map, -1).t === 0 && near(sampleScroll(map, 2).t, 1), "not clamped");
 });
+
+// ---------------------------------------------------------------------------
+// The hero tearing open
+
+for (const [w, h, seamX, u] of [
+  [1440, 900, 720, 0.62],
+  [390, 844, 195, 0.32],
+  [1024, 768, 400, 0.6],
+]) {
+  const layout = { w, h, u, seamX, gridY: 100, cellW: 8 * u, cellH: 16 * u };
+  check(`tear ${w}×${h}: closed at the top, both halves off screen at the end`, () => {
+    assert(openFor(0, layout) === 0, `open(0) = ${openFor(0, layout)}`);
+    // The line swings, is pulled by paint and kicked by bits: the halves must clear all of it.
+    const swing = (CURVE.amp + CURVE.pull * SEAM.radius[1] + BITS.kick) * u;
+    const full = openFor(1, layout);
+    assert(full >= Math.max(seamX, w - seamX) + swing, `open(1) = ${full.toFixed(1)}`);
+    let prev = 0;
+    for (let k = 1; k <= 100; k++) {
+      const o = openFor(k / 100, layout);
+      assert(o >= prev, `opening shrinks at ${k}`);
+      prev = o;
+    }
+    assert(openFor(2, layout) === full && openFor(-1, layout) === 0, "not clamped");
+  });
+}
 
 // ---------------------------------------------------------------------------
 // Layouts and the camera path
