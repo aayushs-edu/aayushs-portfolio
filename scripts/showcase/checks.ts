@@ -8,10 +8,11 @@ import { BITS, CURVE, SEAM } from "../../src/components/hero/splitConfig";
 import { createCameraPath } from "../../src/components/showcase/cameraPath";
 import { detailPose } from "../../src/components/showcase/cameraPose";
 import { freeArea, SHOWCASE } from "../../src/components/showcase/showcaseConfig";
-import { beatsFor, splitLayout } from "../../src/components/showcase/layouts";
 import { FOV_Y, type Placement, type Vec3, type Viewport } from "../../src/components/showcase/layouts/types";
 import { createScrollMap, progressForBeat, sampleScroll, type Beat } from "../../src/components/showcase/scrollMap";
 import type { Work, WorkKind, WorkSide } from "../../src/components/showcase/works";
+import { arcLerp, buildRoom, locate, ROOM, stationPlacement, toWorld } from "../../src/components/showcase/room/ring";
+import type { GroupId, StationLayout } from "../../src/components/showcase/room/types";
 
 let passed = 0;
 const failures: string[] = [];
@@ -134,12 +135,13 @@ for (const [w, h, seamX, u] of [
 }
 
 // ---------------------------------------------------------------------------
-// The layout and the camera path
+// The room: the ring, its stations and the camera path
 
-const fake = (slug: string, kind: WorkKind, side: WorkSide, aspect: number): Work => ({
+const fake = (slug: string, kind: WorkKind, side: WorkSide, group: GroupId, aspect: number): Work => ({
   slug,
   kind,
   side,
+  group,
   title: slug,
   line: "",
   story: [],
@@ -147,10 +149,36 @@ const fake = (slug: string, kind: WorkKind, side: WorkSide, aspect: number): Wor
   media: { image: "", aspect, avgColor: "#808080" },
 });
 
+/** The real works' slugs, groups and aspects (stage 1). */
 const WORKS_16: Work[] = [
-  ...[1.34, 1.3, 1.24, 1.24, 1.24, 0.74, 1.25].map((a, i) => fake(`painting-${i}`, "painting", "art", a)),
-  fake("both-0", "project", "both", 1.21),
-  ...[1.92, 1.9, 0.87, 2.22, 1.29, 1.26, 1.37, 0.79].map((a, i) => fake(`project-${i}`, "project", "code", a)),
+  ...(
+    [
+      ["snorkeling-hawaii", 1.34],
+      ["snowboarding", 1.3],
+      ["taj-mahal", 1.24],
+      ["safari-kid", 1.24],
+      ["soccer-penalty", 1.24],
+      ["red-dead-redemption", 0.74],
+      ["childhood-toys", 1.25],
+    ] as const
+  ).map(([slug, a]) => fake(slug, "painting", "art", "paintings", a)),
+  fake("paintwise", "project", "both", "paintwise", 1.21),
+  ...(
+    [
+      ["exovision", 1.92],
+      ["lumina", 1.9],
+      ["medai", 0.87],
+      ["stockapp", 2.22],
+    ] as const
+  ).map(([slug, a]) => fake(slug, "project", "code", "hackathons", a)),
+  ...(
+    [
+      ["bounce-back", 1.29],
+      ["reign-or-ruin", 1.26],
+      ["biscuit-bandit", 1.37],
+      ["murphys-rocket", 0.79],
+    ] as const
+  ).map(([slug, a]) => fake(slug, "project", "code", "games", a)),
 ];
 
 const VIEWPORTS: Viewport[] = [
@@ -158,8 +186,10 @@ const VIEWPORTS: Viewport[] = [
   { width: 1024, height: 768 },
   { width: 390, height: 844 },
 ];
+const landscape = (v: Viewport) => v.width >= v.height;
 
 const v3 = (p: Vec3) => new THREE.Vector3(p[0], p[1], p[2]);
+const flat = (p: THREE.Vector3 | Vec3) => (Array.isArray(p) ? Math.hypot(p[0] - ROOM.centre[0], p[2] - ROOM.centre[2]) : Math.hypot(p.x - ROOM.centre[0], p.z - ROOM.centre[2]));
 
 /** Distance from a point to a work's rectangle (a vertical plane turned by rotationY). */
 function distanceToWork(point: THREE.Vector3, placement: Placement): number {
@@ -199,97 +229,152 @@ function fill(placement: Placement, eye: THREE.Vector3, target: THREE.Vector3, v
   return [(maxX - minX) / 2, (maxY - minY) / 2];
 }
 
-{
-  for (const viewport of VIEWPORTS) {
-    const label = `layout ${viewport.width}×${viewport.height}`;
-    const layout = splitLayout(WORKS_16, viewport);
-    const path = createCameraPath(layout.cameraPath);
-    const byslug = new Map(layout.placements.map((p) => [p.slug, p]));
-    const eye = new THREE.Vector3();
-    const target = new THREE.Vector3();
+/** The Paintwise station for these checks (the real one replaces it once it exists). */
+const paintwiseFor = (_viewport: Viewport): StationLayout => ({
+  id: "paintwise",
+  title: "Paintwise",
+  radius: 3,
+  works: [{ slug: "paintwise", position: [0, 1.75, 0], rotationY: 0, width: 1.9, height: 1.56 }],
+  beats: [{ key: "work:paintwise", camera: { position: [0, 1.6, 4.8], target: [0, 1.75, 0] } }],
+});
 
-    check(`${label}: every work has one placement and one stop`, () => {
-      assert(layout.placements.length === WORKS_16.length, `${layout.placements.length} placements`);
-      assert(layout.stops.length === WORKS_16.length, `${layout.stops.length} stops`);
-      for (const work of WORKS_16) {
-        assert(layout.placements.filter((p) => p.slug === work.slug).length === 1, `placements of ${work.slug}`);
-        assert(layout.stops.filter((s) => s.slug === work.slug).length === 1, `stops of ${work.slug}`);
-      }
+check("ring: stations stand on their halves, facing the centre", () => {
+  for (const id of ["paintings", "animation", "hackathons", "games"] as const) {
+    const at = stationPlacement(id);
+    const side = id === "paintings" || id === "animation" ? -1 : 1;
+    assert(Math.sign(at.position[0]) === side, `${id} at x ${at.position[0].toFixed(2)}`);
+    assert(near(flat(at.position), ROOM.radius, 1e-6), `${id} off the ring`);
+    const facing = v3(toWorld([0, 0, 1], at)).sub(v3(at.position));
+    const inward = v3(ROOM.centre).sub(v3(at.position)).setY(0).normalize();
+    assert(facing.dot(inward) > 0.999, `${id} faces ${facing.toArray().map((v) => v.toFixed(2))}`);
+  }
+  const centre = stationPlacement("paintwise");
+  assert(centre.position.every((v, i) => near(v, ROOM.centre[i])) && centre.yaw === 0, "paintwise not at the centre facing the entrance");
+});
+
+check("ring: arcLerp ends where it should and keeps its distance from the centre", () => {
+  const a: Vec3 = [-6, 1.6, -13];
+  const b: Vec3 = [6, 2, -13];
+  const start = arcLerp(a, b, ROOM.centre, 0);
+  const end = arcLerp(a, b, ROOM.centre, 1);
+  assert(start.every((v, i) => near(v, a[i], 1e-9)) && end.every((v, i) => near(v, b[i], 1e-9)), "endpoints");
+  for (let k = 0; k <= 50; k++) assert(flat(arcLerp(a, b, ROOM.centre, k / 50)) >= 6 - 1e-9, `cuts in at ${k}`);
+});
+
+for (const viewport of VIEWPORTS) {
+  const label = `room ${viewport.width}×${viewport.height}`;
+  const room = buildRoom(WORKS_16, viewport, paintwiseFor(viewport));
+  const path = createCameraPath(room.cameraPath);
+  const byslug = new Map(room.placements.map((p) => [p.slug, p]));
+  const keyIndex = new Map(room.beats.map((b, i) => [b.key, i]));
+  const eye = new THREE.Vector3();
+  const target = new THREE.Vector3();
+
+  check(`${label}: every work has one placement and one beat`, () => {
+    assert(room.placements.length === WORKS_16.length, `${room.placements.length} placements`);
+    for (const work of WORKS_16) {
+      assert(room.placements.filter((p) => p.slug === work.slug).length === 1, `placements of ${work.slug}`);
+      assert(room.beats.filter((b) => b.key === `work:${work.slug}`).length === 1, `beats of ${work.slug}`);
+    }
+  });
+
+  check(`${label}: the overview first, then the stations in tour order`, () => {
+    assert(room.beats[0].key === "room:overview", `first beat ${room.beats[0].key}`);
+    const order = room.stations.map((s) => s.id).join(",");
+    assert(order === "paintwise,paintings,hackathons,games", `stations ${order}`);
+    room.stations.forEach((s, i) => {
+      const next = room.stations[i + 1];
+      assert(s.first === (i === 0 ? 1 : room.stations[i - 1].first + room.stations[i - 1].count), `${s.id} starts at ${s.first}`);
+      assert(!next || next.first === s.first + s.count, `${s.id} and ${next?.id} overlap`);
     });
+    assert(room.beats.length === 1 + room.stations.reduce((n, s) => n + s.count, 0), "beat count");
+  });
 
-    check(`${label}: stops are in order, inside the path`, () => {
-      layout.stops.forEach((s, i) => assert(i === 0 || s.t > layout.stops[i - 1].t, `stop ${i} out of order`));
-      for (const s of layout.stops) assert(s.t > 0 && s.t < 1, `stop ${s.slug} at ${s.t}`);
+  check(`${label}: beats are in order, on control points, inside the path`, () => {
+    room.beats.forEach((b, i) => {
+      assert(i === 0 || b.t > room.beats[i - 1].t, `${b.key} out of order`);
+      assert(b.t > 0 && b.t < 1, `${b.key} at ${b.t}`);
+      const index = Math.round(b.t * (room.cameraPath.length - 1));
+      assert(near(index / (room.cameraPath.length - 1), b.t), `${b.key} is not on a control point`);
+      path.at(b.t, eye, target);
+      assert(eye.distanceTo(v3(room.cameraPath[index].position)) < 1e-6, `${b.key}: camera off its point`);
     });
+  });
 
-    check(`${label}: the camera is at each stop's point, looking at the work`, () => {
-      for (const s of layout.stops) {
-        const index = Math.round(s.t * (layout.cameraPath.length - 1));
-        assert(near(index / (layout.cameraPath.length - 1), s.t), `${s.slug}: t ${s.t} is not a control point`);
-        path.at(s.t, eye, target);
-        assert(eye.distanceTo(v3(layout.cameraPath[index].position)) < 1e-6, `${s.slug}: camera off its point`);
-        assert(target.distanceTo(v3(byslug.get(s.slug)!.position)) < 1e-6, `${s.slug}: not looking at the work`);
-      }
-    });
+  check(`${label}: at a gallery work's beat the camera looks at it`, () => {
+    for (const work of WORKS_16) {
+      if (work.group === "paintwise") continue;
+      path.at(room.beats[keyIndex.get(`work:${work.slug}`)!].t, eye, target);
+      assert(target.distanceTo(v3(byslug.get(work.slug)!.position)) < 1e-6, `${work.slug}: not looking at it`);
+    }
+  });
 
-    check(`${label}: the camera never brushes a work`, () => {
-      for (let k = 0; k <= 2000; k++) {
-        path.at(k / 2000, eye, target);
-        assert(Number.isFinite(eye.x + eye.y + eye.z + target.x + target.y + target.z), `NaN at ${k}`);
-        for (const p of layout.placements) {
-          const d = distanceToWork(eye, p);
-          assert(d >= 0.6, `${p.slug} ${d.toFixed(2)} m from the camera at t ${(k / 2000).toFixed(4)}`);
-        }
-      }
-      for (const s of layout.stops) {
-        path.at(s.t, eye, target);
-        const d = distanceToWork(eye, byslug.get(s.slug)!);
-        assert(d >= 1, `${s.slug} presented from ${d.toFixed(2)} m`);
-      }
-    });
+  check(`${label}: stations keep apart (with room for animation)`, () => {
+    const ring = [...room.stations.map((s) => ({ id: s.id, p: s.at.position, r: s.layout.radius })), { id: "animation", p: stationPlacement("animation").position, r: 4 }];
+    ring.forEach((a, i) =>
+      ring.slice(i + 1).forEach((b) => {
+        const d = Math.hypot(a.p[0] - b.p[0], a.p[2] - b.p[2]);
+        assert(d >= a.r + b.r + 0.5, `${a.id} and ${b.id}: ${d.toFixed(2)} m apart, reach ${a.r.toFixed(2)} + ${b.r.toFixed(2)}`);
+      }),
+    );
+  });
 
-    check(`${label}: works stand apart, on the floor`, () => {
-      const [minX, maxX, minZ, maxZ] = layout.floor.bounds;
-      layout.placements.forEach((a, i) => {
-        assert(a.position[0] > minX && a.position[0] < maxX && a.position[2] > minZ && a.position[2] < maxZ, `${a.slug} off the floor`);
-        layout.placements.slice(i + 1).forEach((b) => {
+  check(`${label}: the camera never brushes a work, nor cuts through the middle`, () => {
+    for (let k = 0; k <= 2000; k++) {
+      path.at(k / 2000, eye, target);
+      assert(Number.isFinite(eye.x + eye.y + eye.z + target.x + target.y + target.z), `NaN at ${k}`);
+      assert(flat(eye) >= 2.2, `${flat(eye).toFixed(2)} m from the centre at t ${(k / 2000).toFixed(4)}`);
+      for (const p of room.placements) {
+        const d = distanceToWork(eye, p);
+        assert(d >= 0.6, `${p.slug} ${d.toFixed(2)} m from the camera at t ${(k / 2000).toFixed(4)}`);
+      }
+    }
+  });
+
+  check(`${label}: works in a station stand apart`, () => {
+    for (const s of room.stations) {
+      s.layout.works.forEach((a, i) =>
+        s.layout.works.slice(i + 1).forEach((b) => {
           const d = v3(a.position).distanceTo(v3(b.position));
-          assert(d >= 1.2, `${a.slug} and ${b.slug} ${d.toFixed(2)} m apart`);
-        });
-      });
-    });
+          assert(d >= 1.0, `${a.slug} and ${b.slug} ${d.toFixed(2)} m apart`);
+        }),
+      );
+    }
+  });
 
-    check(`${label}: a presented work fills a good part of the view, not all of it`, () => {
-      for (const s of layout.stops) {
-        path.at(s.t, eye, target);
-        const [w, h] = fill(byslug.get(s.slug)!, eye, target, viewport);
-        assert(w <= 0.7 && h <= 0.7, `${s.slug} fills ${w.toFixed(2)} × ${h.toFixed(2)}`);
-        assert(Math.max(w, h) >= 0.35, `${s.slug} only fills ${w.toFixed(2)} × ${h.toFixed(2)}`);
-      }
-    });
-
-    check(`${label}: each work stands on its side of the floor`, () => {
+  if (landscape(viewport)) {
+    check(`${label}: a presented gallery work fills a good part of the view, not all of it`, () => {
       for (const work of WORKS_16) {
-        if (work.side === "both") continue;
-        const p = byslug.get(work.slug)!;
-        // The spine runs down x = 0: art to its left, code to its right.
-        assert((p.position[0] < 0 ? "art" : "code") === work.side, `${work.slug} on the wrong side`);
+        if (work.group === "paintwise") continue;
+        path.at(room.beats[keyIndex.get(`work:${work.slug}`)!].t, eye, target);
+        const [w, h] = fill(byslug.get(work.slug)!, eye, target, viewport);
+        assert(w <= 0.7 && h <= 0.7, `${work.slug} fills ${w.toFixed(2)} × ${h.toFixed(2)}`);
+        assert(Math.max(w, h) >= 0.35, `${work.slug} only fills ${w.toFixed(2)} × ${h.toFixed(2)}`);
       }
-    });
-
-    check(`${label}: a beat for every stop, in order`, () => {
-      const beats = beatsFor(layout, 1);
-      assert(beats.length === layout.stops.length, `${beats.length} beats`);
-      beats.forEach((b, i) => assert(i === 0 || b.t > beats[i - 1].t, `beat ${b.key} out of order`));
-    });
-
-    check(`${label}: works that are both sit on the spine`, () => {
-      const p = byslug.get("both-0")!;
-      assert(p.position[0] === 0, `both-0 at x ${p.position[0]}`);
     });
   }
-}
 
+  check(`${label}: locate names the station and the beat within it`, () => {
+    assert(locate(room, 0).station === null, "overview has a station");
+    for (const s of room.stations) {
+      for (let i = 0; i < s.count; i++) {
+        const at = locate(room, s.first + i);
+        assert(at.station?.id === s.id && near(at.local, i), `beat ${s.first + i}: ${at.station?.id} ${at.local}`);
+      }
+      const between = locate(room, s.first + 0.3);
+      assert(between.station?.id === s.id && near(between.local, 0.3), "continuous local");
+    }
+  });
+
+  check(`${label}: a jump between any two stations arcs round the middle`, () => {
+    const firsts = room.stations.map((s) => room.cameraPath[Math.round(room.beats[s.first].t * (room.cameraPath.length - 1))].position);
+    firsts.forEach((a) =>
+      firsts.forEach((b) => {
+        for (let k = 0; k <= 50; k++) assert(flat(arcLerp(a, b, ROOM.centre, k / 50)) >= 2.2, "jump cuts through the middle");
+      }),
+    );
+  });
+}
 // ---------------------------------------------------------------------------
 // Flying in to a work
 

@@ -3,6 +3,9 @@
 // stories and links taken from the old pages.
 
 import { GALLERY, type GalleryItem } from "../hero/heroConfig";
+import type { GroupId } from "./room/types";
+
+export { GROUP_TITLES } from "./room/types";
 
 export type WorkKind = "painting" | "project" | "game" | "animation" | "hackathon";
 export type WorkSide = "art" | "code" | "both";
@@ -26,6 +29,8 @@ export interface Work {
   slug: string;
   kind: WorkKind;
   side: WorkSide;
+  /** The station that holds it */
+  group: GroupId;
   title: string;
   year?: string;
   /** Medium (art) or stack (code): one line */
@@ -49,6 +54,8 @@ export const KIND_TITLES: Record<WorkKind, string> = {
 
 interface Extra {
   side?: WorkSide;
+  /** Projects only (paintings are always in "paintings") */
+  group?: GroupId;
   year?: string;
   story: string[];
   links: WorkLink[];
@@ -95,6 +102,7 @@ const PAINTINGS: Record<string, Extra> = {
 const PROJECTS: Record<string, Extra> = {
   paintwise: {
     side: "both",
+    group: "paintwise",
     year: "2025",
     story: [
       "If you ever wanted to learn how to draw, YouTube was the place to go. But following along with those videos was not actually teaching you anything, and good art teachers are not always available or affordable.",
@@ -104,6 +112,7 @@ const PROJECTS: Record<string, Extra> = {
     links: [{ label: "Read the build log", href: "/paintwise" }],
   },
   exovision: {
+    group: "hackathons",
     story: [
       "ExoVision is a 3D interactive star map for exoplanets throughout the universe. Select one of the exoplanets in the database and gaze at its sky.",
       "It has the accurate distance, brightness and color for all of its stars, creating an easy-to-use scientific tool for everyone.",
@@ -116,6 +125,7 @@ const PROJECTS: Record<string, Extra> = {
     ],
   },
   lumina: {
+    group: "hackathons",
     story: [
       "Lumina is a platform dedicated to illuminating hidden inequalities and sharing stories of marginalized communities. Its goal is to bring awareness, spark dialogue, and empower individuals to create change.",
       "It pairs authentic stories with an Inequality Atlas, a themed forum, and LuminaLens, which drafts policy ideas with AI.",
@@ -128,6 +138,7 @@ const PROJECTS: Record<string, Extra> = {
     ],
   },
   medai: {
+    group: "hackathons",
     story: [
       "MedAI democratizes access to early disease detection by putting an intelligent AI doctor in your pocket.",
       "Its Naive-Bayes model has an 85% accuracy in describing the disease as its top three predictions, and its zero-shot model has an almost 93% accuracy in describing a given image.",
@@ -140,10 +151,12 @@ const PROJECTS: Record<string, Extra> = {
     ],
   },
   stockapp: {
+    group: "hackathons",
     story: ["A tool for a family in India managing a portfolio of over $1M."],
     links: [{ label: "More projects", href: "/hackathons" }],
   },
   "bounce-back": {
+    group: "games",
     story: [
       "A puzzle platformer made in 11 hours with a twist: your past self brings your end. Every jump leaves a mark of danger but also gives you platforms to rebuild the level around you.",
       "You can only move forward, avoiding the remnants of your past self.",
@@ -152,6 +165,7 @@ const PROJECTS: Record<string, Extra> = {
     links: [itch("bounce-back")],
   },
   "reign-or-ruin": {
+    group: "games",
     story: [
       "Rule over your village in this power management game, but these aren't ordinary villagers: they are AI-powered, understand what happens around them, and can act on it, even rebellion.",
       "Hoard too much power and you might get overthrown; keeping villagers happy is expensive, and harming them by accident has dire consequences.",
@@ -160,6 +174,7 @@ const PROJECTS: Record<string, Extra> = {
     links: [itch("reign-or-ruin")],
   },
   "biscuit-bandit": {
+    group: "games",
     story: [
       "Risk it for the biscuit: you're after the family biscuits, and your parents are lurking, ready to catch you.",
       "Use stealth and strategy to sneak to the biscuit and back, night after night.",
@@ -168,6 +183,7 @@ const PROJECTS: Record<string, Extra> = {
     links: [itch("biscuit-bandit")],
   },
   "murphys-rocket": {
+    group: "games",
     story: [
       "Earth is under a robot takeover, so humans must set foot on Mars. You are Murphy, the only scientist left, and you need to build a rocket as fast as possible.",
       "According to Murphy's law, everything that can go wrong will go wrong. Ignite the robots with electricity and defend the rocket at all costs.",
@@ -181,10 +197,13 @@ function toWork(item: GalleryItem): Work {
   const painting = item.mode === "art";
   const extra = (painting ? PAINTINGS : PROJECTS)[item.slug];
   if (!extra) throw new Error(`Showcase: no story for ${item.mode}/${item.slug} in works.ts`);
+  const group = painting ? "paintings" : extra.group;
+  if (!group) throw new Error(`Showcase: no group for project ${item.slug} in works.ts`);
   return {
     slug: item.slug,
     kind: painting ? "painting" : "project",
     side: extra.side ?? (painting ? "art" : "code"),
+    group,
     title: item.title,
     year: extra.year ?? item.year,
     line: item.detail,
