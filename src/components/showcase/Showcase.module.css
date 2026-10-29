@@ -102,3 +102,150 @@
     font-size: 19px;
   }
 }
+
+/* ----------------------------------------------------------------------- */
+/* Station labels: pinned to panels by the scene (Paintwise's tags, title,  */
+/* step, painting order, figure caption).                                   */
+
+.label {
+  position: absolute;
+  left: 0;
+  top: 0;
+  opacity: 0;
+  visibility: hidden;
+  color: #fff;
+  will-change: transform, opacity;
+}
+
+.stationTitle {
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+  max-width: min(460px, 80vw);
+}
+
+.stationTitle img {
+  flex: none;
+  width: 48px;
+  height: auto;
+}
+
+.stationName {
+  display: block;
+  font-family: var(--font-poppins), sans-serif;
+  font-weight: 800;
+  font-size: 34px;
+  line-height: 1;
+}
+
+.stationPitch {
+  display: block;
+  margin-top: 6px;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 12px;
+  line-height: 1.45;
+  color: rgb(255 255 255 / 0.6);
+}
+
+.tag {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  max-width: 170px;
+  font-family: var(--font-geist-mono), monospace;
+  /* Legible where a tag falls over a busy image. */
+  text-shadow:
+    0 1px 2px rgb(0 0 0 / 0.85),
+    0 0 10px rgb(0 0 0 / 0.7);
+}
+
+.tagTitle {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgb(255 255 255 / 0.85);
+}
+
+.tagMeta {
+  font-size: 13px;
+  line-height: 1.35;
+  color: rgb(255 255 255 / 0.6);
+}
+
+.step {
+  align-items: center;
+  text-align: center;
+  max-width: none;
+}
+
+.stepText {
+  font-family: var(--font-poppins), sans-serif;
+  font-weight: 800;
+  font-size: 20px;
+  white-space: nowrap;
+}
+
+.chips {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 13px;
+  color: rgb(255 255 255 / 0.8);
+}
+
+.chips li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.chips li span {
+  display: inline-grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #ece4d4;
+  color: #0d0d0d;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.figureCaption {
+  align-items: center;
+  max-width: none;
+  padding: 6px 12px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  text-align: center;
+  cursor: zoom-in;
+}
+
+.figureTitle {
+  font-family: var(--font-poppins), sans-serif;
+  font-weight: 800;
+  font-size: 18px;
+}
+
+.tagLink {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 13px;
+  color: #ece4d4;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+@media (max-width: 639px) {
+  .stationName {
+    font-size: 26px;
+  }
+
+  .tag {
+    max-width: 180px;
+  }
+}

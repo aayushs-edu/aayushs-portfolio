@@ -5,13 +5,14 @@ import { useEffect, useMemo } from "react";
 import * as THREE from "three";
 import { NAME } from "../hero/heroConfig";
 import { BITS, VIVID } from "../hero/splitConfig";
-import type { FloorPlan } from "./layouts/types";
+import type { Vec3 } from "./layouts/types";
 import { SHOWCASE } from "./showcaseConfig";
 
-// The floor: linen on the art side, the dot grid on the code side, as on the
-// hero's wall. A fluid off-white line (the hero's seam) runs down the middle
-// and, on the full tier, thin strokes of paint flow off its art side and
-// packets of bits off its code side.
+// The floor of the room: linen on the art side, the dot grid on the code
+// side, as on the hero's wall, fading into the dark past the ring. A fluid
+// off-white line (the hero's seam) runs down the middle, through the room's
+// centre, and on the full tier thin strokes of paint flow off its art side
+// and packets of bits off its code side.
 
 /** Raw sRGB components: these shaders write display values straight out (no colour management), like the scene's background. */
 const color = (hex: string) => new THREE.Color(hex).convertLinearToSRGB();
@@ -69,6 +70,8 @@ vec3 fog(vec3 col, vec3 world) {
 }
 
 uniform float uEffects;
+uniform vec2 uCentre;          // the room's centre (xz)
+uniform float uRadius;         // the floor is gone by here
 uniform vec3 uPalette[6];      // the paint's pigments
 uniform vec3 uBitPalette[${BITS.palette.length}];   // the bits: hacker green and greys
 uniform vec3 uSpineColor;
@@ -138,11 +141,12 @@ void main() {
   float aa = fwidth(p.x) * 1.2;
   float line = 1.0 - smoothstep(0.016 - aa, 0.016 + aa, abs(p.x - spine));
   col = mix(col, uSpineColor, line * 0.9);
+  col = mix(col, uFogColor, smoothstep(uRadius - 3.5, uRadius, length(p - uCentre)));
   gl_FragColor = vec4(fog(col, vWorld), 1.0);
 }
 `;
 
-export function Floor({ plan, effects }: { plan: FloorPlan; effects: boolean }) {
+export function Floor({ centre, radius, effects }: { centre: Vec3; radius: number; effects: boolean }) {
   // Built here rather than through R3F props: R3F copies uniforms into new objects, and uTime is written every frame.
   const material = useMemo(
     () =>
@@ -157,9 +161,11 @@ export function Floor({ plan, effects }: { plan: FloorPlan; effects: boolean }) 
           uPalette: { value: VIVID.map(color) },
           uBitPalette: { value: BITS.palette.map(color) },
           uSpineColor: { value: color(NAME.paint) },
+          uCentre: { value: new THREE.Vector2(centre[0], centre[2]) },
+          uRadius: { value: radius },
         },
       }),
-    [effects],
+    [effects, centre, radius],
   );
   useEffect(() => () => material.dispose(), [material]);
 
@@ -167,10 +173,9 @@ export function Floor({ plan, effects }: { plan: FloorPlan; effects: boolean }) 
     material.uniforms.uTime.value += Math.min(delta, 0.05);
   });
 
-  const [minX, maxX, minZ, maxZ] = plan.bounds;
   return (
-    <mesh rotation-x={-Math.PI / 2} position={[(minX + maxX) / 2, 0, (minZ + maxZ) / 2]} material={material}>
-      <planeGeometry args={[maxX - minX, maxZ - minZ]} />
+    <mesh rotation-x={-Math.PI / 2} position={[centre[0], 0, centre[2]]} material={material}>
+      <planeGeometry args={[radius * 2, radius * 2]} />
     </mesh>
   );
 }

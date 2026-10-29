@@ -10,8 +10,8 @@ export const SHOWCASE = {
   /** Scroll smoothing rate (1/s), as the gallery hero. */
   smoothing: 8,
   background: "#0d0d0d",
-  /** FogExp2 density: pieces emerge from the dark as they approach. */
-  fog: 0.075,
+  /** FogExp2 density: light enough that the far side of the room (about 20 m) still reads. */
+  fog: 0.028,
   /** While the hero opens, the camera moves forward this far (m) through the gap. */
   dolly: 3.2,
   /** Look-around toward the cursor: at most this many degrees, eased at this rate (1/s). */
@@ -25,8 +25,19 @@ export const SHOWCASE = {
   relief: { scale: 0.035, segments: 160, bump: 0.5 },
   /** A caption is fully in within fade[0] beats of its work's stop and gone by fade[1]. */
   caption: { fade: [0.3, 0.5] as [number, number] },
-  /** A work's textures load once it is this many beats away. */
+  /** A work's textures load once it is this many beats away… */
   streamBeats: 3,
+  /** …and every texture this long (s) after the hero has opened, so the other stations read from across the room. */
+  loadAllAfter: 1.5,
+  /** Jumping to another station: the camera arcs round the centre in this long (s). */
+  jump: { seconds: 1.1 },
+  /** A soft warm light in front of each station (full tier): intensity, height and distance in front (m). */
+  stationLight: { intensity: 10, height: 3, ahead: 3.5 },
+  /** Floating panels (full tier): bob (m) and sway (rad); Paintwise's idle sculpture turns this fast (rad/s). */
+  drift: { lift: 0.025, sway: 0.01 },
+  spin: 0.12,
+  /** The flipbook: seconds per step, and how long the last step holds before it starts again. */
+  flipbook: { frame: 0.4, hold: 1.6 },
   /**
    * The detail panel: at or above `breakpoint` px wide, a side panel `width` px
    * wide (at most `maxShare` of the viewport); below it, a bottom sheet `sheet`

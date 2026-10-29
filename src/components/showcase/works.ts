@@ -4,6 +4,7 @@
 
 import { GALLERY, type GalleryItem } from "../hero/heroConfig";
 import type { GroupId } from "./room/types";
+import paintwiseMedia from "./stations/paintwise/paintwise.generated.json";
 
 export { GROUP_TITLES } from "./room/types";
 
@@ -22,6 +23,8 @@ export interface WorkMedia {
   /** width / height */
   aspect: number;
   avgColor: string;
+  /** A figure that stands for the work without 3D (Paintwise's pipeline) */
+  figure?: string;
 }
 
 export interface Work {
@@ -56,6 +59,7 @@ interface Extra {
   side?: WorkSide;
   /** Projects only (paintings are always in "paintings") */
   group?: GroupId;
+  figure?: string;
   year?: string;
   story: string[];
   links: WorkLink[];
@@ -103,6 +107,7 @@ const PROJECTS: Record<string, Extra> = {
   paintwise: {
     side: "both",
     group: "paintwise",
+    figure: paintwiseMedia.figure.src,
     year: "2025",
     story: [
       "If you ever wanted to learn how to draw, YouTube was the place to go. But following along with those videos was not actually teaching you anything, and good art teachers are not always available or affordable.",
@@ -209,7 +214,7 @@ function toWork(item: GalleryItem): Work {
     line: item.detail,
     story: extra.story,
     links: extra.links,
-    media: { image: item.assets.color, depth: item.assets.depth, aspect: item.aspect, avgColor: item.avgColor },
+    media: { image: item.assets.color, depth: item.assets.depth, aspect: item.aspect, avgColor: item.avgColor, ...(extra.figure ? { figure: extra.figure } : {}) },
   };
 }
 

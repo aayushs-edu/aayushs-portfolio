@@ -40,14 +40,20 @@ export default function WorkList({ groups, mode, onOpen, onFocusWork, onBlurWork
           </h2>
           <ol className={css.grid}>
             {group.works.map((work) => (
-              <li key={work.slug} className={css.item}>
+              <li key={work.slug} className={css.item} data-wide={grid && !!work.media.figure}>
                 <article aria-labelledby={`${mode}-title-${work.slug}`}>
-                  {grid && (
-                    <div className={css.thumb} data-kind={work.kind}>
-                      {/* eslint-disable-next-line @next/next/no-img-element -- hashed, pre-sized assets from public/hero */}
-                      <img src={work.media.image} alt="" loading="lazy" decoding="async" />
-                    </div>
-                  )}
+                  {grid &&
+                    (work.media.figure ? (
+                      <div className={css.figure}>
+                        {/* eslint-disable-next-line @next/next/no-img-element -- a hashed figure from public/showcase */}
+                        <img src={work.media.figure} alt={`${work.title}: how it works`} loading="lazy" decoding="async" />
+                      </div>
+                    ) : (
+                      <div className={css.thumb} data-kind={work.kind}>
+                        {/* eslint-disable-next-line @next/next/no-img-element -- hashed, pre-sized assets from public/hero */}
+                        <img src={work.media.image} alt="" loading="lazy" decoding="async" />
+                      </div>
+                    ))}
                   <h3 id={`${mode}-title-${work.slug}`} className={css.title}>
                     {work.title}
                   </h3>

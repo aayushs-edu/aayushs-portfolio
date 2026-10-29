@@ -83,7 +83,7 @@ export function paintwiseStation(viewport: Viewport): PaintwiseLayout {
 
   // The canvas and the five layers behind it (k = 0 is the canvas).
   const stackAt3 = { at: [-2.9, Y0 - 0.1, -1.0] as Vec3, ry: 0.55, s: 0.55 };
-  const stackAt4 = { at: [2.9, Y0, -1.0] as Vec3, ry: -0.5, s: 0.55 };
+  const stackAt4 = { at: [3.9, Y0, -1.6] as Vec3, ry: -0.5, s: 0.55 };
   media.layers.forEach((layer, k) => {
     const behind = (stack: typeof stackAt3, o: number) => {
       const [x, y, z] = onPanel(stack.at, stack.ry, stack.s, [0, 0, -0.012 * k]);
@@ -145,7 +145,7 @@ export function paintwiseStation(viewport: Viewport): PaintwiseLayout {
     width: 2.3,
     height: 2.3 / steps.aspect,
     color: "#b48a5a",
-    poses: [parked, parked, parked, pose(0, Y0, 0.4), pose(-3.0, Y0, -0.8, 1, { ry: 0.5, s: 0.55 })],
+    poses: [parked, parked, parked, pose(0, Y0, 0.4), pose(-3.9, Y0, -1.6, 1, { ry: 0.5, s: 0.55 })],
     idle: parked,
   });
 
@@ -191,13 +191,14 @@ export function paintwiseStation(viewport: Viewport): PaintwiseLayout {
 
   const labels: LabelSpec[] = [
     { id: "pw:title", kind: "title", panel: "canvas", anchor: [-0.5, 0.5], align: "above", beats: [0, 0], title: GROUP_TITLES.paintwise, meta: PITCH },
+    // Layer tags alternate above and below the fanned-out layers, where they sit on the dark, not on the next image.
     ...media.layers.map(
       (layer, k): LabelSpec => ({
         id: `pw:tag:${layer.id}`,
         kind: "tag",
         panel: k === 0 ? "canvas" : `layer:${layer.id}`,
-        anchor: [0.5, 0.3],
-        align: "right",
+        anchor: [0, k % 2 === 0 ? 0.5 : -0.5],
+        align: k % 2 === 0 ? "above" : "below",
         beats: [1, 1],
         title: LAYER_COPY[layer.id]?.title ?? layer.id,
         meta: LAYER_COPY[layer.id]?.line,

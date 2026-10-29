@@ -46,3 +46,6 @@ next-env.d.ts
 
 # hero asset pipeline intermediates
 /scripts/hero/.cache/
+
+# python
+__pycache__/

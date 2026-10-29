@@ -6,17 +6,22 @@ import * as THREE from "three";
 import { createCameraPath } from "./cameraPath";
 import { detailPose } from "./cameraPose";
 import { Floor } from "./Floor";
-import { EYE, FOV_Y, type SceneLayout } from "./layouts/types";
+import { EYE, FOV_Y, type Vec3 } from "./layouts/types";
 import PaintingMesh from "./PaintingMesh";
+import { arcLerp, toWorld } from "./room/ring";
+import type { RoomLayout } from "./room/types";
 import ScreenMesh from "./ScreenMesh";
 import type { ScrollSample } from "./scrollMap";
+import type { PaintwiseLayout } from "./stations/paintwise/layout";
+import PaintwiseStation from "./stations/paintwise/PaintwiseStation";
 import { SHOWCASE, type SceneTier } from "./showcaseConfig";
 import { InteractionContext, type WorkInteraction } from "./workMesh";
 import type { Work } from "./works";
 
 export interface SceneProps {
   tier: SceneTier;
-  layout: SceneLayout;
+  room: RoomLayout;
+  paintwise: PaintwiseLayout;
   works: ReadonlyMap<string, Work>;
   /** Beat index by key ("work:<slug>") */
   beatOf: ReadonlyMap<string, number>;
@@ -25,9 +30,18 @@ export interface SceneProps {
   openSlug: string | null;
   /** Run the frame loop (the scene is on screen and showing) */
   active: boolean;
-  /** Holds the captions (data-caption) the scene positions */
+  /** Holds the captions (data-caption) and station labels (data-label) the scene positions */
   overlay: RefObject<HTMLDivElement | null>;
+  /** Bumped by the showcase on every jump to another station: the camera arcs there from where it was. */
+  jump: RefObject<number>;
+  /** Load every station's images now, not only the near ones */
+  loadAll: boolean;
+  /** Something is shown full size over the scene: no picking */
+  paused: boolean;
+  /** Where Paintwise's figure is on screen (written by its station) */
+  figureRect: RefObject<DOMRect | null>;
   onOpen: (slug: string) => void;
+  onFigure: () => void;
   onContextLost: () => void;
 }
 
@@ -35,17 +49,24 @@ const smooth = (t: number) => t * t * (3 - 2 * t);
 const easeInOutCubic = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2);
 const smoothstep = (e0: number, e1: number, x: number) => smooth(Math.min(1, Math.max(0, (x - e0) / (e1 - e0))));
 
-/** The camera: along the path with scroll (dollying through the gap during the entrance), into a work when it's open, and a little toward the cursor. Also positions the DOM overlay. */
-function Rig({ tier, layout, beatOf, scroll, openSlug, overlay, onBeat }: Pick<SceneProps, "tier" | "layout" | "beatOf" | "scroll" | "openSlug" | "overlay"> & { onBeat: (beat: number) => void }) {
+/**
+ * The camera: along the room's path with scroll (dollying through the gap
+ * during the entrance), arcing round the centre on a jump to another station,
+ * into a work when it's open, and a little toward the cursor. Also positions
+ * the captions.
+ */
+function Rig({ tier, room, beatOf, scroll, openSlug, overlay, jump, onBeat }: Pick<SceneProps, "tier" | "room" | "beatOf" | "scroll" | "openSlug" | "overlay" | "jump"> & { onBeat: (beat: number) => void }) {
   const camera = useThree((s) => s.camera);
   const size = useThree((s) => s.size);
-  const path = useMemo(() => createCameraPath(layout.cameraPath), [layout]);
-  const placements = useMemo(() => new Map(layout.placements.map((p) => [p.slug, p])), [layout]);
+  const path = useMemo(() => createCameraPath(room.cameraPath), [room]);
+  const placements = useMemo(() => new Map(room.placements.map((p) => [p.slug, p])), [room]);
   const v = useMemo(
     () => ({ pos: new THREE.Vector3(), tgt: new THREE.Vector3(), p0: new THREE.Vector3(), t0: new THREE.Vector3(), dir: new THREE.Vector3(), a: new THREE.Vector3(), b: new THREE.Vector3() }),
     [],
   );
   const flight = useRef({ blend: 0, slug: null as string | null });
+  const arc = useRef({ seen: jump.current ?? 0, blend: 0, from: new THREE.Vector3(), fromTarget: new THREE.Vector3(), out: [0, 0, 0] as Vec3 });
+  const last = useRef({ position: new THREE.Vector3(), target: new THREE.Vector3(), set: false });
   const look = useRef({ x: 0, y: 0, tx: 0, ty: 0 });
   const key = useRef<THREE.DirectionalLight | null>(null);
   const nearBeat = useRef(Number.NaN);
@@ -72,10 +93,10 @@ function Rig({ tier, layout, beatOf, scroll, openSlug, overlay, onBeat }: Pick<S
     };
   }, [tier]);
 
-  // The overlay's captions, found again whenever the layout changes.
+  // The overlay's captions, found again whenever the room changes.
   useEffect(() => {
     elements.current = null;
-  }, [layout]);
+  }, [room]);
 
   useFrame((_, delta) => {
     const dt = Math.min(delta, 0.05);
@@ -91,6 +112,27 @@ function Rig({ tier, layout, beatOf, scroll, openSlug, overlay, onBeat }: Pick<S
       v.pos.addScaledVector(v.dir, -back);
       v.tgt.addScaledVector(v.dir, -back);
     }
+
+    // A jump to another station: from where the camera was, round the centre to the path.
+    const A = arc.current;
+    if ((jump.current ?? 0) !== A.seen) {
+      A.seen = jump.current ?? 0;
+      if (last.current.set) {
+        A.from.copy(last.current.position);
+        A.fromTarget.copy(last.current.target);
+        A.blend = 1;
+      }
+    }
+    if (A.blend > 0) {
+      A.blend = Math.max(0, A.blend - dt / SHOWCASE.jump.seconds);
+      const e = easeInOutCubic(1 - A.blend);
+      const p = arcLerp([A.from.x, A.from.y, A.from.z], [v.pos.x, v.pos.y, v.pos.z], room.floor.centre, e, A.out);
+      v.pos.set(p[0], p[1], p[2]);
+      v.tgt.lerpVectors(A.fromTarget, v.tgt, e);
+    }
+    last.current.position.copy(v.pos);
+    last.current.target.copy(v.tgt);
+    last.current.set = true;
 
     // Flying in to an open work, and back out.
     const f = flight.current;
@@ -168,7 +210,7 @@ function Rig({ tier, layout, beatOf, scroll, openSlug, overlay, onBeat }: Pick<S
   return <directionalLight ref={key} color="#fff0dc" intensity={2.5} />;
 }
 
-function SceneContents({ tier, layout, works, beatOf, scroll, openSlug, overlay, onOpen }: SceneProps) {
+function SceneContents({ tier, room, paintwise, works, beatOf, scroll, openSlug, overlay, jump, loadAll, paused, figureRect, onOpen, onFigure }: SceneProps) {
   const scene = useThree((s) => s.scene);
   const camera = useThree((s) => s.camera);
   const gl = useThree((s) => s.gl);
@@ -185,12 +227,12 @@ function SceneContents({ tier, layout, works, beatOf, scroll, openSlug, overlay,
   onOpenRef.current = onOpen;
   const interaction = useMemo<WorkInteraction>(() => ({ hover: { current: null }, enabled: { current: true }, open: (slug) => onOpenRef.current(slug) }), []);
   useEffect(() => {
-    interaction.enabled.current = !openSlug;
-    if (openSlug) {
+    interaction.enabled.current = !openSlug && !paused;
+    if (openSlug || paused) {
       interaction.hover.current = null;
       document.body.style.cursor = "";
     }
-  }, [openSlug, interaction]);
+  }, [openSlug, paused, interaction]);
   useEffect(() => () => void (document.body.style.cursor = ""), []);
 
   // Compile and draw one frame up front, so the scene is ready the moment the hero opens.
@@ -199,29 +241,56 @@ function SceneContents({ tier, layout, works, beatOf, scroll, openSlug, overlay,
     advance(performance.now());
   }, [gl, scene, camera, advance]);
 
+  const centre = room.stations.find((s) => s.id === "paintwise");
+
   return (
     <InteractionContext.Provider value={interaction}>
       <ambientLight color="#fff4e6" intensity={1.05} />
-      <Floor plan={layout.floor} effects={tier === "full"} />
-      {layout.placements.map((placement) => {
+      {tier === "full" &&
+        room.stations.map((station) => (
+          <pointLight
+            key={station.id}
+            position={toWorld([0, SHOWCASE.stationLight.height, SHOWCASE.stationLight.ahead], station.at)}
+            color="#fff0dc"
+            intensity={SHOWCASE.stationLight.intensity}
+            decay={2}
+          />
+        ))}
+      <Floor centre={room.floor.centre} radius={room.floor.radius} effects={tier === "full"} />
+      {/* The stations that show their works as they are: the salon, the arcs of screens. */}
+      {room.placements.map((placement) => {
         const work = works.get(placement.slug);
-        if (!work) return null;
+        if (!work || work.group === "paintwise") return null;
         const beat = beatOf.get(`work:${placement.slug}`) ?? 0;
-        const wanted = Math.abs(beat - near) <= SHOWCASE.streamBeats;
+        const wanted = loadAll || Math.abs(beat - near) <= SHOWCASE.streamBeats;
         return work.kind === "painting" ? (
           <PaintingMesh key={work.slug} work={work} placement={placement} wanted={wanted} relief={tier === "full"} />
         ) : (
           <ScreenMesh key={work.slug} work={work} placement={placement} wanted={wanted} />
         );
       })}
-      <Rig tier={tier} layout={layout} beatOf={beatOf} scroll={scroll} openSlug={openSlug} overlay={overlay} onBeat={setNear} />
+      {centre && (
+        <PaintwiseStation
+          layout={paintwise}
+          station={centre}
+          tier={tier}
+          scroll={scroll}
+          openSlug={openSlug}
+          wanted={loadAll || near <= centre.first + centre.count + SHOWCASE.streamBeats}
+          overlay={overlay}
+          figureRect={figureRect}
+          onFigure={onFigure}
+        />
+      )}
+      <Rig tier={tier} room={room} beatOf={beatOf} scroll={scroll} openSlug={openSlug} overlay={overlay} jump={jump} onBeat={setNear} />
     </InteractionContext.Provider>
   );
 }
 
 /**
- * The 3D scene of the work: a dark space with soft fog, a floor of linen and
- * dots, and the works along the camera's path. Loaded lazily by the showcase.
+ * The 3D scene of the work: one round room, dark with light fog, a floor of
+ * linen and dots, Paintwise at its centre and the other stations round it.
+ * Loaded lazily by the showcase.
  */
 export default function Scene(props: SceneProps) {
   const { tier, active } = props;
