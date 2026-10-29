@@ -1,0 +1,465 @@
+{
+  "canvas": {
+    "width": 380,
+    "height": 312
+  },
+  "layers": [
+    {
+      "id": "original",
+      "src": "/showcase/paintwise/layers/original.849659e0.webp"
+    },
+    {
+      "id": "masks",
+      "src": "/showcase/paintwise/layers/masks.2d8f95a1.webp"
+    },
+    {
+      "id": "depth",
+      "src": "/showcase/paintwise/layers/depth.a76c4856.webp"
+    },
+    {
+      "id": "blockin",
+      "src": "/showcase/paintwise/layers/blockin.b99e4e38.webp"
+    },
+    {
+      "id": "edges",
+      "src": "/showcase/paintwise/layers/edges.8ff447fd.webp"
+    },
+    {
+      "id": "sketch",
+      "src": "/showcase/paintwise/layers/sketch.23dc8508.webp"
+    }
+  ],
+  "objects": [
+    {
+      "id": "o01",
+      "src": "/showcase/paintwise/objects/o01.0dc18f2e.webp",
+      "box": [
+        0.90526,
+        0.41987,
+        0.09474,
+        0.34615
+      ],
+      "depth": 0.0096,
+      "color": "#ff7f0e"
+    },
+    {
+      "id": "o02",
+      "src": "/showcase/paintwise/objects/o02.3415bcfa.webp",
+      "box": [
+        0.67895,
+        0.00641,
+        0.15789,
+        0.24679
+      ],
+      "depth": 0.0653,
+      "color": "#bcbd22"
+    },
+    {
+      "id": "o03",
+      "src": "/showcase/paintwise/objects/o03.2871d9c1.webp",
+      "box": [
+        0.68947,
+        0.20513,
+        0.16316,
+        0.10256
+      ],
+      "depth": 0.0697,
+      "color": "#8c564b"
+    },
+    {
+      "id": "o04",
+      "src": "/showcase/paintwise/objects/o04.d072fcac.webp",
+      "box": [
+        0.0,
+        0.0,
+        1.0,
+        0.81731
+      ],
+      "depth": 0.0853,
+      "color": "#ffbb78"
+    },
+    {
+      "id": "o05",
+      "src": "/showcase/paintwise/objects/o05.1421a245.webp",
+      "box": [
+        0.82368,
+        0.00321,
+        0.17632,
+        0.23077
+      ],
+      "depth": 0.1061,
+      "color": "#ff7f0e"
+    },
+    {
+      "id": "o06",
+      "src": "/showcase/paintwise/objects/o06.e21deb53.webp",
+      "box": [
+        0.70526,
+        0.09936,
+        0.11579,
+        0.15385
+      ],
+      "depth": 0.1212,
+      "color": "#9edae5"
+    },
+    {
+      "id": "o07",
+      "src": "/showcase/paintwise/objects/o07.7cf8131c.webp",
+      "box": [
+        0.85,
+        0.54487,
+        0.09737,
+        0.10577
+      ],
+      "depth": 0.1224,
+      "color": "#2ca02c"
+    },
+    {
+      "id": "o08",
+      "src": "/showcase/paintwise/objects/o08.6b6ae6a6.webp",
+      "box": [
+        0.0,
+        0.80769,
+        0.15526,
+        0.19231
+      ],
+      "depth": 0.3268,
+      "color": "#7f7f7f"
+    },
+    {
+      "id": "o09",
+      "src": "/showcase/paintwise/objects/o09.3b957598.webp",
+      "box": [
+        0.17368,
+        0.58974,
+        0.07368,
+        0.08654
+      ],
+      "depth": 0.3677,
+      "color": "#9467bd"
+    },
+    {
+      "id": "o10",
+      "src": "/showcase/paintwise/objects/o10.160799c1.webp",
+      "box": [
+        0.59211,
+        0.47436,
+        0.21053,
+        0.15385
+      ],
+      "depth": 0.3995,
+      "color": "#c7c7c7"
+    },
+    {
+      "id": "o11",
+      "src": "/showcase/paintwise/objects/o11.33fa08fa.webp",
+      "box": [
+        0.54474,
+        0.40064,
+        0.15263,
+        0.16026
+      ],
+      "depth": 0.4367,
+      "color": "#ff9896"
+    },
+    {
+      "id": "o12",
+      "src": "/showcase/paintwise/objects/o12.352af787.webp",
+      "box": [
+        0.39737,
+        0.35577,
+        0.12105,
+        0.11218
+      ],
+      "depth": 0.5265,
+      "color": "#ffbb78"
+    },
+    {
+      "id": "o13",
+      "src": "/showcase/paintwise/objects/o13.667adb34.webp",
+      "box": [
+        0.09474,
+        0.65064,
+        0.11053,
+        0.13141
+      ],
+      "depth": 0.5825,
+      "color": "#aec7e8"
+    },
+    {
+      "id": "o14",
+      "src": "/showcase/paintwise/objects/o14.2b41ef92.webp",
+      "box": [
+        0.56842,
+        0.58333,
+        0.11842,
+        0.13462
+      ],
+      "depth": 0.5831,
+      "color": "#1f77b4"
+    },
+    {
+      "id": "o15",
+      "src": "/showcase/paintwise/objects/o15.3a192d8f.webp",
+      "box": [
+        0.41579,
+        0.55769,
+        0.14211,
+        0.17628
+      ],
+      "depth": 0.5909,
+      "color": "#17becf"
+    },
+    {
+      "id": "o16",
+      "src": "/showcase/paintwise/objects/o16.189875af.webp",
+      "box": [
+        0.92895,
+        0.90064,
+        0.07105,
+        0.09936
+      ],
+      "depth": 0.5934,
+      "color": "#ff7f0e"
+    },
+    {
+      "id": "o17",
+      "src": "/showcase/paintwise/objects/o17.024d6925.webp",
+      "box": [
+        0.05263,
+        0.54808,
+        0.70263,
+        0.35897
+      ],
+      "depth": 0.6,
+      "color": "#2ca02c"
+    },
+    {
+      "id": "o18",
+      "src": "/showcase/paintwise/objects/o18.fa10d4ab.webp",
+      "box": [
+        0.29474,
+        0.67628,
+        0.07368,
+        0.08333
+      ],
+      "depth": 0.6227,
+      "color": "#8c564b"
+    },
+    {
+      "id": "o19",
+      "src": "/showcase/paintwise/objects/o19.674be6f9.webp",
+      "box": [
+        0.55263,
+        0.70192,
+        0.13421,
+        0.06731
+      ],
+      "depth": 0.6497,
+      "color": "#98df8a"
+    },
+    {
+      "id": "o20",
+      "src": "/showcase/paintwise/objects/o20.f0f9af6d.webp",
+      "box": [
+        0.22632,
+        0.23077,
+        0.21053,
+        0.42308
+      ],
+      "depth": 0.6769,
+      "color": "#9467bd"
+    },
+    {
+      "id": "o21",
+      "src": "/showcase/paintwise/objects/o21.9c04b356.webp",
+      "box": [
+        0.41316,
+        0.6859,
+        0.06579,
+        0.08974
+      ],
+      "depth": 0.6984,
+      "color": "#c5b0d5"
+    },
+    {
+      "id": "o22",
+      "src": "/showcase/paintwise/objects/o22.1e4ffc4e.webp",
+      "box": [
+        0.34211,
+        0.69231,
+        0.07368,
+        0.09936
+      ],
+      "depth": 0.7086,
+      "color": "#d62728"
+    },
+    {
+      "id": "o23",
+      "src": "/showcase/paintwise/objects/o23.99033b8f.webp",
+      "box": [
+        0.8,
+        0.53205,
+        0.17105,
+        0.26282
+      ],
+      "depth": 0.7866,
+      "color": "#c49c94"
+    },
+    {
+      "id": "o24",
+      "src": "/showcase/paintwise/objects/o24.8dc9df0d.webp",
+      "box": [
+        0.48421,
+        0.54487,
+        0.51579,
+        0.36538
+      ],
+      "depth": 0.7995,
+      "color": "#2ca02c"
+    },
+    {
+      "id": "o25",
+      "src": "/showcase/paintwise/objects/o25.88f921f3.webp",
+      "box": [
+        0.13947,
+        0.89744,
+        0.32368,
+        0.10256
+      ],
+      "depth": 0.8306,
+      "color": "#c5b0d5"
+    },
+    {
+      "id": "o26",
+      "src": "/showcase/paintwise/objects/o26.2a0b4253.webp",
+      "box": [
+        0.46053,
+        0.89744,
+        0.48158,
+        0.10256
+      ],
+      "depth": 0.8335,
+      "color": "#c5b0d5"
+    },
+    {
+      "id": "o27",
+      "src": "/showcase/paintwise/objects/o27.521e2ad9.webp",
+      "box": [
+        0.27105,
+        0.74359,
+        0.49211,
+        0.22756
+      ],
+      "depth": 0.9261,
+      "color": "#dbdb8d"
+    },
+    {
+      "id": "o28",
+      "src": "/showcase/paintwise/objects/o28.f9d3735c.webp",
+      "box": [
+        0.43947,
+        0.82051,
+        0.09211,
+        0.17949
+      ],
+      "depth": 0.9697,
+      "color": "#c49c94"
+    }
+  ],
+  "steps": {
+    "atlas": "/showcase/paintwise/steps.537612e2.webp",
+    "cols": 6,
+    "rows": 4,
+    "count": 23,
+    "aspect": 1.5,
+    "labels": [
+      "1 · background",
+      "2",
+      "3.1",
+      "3.2 · banana",
+      "3.3 · orange",
+      "3.4 · leaves",
+      "3.5 · plant",
+      "3.6 · fruit",
+      "3.7 · apple",
+      "3.8 · leaves",
+      "3.9 · leaves",
+      "3.10 · fruit",
+      "3.11 · fruit",
+      "3.12 · banana",
+      "3.13 · apple",
+      "3.14 · banana",
+      "3.15 · plant",
+      "3.16 · apple",
+      "3.17 · apple",
+      "3.18 · apple",
+      "4.1 · orange",
+      "4.2 · fruit",
+      "4.3 · fruit"
+    ],
+    "phase": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      2,
+      2,
+      2
+    ]
+  },
+  "stillLifes": [
+    {
+      "src": "/showcase/paintwise/stills/s1.b3db1490.webp",
+      "aspect": 0.7725
+    },
+    {
+      "src": "/showcase/paintwise/stills/s2.509846c3.webp",
+      "aspect": 0.7725
+    },
+    {
+      "src": "/showcase/paintwise/stills/s3.6a049104.webp",
+      "aspect": 0.7725
+    },
+    {
+      "src": "/showcase/paintwise/stills/s4.12dddf01.webp",
+      "aspect": 1.2583
+    },
+    {
+      "src": "/showcase/paintwise/stills/s5.fcf33c13.webp",
+      "aspect": 1.2517
+    },
+    {
+      "src": "/showcase/paintwise/stills/s6.079899de.webp",
+      "aspect": 1.2517
+    },
+    {
+      "src": "/showcase/paintwise/stills/s7.4fc83b82.webp",
+      "aspect": 0.7959
+    },
+    {
+      "src": "/showcase/paintwise/stills/s8.d69e1d0e.webp",
+      "aspect": 0.7624
+    }
+  ],
+  "figure": {
+    "src": "/showcase/paintwise/figure.e17b3d20.webp",
+    "aspect": 2.1053
+  }
+}

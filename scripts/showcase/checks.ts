@@ -1,5 +1,7 @@
 // Checks for the showcase's pure modules. Run with `npm run showcase:check`.
 
+import fs from "node:fs";
+import path from "node:path";
 import * as THREE from "three";
 import { openFor } from "../../src/components/hero/seamField";
 import { BITS, CURVE, SEAM } from "../../src/components/hero/splitConfig";
@@ -28,6 +30,16 @@ function assert(condition: boolean, message: string): asserts condition {
 }
 
 const near = (a: number, b: number, eps = 1e-6) => Math.abs(a - b) <= eps;
+
+/** What scripts/showcase/build-assets.py writes (checked at run time, so a missing file is a failed check). */
+interface PaintwiseMediaShape {
+  canvas: { width: number; height: number };
+  layers: { id: string; src: string }[];
+  objects: { id: string; src: string; box: [number, number, number, number]; depth: number; color: string }[];
+  steps: { atlas: string; cols: number; rows: number; count: number; aspect: number; labels: string[]; phase: number[] };
+  stillLifes: { src: string; aspect: number }[];
+  figure: { src: string; aspect: number };
+}
 
 // ---------------------------------------------------------------------------
 // Scroll map
@@ -306,6 +318,57 @@ for (const viewport of VIEWPORTS) {
       assert(eye.distanceTo(v3(p.position)) > 0.5, "too close");
     });
   }
+}
+
+// ---------------------------------------------------------------------------
+// Paintwise's media (made by `npm run showcase:assets`)
+
+{
+  const generated = path.join(process.cwd(), "src/components/showcase/stations/paintwise/paintwise.generated.json");
+  const exists = (src: string) => fs.existsSync(path.join(process.cwd(), "public", src.replace(/^\//, "")));
+  let media: PaintwiseMediaShape | null = null;
+
+  check("paintwise media: the generated JSON is there", () => {
+    assert(fs.existsSync(generated), `${path.relative(process.cwd(), generated)} is missing (run npm run showcase:assets)`);
+    media = JSON.parse(fs.readFileSync(generated, "utf8")) as PaintwiseMediaShape;
+  });
+
+  check("paintwise media: six layers, in pipeline order, all on disk", () => {
+    assert(media !== null, "no media");
+    const ids = media.layers.map((l) => l.id).join(",");
+    assert(ids === "original,masks,depth,blockin,edges,sketch", `layers ${ids}`);
+    for (const l of media.layers) assert(exists(l.src), `missing ${l.src}`);
+    assert(media.canvas.width > 0 && media.canvas.height > 0, "canvas size");
+  });
+
+  check("paintwise media: objects cut from the masks, far to near, inside the canvas", () => {
+    assert(media !== null, "no media");
+    assert(media.objects.length >= 8 && media.objects.length <= 28, `${media.objects.length} objects`);
+    media.objects.forEach((o, i) => {
+      assert(exists(o.src), `missing ${o.src}`);
+      const [x, y, w, h] = o.box;
+      assert(x >= 0 && y >= 0 && w > 0 && h > 0 && x + w <= 1.0001 && y + h <= 1.0001, `${o.id} box ${o.box}`);
+      assert(o.depth >= 0 && o.depth <= 1, `${o.id} depth ${o.depth}`);
+      assert(i === 0 || o.depth >= media!.objects[i - 1].depth, `${o.id} out of depth order`);
+    });
+  });
+
+  check("paintwise media: 23 steps in a 6×4 atlas, each labelled with its phase", () => {
+    assert(media !== null, "no media");
+    const s = media.steps;
+    assert(exists(s.atlas), `missing ${s.atlas}`);
+    assert(s.count === 23 && s.cols * s.rows >= s.count, `${s.count} steps in ${s.cols}×${s.rows}`);
+    assert(s.labels.length === s.count && s.phase.length === s.count, "labels/phase length");
+    assert(s.labels[0] === "1 · background" && s.labels[22] === "4.3 · fruit", `labels ${s.labels[0]} … ${s.labels[22]}`);
+    assert(s.phase.filter((p) => p === 2).length === 3, "three detail steps");
+  });
+
+  check("paintwise media: eight still lifes and the figure", () => {
+    assert(media !== null, "no media");
+    assert(media.stillLifes.length === 8, `${media.stillLifes.length} still lifes`);
+    for (const s of media.stillLifes) assert(exists(s.src) && s.aspect > 0, `still life ${s.src}`);
+    assert(exists(media.figure.src) && media.figure.aspect > 1.5, `figure ${media.figure.src}`);
+  });
 }
 
 // ---------------------------------------------------------------------------

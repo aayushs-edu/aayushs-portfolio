@@ -82,6 +82,47 @@ def file_hash(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def load_estimator():
+    """The Depth Anything V2 pipeline (downloads the model on first run)."""
+    from transformers import pipeline
+
+    try:
+        return pipeline("depth-estimation", model=MODEL)
+    except Exception as err:  # noqa: BLE001 - surface any download/load failure
+        fail(
+            f"could not load {MODEL} ({err}). The model downloads from Hugging Face on first run; "
+            "check the network connection and retry. Depth is never faked."
+        )
+
+
+def estimate(estimator, image, long_side: int = LONG_SIDE):
+    """An 8-bit depth map of `image` (near = white), at most `long_side` px on its long side."""
+    import numpy as np
+    import torch
+    from PIL import Image, ImageFilter
+
+    width, height = image.size
+    scale = min(1.0, long_side / max(width, height))
+    target = (max(1, round(width * scale)), max(1, round(height * scale)))
+
+    with torch.no_grad():
+        result = estimator(image)
+    depth = result["predicted_depth"]
+    if depth.dim() == 2:
+        depth = depth[None, None]
+    elif depth.dim() == 3:
+        depth = depth[None]
+    depth = torch.nn.functional.interpolate(
+        depth, size=(target[1], target[0]), mode="bicubic", align_corners=False
+    )[0, 0].cpu().numpy()
+
+    # Depth Anything predicts relative inverse depth: larger = nearer = white.
+    lo, hi = float(np.percentile(depth, 0.5)), float(np.percentile(depth, 99.5))
+    norm = np.clip((depth - lo) / max(hi - lo, 1e-6), 0.0, 1.0)
+    gray = Image.fromarray((norm * 255.0 + 0.5).astype(np.uint8), mode="L")
+    return gray.filter(ImageFilter.MedianFilter(size=MEDIAN_SIZE))
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--slug", help="only process this slug")
@@ -111,47 +152,16 @@ def main() -> None:
         return
 
     # Imported late so validation and "nothing to do" runs stay fast.
-    import numpy as np
-    import torch
-    from PIL import Image, ImageFilter
-    from transformers import pipeline
+    from PIL import Image
 
-    try:
-        estimator = pipeline("depth-estimation", model=MODEL)
-    except Exception as err:  # noqa: BLE001 - surface any download/load failure
-        fail(
-            f"could not load {MODEL} ({err}). The model downloads from Hugging Face on first run; "
-            "check the network connection and retry. Depth is never faked."
-        )
-
+    estimator = load_estimator()
     for key, src, out, digest in todo:
-        image = Image.open(src).convert("RGB")
-        width, height = image.size
-        scale = min(1.0, LONG_SIDE / max(width, height))
-        target = (max(1, round(width * scale)), max(1, round(height * scale)))
-
-        with torch.no_grad():
-            result = estimator(image)
-        depth = result["predicted_depth"]
-        if depth.dim() == 2:
-            depth = depth[None, None]
-        elif depth.dim() == 3:
-            depth = depth[None]
-        depth = torch.nn.functional.interpolate(
-            depth, size=(target[1], target[0]), mode="bicubic", align_corners=False
-        )[0, 0].cpu().numpy()
-
-        # Depth Anything predicts relative inverse depth: larger = nearer = white.
-        lo, hi = float(np.percentile(depth, 0.5)), float(np.percentile(depth, 99.5))
-        norm = np.clip((depth - lo) / max(hi - lo, 1e-6), 0.0, 1.0)
-        gray = Image.fromarray((norm * 255.0 + 0.5).astype(np.uint8), mode="L")
-        gray = gray.filter(ImageFilter.MedianFilter(size=MEDIAN_SIZE))
-
+        gray = estimate(estimator, Image.open(src).convert("RGB"))
         out.parent.mkdir(parents=True, exist_ok=True)
         gray.save(out, optimize=True)
         index[key] = digest
         CACHE_INDEX.write_text(json.dumps(index, indent=2, sort_keys=True) + "\n")
-        print(f"depth  {key}: {target[0]}x{target[1]}")
+        print(f"depth  {key}: {gray.size[0]}x{gray.size[1]}")
 
 
 if __name__ == "__main__":
