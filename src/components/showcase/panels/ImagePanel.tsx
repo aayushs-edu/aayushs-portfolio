@@ -62,10 +62,12 @@ const ImagePanel = forwardRef<ImagePanelHandle, ImagePanelProps>(function ImageP
     [face, sides],
   );
 
+  // The atlas frame it was last asked for, applied again when the texture arrives.
+  const frame = useRef(0);
   useEffect(() => {
     if (texture && atlas) {
       texture.repeat.set(1 / atlas.cols, 1 / atlas.rows);
-      texture.offset.set(0, 1 - 1 / atlas.rows);
+      texture.offset.set((frame.current % atlas.cols) / atlas.cols, 1 - (Math.floor(frame.current / atlas.cols) + 1) / atlas.rows);
     }
     face.map = texture;
     face.color.set(texture ? (lit ? "#ffffff" : "#ececec") : color);
@@ -92,6 +94,7 @@ const ImagePanel = forwardRef<ImagePanelHandle, ImagePanelProps>(function ImageP
         group.current.visible = opacity > 0.002;
       },
       setFrame(k: number) {
+        frame.current = k;
         if (!texture || !atlas) return;
         const col = k % atlas.cols;
         const row = Math.floor(k / atlas.cols);
