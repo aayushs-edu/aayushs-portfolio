@@ -148,16 +148,17 @@ It shows (a) scene understanding, (b) artistic ordering, (c) step synthesis and 
   - Every painting is a real canvas, in relief on the full tier.
   - Depth maps for the 10 early works are made with the same Depth Anything script as the hero's.
 
-**Arriving.** The paintings fly in from the spine and hang themselves: portfolio first, then early work.
+**Arriving.** (Built 2026-10-29: instead of flying in from the spine, which would empty the wall when seen from across the room.) Idle, the salon is compact and still readable from anywhere; arriving, it spreads out, the early work a moment after the portfolio.
 
-**Beats.**
+**Beats** (built as six, a continuous pan from left to right):
 1. The whole salon.
-2. The left column.
-3. The centre column.
-4. The right column.
-5. The early-work edges.
+2. The left edge: Where it all started and the earliest works.
+3. The left column.
+4. The centre column.
+5. The right column.
+6. The right edge: the rest of the early work.
 
-In beats 2–5, the presented paintings step about 40 cm forward with their captions, and the rest ease back. Every painting can be clicked on its own.
+In beats 2–6, the presented paintings step about 40 cm forward with their captions, and the rest ease back. Every painting can be clicked on its own.
 
 **Held photos.** Red Dead, Asthma and Covid turn over to show the photo of the painting being held when their beat comes, or on hover. The detail panel shows both images.
 
@@ -167,7 +168,7 @@ In beats 2–5, the presented paintings step about 40 cm forward with their capt
 
 **Films.** Wild West (2024), Soccer Star (2024) and Sanctuary (2023).
 - Each floats as a large 16:9 panel at its own depth, playing a muted loop of 6–8 s.
-- The Wild West stills (`view0`–`view7`) drift behind them as a storyboard.
+- The Wild West stills (`view0`–`view7`) frame the first film as a storyboard at its beat: a row above it and a column to its left.
 
 **Watching.**
 - Opening a film (`#work/<slug>`) flies in to it, the others drift back, and the detail panel opens beside it.
@@ -181,7 +182,7 @@ In beats 2–5, the presented paintings step about 40 cm forward with their capt
 
 **Inspecting a model.**
 - Opening a model flies in to it and opens the detail panel, which links to the model on Sketchfab.
-- While it's open, dragging orbits and zooms the model in the scene (limited orbit controls), and the arrow keys turn it.
+- While it's open, dragging turns and tilts the model in the scene, and the arrow keys do too. (No zoom: a scroll gesture closes an open work everywhere.)
 - Esc returns.
 
 **Beats.**
@@ -289,8 +290,8 @@ Each stage gets its own plan and build.
    - the Paintwise station complete, with its assets.
 
    The other works from stage 1 (the 7 portfolio paintings and the 8 other projects) move into their stations, looking roughly as they do now: paintings as canvases, the rest as screens. The early works, films and models arrive with their own stages.
-2. **Paintings:** the salon with all 17, the held photos, the origin photo and the early-work depth maps.
-3. **Animation:** loops, posters, the player, the models and the inspector.
+2. **Paintings:** the salon with all 17, the held photos, the origin photo and the early-work depth maps. *Built 2026-10-29.*
+3. **Animation:** loops, posters, the player, the models and the inspector. *Built 2026-10-29.*
 4. **Games:** video panels, screenshot strips, the slideshow stand-in.
 5. **Hackathons:** after their own brainstorm. Then the old pages retire.
 
