@@ -82,7 +82,11 @@ export default function Showcase() {
   const paintwise = stationOf(room, "paintwise")?.layout as PaintwiseLayout | undefined;
   const map = useMemo(() => createScrollMap(room.beats, SHOWCASE.units.entrance, SHOWCASE.dwell), [room]);
   const groups = useMemo(
-    () => (threeD ? groupWorks(room.stations.map((s) => ({ title: s.title, slugs: s.layout.works.map((w) => w.slug) }))) : STATIC_GROUPS),
+    // In 3D the list follows the tour: Tab moves through the works in the order the camera visits them.
+    () =>
+      threeD
+        ? groupWorks(room.stations.map((s) => ({ title: s.title, slugs: s.layout.works.map((w) => w.slug).sort((a, b) => room.workBeat[a] - room.workBeat[b]) })))
+        : STATIC_GROUPS,
     [threeD, room],
   );
   /** Beat index by key, and "work:<slug>" for every work → the beat that presents it. */
