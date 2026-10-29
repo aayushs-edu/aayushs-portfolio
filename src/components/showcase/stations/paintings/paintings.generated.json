@@ -1,0 +1,123 @@
+{
+  "early": [
+    {
+      "slug": "snowy-cabin",
+      "title": "Snowy Cabin",
+      "year": "2018",
+      "story": "A tranquil winter landscape where a cozy cabin rests beside a frozen lake, its warm glow reflecting against the snow as the sun sets over distant mountains.",
+      "image": "/showcase/paintings/snowy-cabin.4207d1de.webp",
+      "depth": "/showcase/paintings/depth/snowy-cabin.5994b932.webp",
+      "aspect": 1.2037,
+      "avgColor": "#8d8a7f"
+    },
+    {
+      "slug": "golden-songbird",
+      "title": "Golden Songbird",
+      "year": "2018",
+      "story": "A delicate bird perched on a branch, its feathers glowing in soft yellow and green tones, capturing a moment of stillness and quiet beauty.",
+      "image": "/showcase/paintings/golden-songbird.9f43c6ba.webp",
+      "depth": "/showcase/paintings/depth/golden-songbird.4568cd6d.webp",
+      "aspect": 0.7856,
+      "avgColor": "#666152"
+    },
+    {
+      "slug": "country-path",
+      "title": "Country Path",
+      "year": "2019",
+      "story": "A winding path leads through tall grasses toward the golden fields and distant hills, evoking the peace of a quiet countryside morning.",
+      "image": "/showcase/paintings/country-path.73ce2b98.webp",
+      "depth": "/showcase/paintings/depth/country-path.1e9d41d7.webp",
+      "aspect": 1.2685,
+      "avgColor": "#797f5a"
+    },
+    {
+      "slug": "forest-cottage",
+      "title": "Forest Cottage",
+      "year": "2019",
+      "story": "A stone path winds through dappled sunlight and lush greenery to a hidden cottage nestled in the woods, radiating a sense of solitude and charm.",
+      "image": "/showcase/paintings/forest-cottage.abd41e36.webp",
+      "depth": "/showcase/paintings/depth/forest-cottage.4f5c7227.webp",
+      "aspect": 1.2553,
+      "avgColor": "#58705f"
+    },
+    {
+      "slug": "hillside-house",
+      "title": "Hillside House",
+      "year": "2019",
+      "story": "A secluded house peeks through the trees overlooking a meadow of wildflowers, framed by soft rolling hills under a hazy sky.",
+      "image": "/showcase/paintings/hillside-house.cc73888c.webp",
+      "depth": "/showcase/paintings/depth/hillside-house.743d71ad.webp",
+      "aspect": 1.2674,
+      "avgColor": "#606349"
+    },
+    {
+      "slug": "river-bend",
+      "title": "River Bend",
+      "year": "2019",
+      "story": "Calm blue waters curve gently around sunlit banks, where golden trees stand in harmony with the serene sky and distant hills.",
+      "image": "/showcase/paintings/river-bend.ea3e3456.webp",
+      "depth": "/showcase/paintings/depth/river-bend.2a48a2bc.webp",
+      "aspect": 1.2489,
+      "avgColor": "#4a7a73"
+    },
+    {
+      "slug": "autumn-lake",
+      "title": "Autumn Lake",
+      "year": "2020",
+      "story": "Flaming autumn leaves reflect across a still lake, creating a glowing tapestry of reds, oranges, and golds against the cool blue horizon.",
+      "image": "/showcase/paintings/autumn-lake.2ba0390c.webp",
+      "depth": "/showcase/paintings/depth/autumn-lake.dd8f11ee.webp",
+      "aspect": 1.2634,
+      "avgColor": "#787065"
+    },
+    {
+      "slug": "lone-boat",
+      "title": "Lone Boat",
+      "year": "2020",
+      "story": "A quiet boat rests along the shore beneath a tree, surrounded by calm waters and rolling meadows in the distance.",
+      "image": "/showcase/paintings/lone-boat.278f3a53.webp",
+      "depth": "/showcase/paintings/depth/lone-boat.817ace5b.webp",
+      "aspect": 1.253,
+      "avgColor": "#787b66"
+    },
+    {
+      "slug": "covid",
+      "title": "Covid",
+      "year": "2024",
+      "story": "A figure stands in the warm glow of a lit window, framed by night shadows and branches reaching toward the light.",
+      "image": "/showcase/paintings/covid.a1a09bf3.webp",
+      "depth": "/showcase/paintings/depth/covid.fe31cd33.webp",
+      "aspect": 1.3178,
+      "avgColor": "#757270"
+    },
+    {
+      "slug": "asthma",
+      "title": "Asthma",
+      "year": "2024",
+      "story": "An inhaler encased in an ethereal glass dome, surrounded by swirling clouds of violet and white, symbolizing fragility and resilience.",
+      "image": "/showcase/paintings/asthma.92bc8d1b.webp",
+      "depth": "/showcase/paintings/depth/asthma.7733653e.webp",
+      "aspect": 0.7983,
+      "avgColor": "#5e627f"
+    }
+  ],
+  "held": {
+    "red-dead-redemption": {
+      "src": "/showcase/paintings/held/red-dead-redemption.af8fa27b.webp",
+      "aspect": 0.7619
+    },
+    "asthma": {
+      "src": "/showcase/paintings/held/asthma.d90d8672.webp",
+      "aspect": 0.75
+    },
+    "covid": {
+      "src": "/showcase/paintings/held/covid.dafafbbb.webp",
+      "aspect": 0.75
+    }
+  },
+  "origin": {
+    "image": "/paintings/origin.webp",
+    "aspect": 1.3333,
+    "avgColor": "#857c77"
+  }
+}

@@ -49,3 +49,8 @@ next-env.d.ts
 
 # python
 __pycache__/
+
+# raw 3D model sources (17 MB); the compressed GLBs in public/showcase/animation are committed
+scripts/showcase/sources/models/
+# downloaded films for the loops
+scripts/showcase/.cache/

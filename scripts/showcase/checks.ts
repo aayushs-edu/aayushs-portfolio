@@ -35,6 +35,18 @@ function assert(condition: boolean, message: string): asserts condition {
 const near = (a: number, b: number, eps = 1e-6) => Math.abs(a - b) <= eps;
 
 /** What scripts/showcase/build-assets.py writes (checked at run time, so a missing file is a failed check). */
+interface PaintingsMediaShape {
+  early: { slug: string; title: string; year: string; story: string; image: string; depth: string; aspect: number; avgColor: string }[];
+  held: Record<string, { src: string; aspect: number }>;
+  origin: { image: string; aspect: number; avgColor: string };
+}
+
+interface AnimationMediaShape {
+  films: { slug: string; loop: string; poster: string; film: string; aspect: number }[];
+  stills: { src: string; aspect: number }[];
+  models: { slug: string; glb: string; thumb: string; uid: string }[];
+}
+
 interface PaintwiseMediaShape {
   canvas: { width: number; height: number };
   layers: { id: string; src: string }[];
@@ -556,6 +568,64 @@ for (const viewport of VIEWPORTS) {
     assert(media.stillLifes.length === 8, `${media.stillLifes.length} still lifes`);
     for (const s of media.stillLifes) assert(exists(s.src) && s.aspect > 0, `still life ${s.src}`);
     assert(exists(media.figure.src) && media.figure.aspect > 1.5, `figure ${media.figure.src}`);
+  });
+}
+
+// ---------------------------------------------------------------------------
+// The paintings' and the animation station's media (also `npm run showcase:assets`)
+
+{
+  const root = process.cwd();
+  const onDisk = (src: string) => fs.existsSync(path.join(root, "public", src.replace(/^\//, "")));
+  const sizeOf = (src: string) => fs.statSync(path.join(root, "public", src.replace(/^\//, ""))).size;
+  const read = <T,>(rel: string): T | null => {
+    const file = path.join(root, rel);
+    return fs.existsSync(file) ? (JSON.parse(fs.readFileSync(file, "utf8")) as T) : null;
+  };
+  const paintings = read<PaintingsMediaShape>("src/components/showcase/stations/paintings/paintings.generated.json");
+  const animation = read<AnimationMediaShape>("src/components/showcase/stations/animation/animation.generated.json");
+
+  check("paintings media: ten early works with images and depth maps", () => {
+    assert(paintings !== null, "paintings.generated.json is missing (run npm run showcase:assets)");
+    assert(paintings.early.length === 10, `${paintings.early.length} early works`);
+    const slugs = new Set(paintings.early.map((p) => p.slug));
+    assert(slugs.size === 10, "duplicate slugs");
+    for (const p of paintings.early) {
+      assert(onDisk(p.image) && onDisk(p.depth), `${p.slug}: missing media`);
+      assert(p.aspect > 0.4 && p.aspect < 2.5 && /^#[0-9a-f]{6}$/.test(p.avgColor), `${p.slug}: aspect ${p.aspect}, colour ${p.avgColor}`);
+      assert(!!p.title && !!p.year && !!p.story, `${p.slug}: text`);
+    }
+  });
+
+  check("paintings media: the three held photos and the origin photo", () => {
+    assert(paintings !== null, "no paintings media");
+    const held = Object.keys(paintings.held).sort().join(",");
+    assert(held === "asthma,covid,red-dead-redemption", `held ${held}`);
+    for (const h of Object.values(paintings.held)) assert(onDisk(h.src) && h.aspect > 0, `held ${h.src}`);
+    assert(onDisk(paintings.origin.image) && paintings.origin.aspect > 0, "origin");
+  });
+
+  check("animation media: three films with small loops and posters", () => {
+    assert(animation !== null, "animation.generated.json is missing (run npm run showcase:assets)");
+    assert(animation.films.map((f) => f.slug).join(",") === "wild-west,soccer-star,sanctuary", "films");
+    for (const f of animation.films) {
+      assert(onDisk(f.loop) && onDisk(f.poster), `${f.slug}: missing loop or poster`);
+      assert(sizeOf(f.loop) < 3 * 1024 * 1024, `${f.slug}: loop is ${(sizeOf(f.loop) / 1048576).toFixed(1)} MB`);
+      assert(/^https:\/\/github\.com\/aayushs-edu\/aayushs-portfolio\/releases\/download\/videos-v1\.0\//.test(f.film), `${f.slug}: film ${f.film}`);
+      assert(f.aspect > 1.5 && f.aspect < 2, `${f.slug}: aspect ${f.aspect}`);
+    }
+  });
+
+  check("animation media: eight storyboard stills and three compressed models", () => {
+    assert(animation !== null, "no animation media");
+    assert(animation.stills.length === 8, `${animation.stills.length} stills`);
+    for (const s of animation.stills) assert(onDisk(s.src) && s.aspect > 1, `still ${s.src}`);
+    assert(animation.models.map((m) => m.slug).join(",") === "main-character,banana-gun,saloon", "models");
+    for (const m of animation.models) {
+      assert(onDisk(m.glb) && onDisk(m.thumb), `${m.slug}: missing glb or thumbnail`);
+      assert(sizeOf(m.glb) < 4 * 1024 * 1024, `${m.slug}: ${(sizeOf(m.glb) / 1048576).toFixed(1)} MB`);
+      assert(/^[0-9a-f]{32}$/.test(m.uid), `${m.slug}: sketchfab uid`);
+    }
   });
 }
 

@@ -1,0 +1,79 @@
+{
+  "films": [
+    {
+      "slug": "wild-west",
+      "loop": "/showcase/animation/films/wild-west.1d4889cd.mp4",
+      "poster": "/showcase/animation/films/wild-west.d83b9a1f.webp",
+      "film": "https://github.com/aayushs-edu/aayushs-portfolio/releases/download/videos-v1.0/wild-west.mp4",
+      "aspect": 1.7778
+    },
+    {
+      "slug": "soccer-star",
+      "loop": "/showcase/animation/films/soccer-star.00edde1a.mp4",
+      "poster": "/showcase/animation/films/soccer-star.10719051.webp",
+      "film": "https://github.com/aayushs-edu/aayushs-portfolio/releases/download/videos-v1.0/messi.mp4",
+      "aspect": 1.7778
+    },
+    {
+      "slug": "sanctuary",
+      "loop": "/showcase/animation/films/sanctuary.9b2458b9.mp4",
+      "poster": "/showcase/animation/films/sanctuary.608e91ea.webp",
+      "film": "https://github.com/aayushs-edu/aayushs-portfolio/releases/download/videos-v1.0/sanctuary.mp4",
+      "aspect": 1.7778
+    }
+  ],
+  "stills": [
+    {
+      "src": "/images/view0.webp",
+      "aspect": 1.7778
+    },
+    {
+      "src": "/images/view1.webp",
+      "aspect": 1.7778
+    },
+    {
+      "src": "/images/view2.webp",
+      "aspect": 1.7778
+    },
+    {
+      "src": "/images/view3.webp",
+      "aspect": 1.7778
+    },
+    {
+      "src": "/images/view4.webp",
+      "aspect": 1.7778
+    },
+    {
+      "src": "/images/view5.webp",
+      "aspect": 1.7778
+    },
+    {
+      "src": "/images/view6.webp",
+      "aspect": 1.7778
+    },
+    {
+      "src": "/images/view7.webp",
+      "aspect": 1.7778
+    }
+  ],
+  "models": [
+    {
+      "slug": "main-character",
+      "glb": "/showcase/animation/models/main-character.9ee5a664.glb",
+      "thumb": "/showcase/animation/models/main-character-thumb.e4e2e1f6.webp",
+      "uid": "507a4bf2b127455f8c06175cd7b97b75"
+    },
+    {
+      "slug": "banana-gun",
+      "glb": "/showcase/animation/models/banana-gun.d78312bd.glb",
+      "thumb": "/showcase/animation/models/banana-gun-thumb.f3b151c6.webp",
+      "uid": "70655c32ae394827ae4c4a06bf492f63"
+    },
+    {
+      "slug": "saloon",
+      "glb": "/showcase/animation/models/saloon.7ec64bff.glb",
+      "thumb": "/showcase/animation/models/saloon-thumb.aa01fb0a.webp",
+      "uid": "2c19629e61354d138b447e0095232331"
+    }
+  ]
+}

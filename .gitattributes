@@ -4,3 +4,6 @@
 *.avi filter=lfs diff=lfs merge=lfs -text
 *.webm filter=lfs diff=lfs merge=lfs -text
 public/videos/** filter=lfs diff=lfs merge=lfs -text
+
+# The showcase's own media (short film loops among it) ships with the site, not through LFS.
+public/showcase/** !filter !diff !merge -text

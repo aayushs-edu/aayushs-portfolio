@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
-"""Builds the showcase's Paintwise media from images already in the repo.
+"""Builds the showcase stations' media from what is already in the repo.
 
-  python3 scripts/showcase/build-assets.py      (npm run showcase:assets)
+  python3 scripts/showcase/build-assets.py                 (npm run showcase:assets)
+  python3 scripts/showcase/build-assets.py paintings       (one step: paintwise, paintings, animation)
 
-Writes hashed WebP files to public/showcase/paintwise/ and describes them in
-src/components/showcase/stations/paintwise/paintwise.generated.json (never
-edit it by hand; commit both). Sources:
+Each step writes hashed files to public/showcase/<station>/ and describes them
+in src/components/showcase/stations/<station>/<station>.generated.json (never
+edit those by hand; commit both).
+
+Paintwise:
 
 - the jug still life's pipeline stages: lossless originals restored from git
   history into scripts/showcase/sources/paintwise/ (380 px);
@@ -16,13 +19,26 @@ edit it by hand; commit both). Sources:
 
 Images with flat colour (masks, block-in) are enlarged cleanly: upscaled,
 then every pixel snapped back to the source's own colours.
+
+Paintings: the ten early works in public/paintings/manifest.json (image, and a
+depth map for the relief), the three "held" photos and the origin photo.
+
+Animation: a short muted loop and a poster per film (cut with ffmpeg from the
+films on the videos-v1.0 release, downloaded once into scripts/showcase/.cache),
+the Sketchfab thumbnails, the storyboard stills, and the 3D models compressed
+by Blender (scripts/showcase/compress-glb.py) from the raw GLBs in
+scripts/showcase/sources/models/ (git-ignored; without them the committed
+models are kept).
 """
 
 import hashlib
 import io
 import json
+import re
 import shutil
+import subprocess
 import sys
+import tempfile
 from collections import deque
 from pathlib import Path
 
@@ -37,10 +53,14 @@ import depth as hero_depth  # noqa: E402
 from grid import panels  # noqa: E402
 
 SOURCES = HERE / "sources/paintwise"
+MODEL_SOURCES = HERE / "sources/models"
+CACHE = HERE / ".cache"
 PUBLIC = ROOT / "public"
 OUT = PUBLIC / "showcase/paintwise"
-GENERATED = ROOT / "src/components/showcase/stations/paintwise/paintwise.generated.json"
+STATIONS = ROOT / "src/components/showcase/stations"
+GENERATED = STATIONS / "paintwise/paintwise.generated.json"
 GALLERY = PUBLIC / "images"
+BLENDER = "/Applications/Blender.app/Contents/MacOS/Blender"
 
 # matplotlib's tab20, which the SAM masks image is drawn in; black is "no mask".
 TAB20 = [
@@ -62,16 +82,36 @@ def fail(message):
     sys.exit(1)
 
 
-def write_webp(image, rel_dir, name, **options):
-    """Saves `image` as public/showcase/paintwise/<rel_dir>/<name>.<hash>.webp and returns its URL."""
-    buf = io.BytesIO()
-    image.save(buf, "WEBP", **({"quality": 90, "method": 6} | options))
-    data = buf.getvalue()
+def write_bytes(data, out, rel_dir, name, ext):
+    """Saves `data` as <out>/<rel_dir>/<name>.<hash>.<ext> and returns its URL."""
     digest = hashlib.sha256(data).hexdigest()[:8]
-    path = OUT / rel_dir / f"{name}.{digest}.webp"
+    path = out / rel_dir / f"{name}.{digest}.{ext}"
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_bytes(data)
     return "/" + path.relative_to(PUBLIC).as_posix()
+
+
+def write_webp(image, rel_dir, name, out=OUT, **options):
+    """Saves `image` as <out>/<rel_dir>/<name>.<hash>.webp (Paintwise's folder by default) and returns its URL."""
+    buf = io.BytesIO()
+    image.save(buf, "WEBP", **({"quality": 90, "method": 6} | options))
+    return write_bytes(buf.getvalue(), out, rel_dir, name, "webp")
+
+
+def write_json(path, data):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n")
+
+
+def average_color(image):
+    r, g, b = image.convert("RGB").resize((1, 1), Image.BOX).getpixel((0, 0))
+    return "#%02x%02x%02x" % (r, g, b)
+
+
+def fit(image, long_side):
+    image = image.convert("RGB")
+    image.thumbnail((long_side, long_side), Image.LANCZOS)
+    return image
 
 
 def palette_image(colors):
@@ -211,13 +251,12 @@ def build_figure():
     return {"src": "/" + path.relative_to(PUBLIC).as_posix(), "aspect": round(aspect, 4)}
 
 
-def main():
+def paintwise_step(estimator):
     for stale in ("layers", "objects", "stills"):
         shutil.rmtree(OUT / stale, ignore_errors=True)
     for stale in [*OUT.glob("steps.*.webp"), *OUT.glob("figure.*.webp")]:
         stale.unlink()
 
-    estimator = hero_depth.load_estimator()
     size, masks, depth, layers = build_layers(estimator)
     media = {
         "canvas": {"width": size[0], "height": size[1]},
@@ -226,12 +265,178 @@ def main():
         "stillLifes": build_still_lifes(),
         "figure": build_figure(),
     }
-    GENERATED.parent.mkdir(parents=True, exist_ok=True)
-    GENERATED.write_text(json.dumps(media, indent=2, ensure_ascii=False) + "\n")
+    write_json(GENERATED, media)
     print(
-        f"build-assets: {len(layers)} layers, {len(media['objects'])} objects, "
+        f"build-assets: paintwise: {len(layers)} layers, {len(media['objects'])} objects, "
         f"{len(media['stillLifes'])} still lifes -> {GENERATED.relative_to(ROOT)}"
     )
+
+
+# ---- paintings -------------------------------------------------------------------
+
+PAINTINGS_OUT = PUBLIC / "showcase/paintings"
+PAINTINGS_JSON = STATIONS / "paintings/paintings.generated.json"
+# The photo of each painting being held: painting slug → file in public/paintings.
+HELD = {"red-dead-redemption": "RedDeadRedemption_2.webp", "asthma": "Inhaler_2.webp", "covid": "Covid_2.webp"}
+ORIGIN = "/paintings/origin.webp"
+
+
+def slugify(title):
+    return re.sub(r"[^a-z0-9]+", "-", title.lower()).strip("-")
+
+
+def paintings_step(estimator):
+    shutil.rmtree(PAINTINGS_OUT, ignore_errors=True)
+    manifest = json.loads((PUBLIC / "paintings/manifest.json").read_text())
+    early = []
+    for item in manifest["items"]:
+        if item.get("wallPosition") != "pre-portfolio":
+            continue
+        slug = slugify(item["title"])
+        source = Image.open(PUBLIC / item["src"].lstrip("/")).convert("RGB")
+        image = fit(source, 1600)
+        depth = hero_depth.estimate(estimator, fit(source, 1024))
+        early.append(
+            {
+                "slug": slug,
+                "title": item["title"],
+                "year": str(item.get("year", "")),
+                "story": item.get("description", ""),
+                "image": write_webp(image, "", slug, out=PAINTINGS_OUT, quality=88),
+                "depth": write_webp(depth.convert("RGB"), "depth", slug, out=PAINTINGS_OUT),
+                "aspect": round(source.width / source.height, 4),
+                "avgColor": average_color(source),
+            }
+        )
+    held = {}
+    for slug, file in HELD.items():
+        source = Image.open(PUBLIC / "paintings" / file)
+        held[slug] = {"src": write_webp(fit(source, 1400), "held", slug, out=PAINTINGS_OUT, quality=88), "aspect": round(source.width / source.height, 4)}
+    origin = Image.open(PUBLIC / ORIGIN.lstrip("/"))
+    media = {
+        "early": early,
+        "held": held,
+        "origin": {"image": ORIGIN, "aspect": round(origin.width / origin.height, 4), "avgColor": average_color(origin)},
+    }
+    write_json(PAINTINGS_JSON, media)
+    print(f"build-assets: paintings: {len(early)} early works, {len(held)} held photos -> {PAINTINGS_JSON.relative_to(ROOT)}")
+
+
+# ---- animation -------------------------------------------------------------------
+
+ANIMATION_OUT = PUBLIC / "showcase/animation"
+ANIMATION_JSON = STATIONS / "animation/animation.generated.json"
+RELEASE = "https://github.com/aayushs-edu/aayushs-portfolio/releases/download/videos-v1.0/"
+# slug, file on the release, where the loop starts (s)
+FILMS = [("wild-west", "wild-west.mp4", 70.0), ("soccer-star", "messi.mp4", 8.5), ("sanctuary", "sanctuary.mp4", 2.0)]
+LOOP_SECONDS = 6
+# slug, raw GLB in scripts/showcase/sources/models, Sketchfab uid
+MODELS = [
+    ("main-character", "wildwest-mc.glb", "507a4bf2b127455f8c06175cd7b97b75"),
+    ("banana-gun", "banana_gun.glb", "70655c32ae394827ae4c4a06bf492f63"),
+    ("saloon", "saloon.glb", "2c19629e61354d138b447e0095232331"),
+]
+STILLS = [f"/images/view{i}.webp" for i in range(8)]
+
+
+def fetch(url):
+    """The body at `url` (curl: it follows redirects and uses the system's certificates)."""
+    return subprocess.run(["curl", "-fsSL", url], check=True, capture_output=True).stdout
+
+
+def download(url, path):
+    if path.is_file() and path.stat().st_size > 0:
+        return path
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(".part")
+    subprocess.run(["curl", "-fsSL", "-o", str(tmp), url], check=True)
+    tmp.rename(path)
+    return path
+
+
+def ffmpeg(*args):
+    subprocess.run(["ffmpeg", "-v", "error", "-y", *args], check=True)
+
+
+def build_films():
+    films = []
+    with tempfile.TemporaryDirectory() as tmp:
+        for slug, file, start in FILMS:
+            source = download(RELEASE + file, CACHE / "films" / file)
+            loop, poster = Path(tmp) / f"{slug}.mp4", Path(tmp) / f"{slug}.png"
+            ffmpeg(
+                "-ss", str(start), "-t", str(LOOP_SECONDS), "-i", str(source), "-vf", "scale=1280:-2,fps=24", "-an",
+                "-c:v", "libx264", "-preset", "slow", "-crf", "27", "-pix_fmt", "yuv420p", "-g", "48", "-movflags", "+faststart",
+                "-threads", "1", str(loop),
+            )
+            ffmpeg("-ss", str(start), "-i", str(source), "-frames:v", "1", "-vf", "scale=1280:-2", str(poster))
+            image = Image.open(poster).convert("RGB")
+            films.append(
+                {
+                    "slug": slug,
+                    "loop": write_bytes(loop.read_bytes(), ANIMATION_OUT, "films", slug, "mp4"),
+                    "poster": write_webp(image, "films", slug, out=ANIMATION_OUT, quality=85),
+                    "film": RELEASE + file,
+                    "aspect": round(image.width / image.height, 4),
+                }
+            )
+    return films
+
+
+def build_models(previous):
+    """Compressed GLBs and Sketchfab thumbnails; without the raw sources, the models already built are kept."""
+    if not all((MODEL_SOURCES / file).is_file() for _, file, _ in MODELS):
+        if not previous:
+            fail(f"the raw models are missing from {MODEL_SOURCES.relative_to(ROOT)} and none were built before")
+        print("build-assets: animation: raw models not found; keeping the models already built")
+        return previous
+    shutil.rmtree(ANIMATION_OUT / "models", ignore_errors=True)
+    models = []
+    with tempfile.TemporaryDirectory() as tmp:
+        for slug, file, uid in MODELS:
+            out = Path(tmp) / f"{slug}.glb"
+            subprocess.run(
+                [BLENDER, "-b", "--factory-startup", "--python", str(HERE / "compress-glb.py"), "--", str(MODEL_SOURCES / file), str(out)],
+                check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+            )
+            info = json.loads(fetch(f"https://api.sketchfab.com/v3/models/{uid}"))
+            best = max(info["thumbnails"]["images"], key=lambda i: i["width"])
+            thumb = Image.open(io.BytesIO(fetch(best["url"])))
+            models.append(
+                {
+                    "slug": slug,
+                    "glb": write_bytes(out.read_bytes(), ANIMATION_OUT, "models", slug, "glb"),
+                    "thumb": write_webp(fit(thumb, 1280), "models", f"{slug}-thumb", out=ANIMATION_OUT, quality=85),
+                    "uid": uid,
+                }
+            )
+    return models
+
+
+def animation_step():
+    previous = json.loads(ANIMATION_JSON.read_text())["models"] if ANIMATION_JSON.is_file() else []
+    shutil.rmtree(ANIMATION_OUT / "films", ignore_errors=True)
+    media = {
+        "films": build_films(),
+        "stills": [{"src": src, "aspect": round((lambda im: im.width / im.height)(Image.open(PUBLIC / src.lstrip("/"))), 4)} for src in STILLS],
+        "models": build_models(previous),
+    }
+    write_json(ANIMATION_JSON, media)
+    print(f"build-assets: animation: {len(media['films'])} films, {len(media['stills'])} stills, {len(media['models'])} models -> {ANIMATION_JSON.relative_to(ROOT)}")
+
+
+def main():
+    steps = sys.argv[1:] or ["paintwise", "paintings", "animation"]
+    unknown = set(steps) - {"paintwise", "paintings", "animation"}
+    if unknown:
+        fail(f"unknown step(s): {', '.join(sorted(unknown))}")
+    estimator = hero_depth.load_estimator() if {"paintwise", "paintings"} & set(steps) else None
+    if "paintwise" in steps:
+        paintwise_step(estimator)
+    if "paintings" in steps:
+        paintings_step(estimator)
+    if "animation" in steps:
+        animation_step()
 
 
 if __name__ == "__main__":
