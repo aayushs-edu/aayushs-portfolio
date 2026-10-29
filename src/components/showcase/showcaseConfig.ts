@@ -36,8 +36,6 @@ export const SHOWCASE = {
   /** Floating panels (full tier): bob (m) and sway (rad); Paintwise's idle sculpture turns this fast (rad/s). */
   drift: { lift: 0.025, sway: 0.01 },
   spin: 0.12,
-  /** The flipbook: seconds per step, and how long the last step holds before it starts again. */
-  flipbook: { frame: 0.4, hold: 1.6 },
   /**
    * The detail panel: at or above `breakpoint` px wide, a side panel `width` px
    * wide (at most `maxShare` of the viewport); below it, a bottom sheet `sheet`

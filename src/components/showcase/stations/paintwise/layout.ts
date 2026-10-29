@@ -1,11 +1,11 @@
 // Paintwise, at the centre of the room: the exploded painting (pure).
 //
-// Five beats. (0) The jug still life hangs as a canvas, the pipeline figure
+// Four beats. (0) The jug still life hangs as a canvas, the pipeline figure
 // beside it. (1) It separates into its pipeline's layers, spaced out in
 // depth. (2) The masks layer breaks into one shape per object, each pushed
-// out to its own depth. (3) The grapefruit's real steps play as a flipbook.
-// (4) The figure comes forward, the other still lifes round it. Idle (the
-// camera elsewhere): the layers half-exploded, read as a sculpture.
+// out to its own depth. (3) The figure comes forward, the other still lifes
+// round it. Idle (the camera elsewhere): the layers half-exploded, read as a
+// sculpture.
 //
 // The station's frame faces +z, toward the entrance.
 
@@ -17,7 +17,7 @@ export type PaintwiseMedia = typeof media;
 
 export interface PaintwisePanel {
   id: string;
-  kind: "canvas" | "layer" | "object" | "flipbook" | "figure" | "still";
+  kind: "canvas" | "layer" | "object" | "figure" | "still";
   /** Its image (null: a flat colour) */
   src: string | null;
   /** Size at scale 1 (m) */
@@ -35,7 +35,6 @@ export interface PaintwiseLayout extends StationLayout {
   labels: LabelSpec[];
   /** Where the canvas hangs at the first beat: what the camera flies in to */
   detailPlacement: Placement;
-  steps: PaintwiseMedia["steps"];
   figure: PaintwiseMedia["figure"];
 }
 
@@ -56,7 +55,6 @@ export const LAYER_COPY: Record<string, { title: string; line: string }> = {
 };
 
 const PITCH = "Teaches you to paint a picture the way an artist would, one step at a time.";
-const ORDER = ["background", "table", "focal objects", "supporting", "small details", "refinements"];
 
 const pose = (x: number, y: number, z: number, o = 1, { ry = 0, s = 1, rx = 0 } = {}): PanelPose => ({
   position: [x, y, z],
@@ -81,11 +79,10 @@ function camera(centre: Vec3, size: [number, number], dir: Vec3, viewport: Viewp
 export function paintwiseStation(viewport: Viewport): PaintwiseLayout {
   const panels: PaintwisePanel[] = [];
 
-  // The canvas and the five layers behind it (k = 0 is the canvas).
-  const stackAt3 = { at: [-2.9, Y0 - 0.1, -1.0] as Vec3, ry: 0.55, s: 0.55 };
-  const stackAt4 = { at: [3.9, Y0, -1.6] as Vec3, ry: -0.5, s: 0.55 };
+  // The canvas and the five layers behind it (k = 0 is the canvas). At the last beat they stack to one side.
+  const stacked = { at: [3.9, Y0, -1.6] as Vec3, ry: -0.5, s: 0.55 };
   media.layers.forEach((layer, k) => {
-    const behind = (stack: typeof stackAt3, o: number) => {
+    const behind = (stack: typeof stacked, o: number) => {
       const [x, y, z] = onPanel(stack.at, stack.ry, stack.s, [0, 0, -0.012 * k]);
       return pose(x, y, z, o, { ry: stack.ry, s: stack.s });
     };
@@ -100,8 +97,7 @@ export function paintwiseStation(viewport: Viewport): PaintwiseLayout {
         pose(0, Y0, -0.012 * k, k === 0 ? 1 : 0),
         pose(0.32 * k, Y0 + 0.06 * k, -0.75 * k),
         pose(0.32 * k - 0.6, Y0 + 0.06 * k, -0.75 * k - 1.2, layer.id === "masks" ? 0 : 0.25),
-        behind(stackAt3, k === 0 ? 1 : 0),
-        behind(stackAt4, k === 0 ? 1 : 0),
+        behind(stacked, k === 0 ? 1 : 0),
       ],
       idle: pose(0.18 * k - 0.45, Y0, 1.0 - 0.4 * k),
     });
@@ -113,7 +109,7 @@ export function paintwiseStation(viewport: Viewport): PaintwiseLayout {
     const [bx, by, bw, bh] = object.box;
     const x = (bx + bw / 2 - 0.5) * CANVAS_W;
     const y = Y0 + (0.5 - (by + bh / 2)) * CANVAS_H;
-    const home = (stack: typeof stackAt3) => {
+    const home = (stack: typeof stacked) => {
       const p = onPanel(stack.at, stack.ry, stack.s, [x, y - Y0, 0.004]);
       return pose(p[0], p[1], p[2], 0, { ry: stack.ry, s: stack.s });
     };
@@ -128,26 +124,11 @@ export function paintwiseStation(viewport: Viewport): PaintwiseLayout {
         pose(x, y, -0.012 * masksK + 0.004, 0),
         pose(x + 0.32 * masksK, y + 0.06 * masksK, -0.75 * masksK + 0.004, 0),
         pose(x * 1.15, y, (object.depth - 0.5) * 2.4 + 0.3),
-        home(stackAt3),
-        home(stackAt4),
+        home(stacked),
       ],
       idle: pose(x + 0.18 * masksK - 0.45, y, 1.0 - 0.4 * masksK + 0.004, 0),
     });
   }
-
-  // The steps, as a flipbook.
-  const steps = media.steps;
-  const parked = pose(-2.5, Y0, -1.2, 0, { ry: 0.5, s: 0.6 });
-  panels.push({
-    id: "flipbook",
-    kind: "flipbook",
-    src: steps.atlas,
-    width: 2.3,
-    height: 2.3 / steps.aspect,
-    color: "#b48a5a",
-    poses: [parked, parked, parked, pose(0, Y0, 0.4), pose(-3.9, Y0, -1.6, 1, { ry: 0.5, s: 0.55 })],
-    idle: parked,
-  });
 
   // The figure: a preview beside the canvas, then front and centre.
   const FIGURE_W = 1.5;
@@ -159,7 +140,7 @@ export function paintwiseStation(viewport: Viewport): PaintwiseLayout {
     width: FIGURE_W,
     height: FIGURE_W / media.figure.aspect,
     color: "#ffffff",
-    poses: [pose(2.25, Y0 - 0.1, -0.5, 1, { ry: -0.45 }), away, away, away, pose(0, Y0, 0.7, 1, { s: 3.1 / FIGURE_W })],
+    poses: [pose(2.25, Y0 - 0.1, -0.5, 1, { ry: -0.45 }), away, away, pose(0, Y0, 0.7, 1, { s: 3.1 / FIGURE_W })],
     idle: pose(2.25, Y0, -0.5, 0),
   });
 
@@ -176,7 +157,7 @@ export function paintwiseStation(viewport: Viewport): PaintwiseLayout {
       width: still.aspect >= 1 ? STILL : STILL * still.aspect,
       height: still.aspect >= 1 ? STILL / still.aspect : STILL,
       color: "#3a3a3a",
-      poses: [gathered, gathered, gathered, gathered, pose(2.9 * Math.cos(a), Y0 + 1.35 * Math.sin(a), -1.2, 1, { ry: -0.25 * Math.cos(a) })],
+      poses: [gathered, gathered, gathered, pose(2.9 * Math.cos(a), Y0 + 1.35 * Math.sin(a), -1.2, 1, { ry: -0.25 * Math.cos(a) })],
       idle: gathered,
     });
   });
@@ -185,7 +166,6 @@ export function paintwiseStation(viewport: Viewport): PaintwiseLayout {
     { key: "work:paintwise", camera: camera([0.55, Y0, -0.1], [3.8, CANVAS_H + 0.2], [0.1, 0, 1], viewport) },
     { key: "paintwise:explode", camera: camera([0.8, Y0 + 0.15, -1.9], [3.4, 2.2], [0.75, 0.12, 0.65], viewport) },
     { key: "paintwise:masks", camera: camera([0, Y0, 0], [2.6, 2.1], [-0.68, 0.1, 0.73], viewport) },
-    { key: "paintwise:steps", camera: camera([-0.35, Y0, 0.4], [3.2, 1.7], [0, 0, 1], viewport) },
     { key: "paintwise:pipeline", camera: camera([0, Y0, 0.7], [3.4, 1.8], [0, 0, 1], viewport) },
   ];
 
@@ -214,10 +194,8 @@ export function paintwiseStation(viewport: Viewport): PaintwiseLayout {
       title: "SAM 2.1 × Depth Anything V2",
       meta: "every mask, pushed out to its depth",
     },
-    { id: "pw:step", kind: "step", panel: "flipbook", anchor: [0, -0.5], align: "below", beats: [3, 3], title: "Two-phase painter" },
-    { id: "pw:chips", kind: "chips", panel: "flipbook", anchor: [-0.5, 0], align: "left", beats: [3, 3], title: "Painting order", meta: ORDER.join("|") },
-    { id: "pw:figure", kind: "figure", panel: "figure", anchor: [0, -0.5], align: "below", beats: [4, 4], title: "Figure 1 · the Paintwise pipeline", meta: "Click to enlarge" },
-    { id: "pw:buildlog", kind: "link", panel: "figure", anchor: [0.5, -0.5], align: "below", beats: [4, 4], title: "Read the build log →", href: "/paintwise" },
+    { id: "pw:figure", kind: "figure", panel: "figure", anchor: [0, -0.5], align: "below", beats: [3, 3], title: "Figure 1 · the Paintwise pipeline", meta: "Click to enlarge" },
+    { id: "pw:buildlog", kind: "link", panel: "figure", anchor: [0.5, -0.5], align: "below", beats: [3, 3], title: "Read the build log →", href: "/paintwise" },
   ];
 
   const canvas = panels[0];
@@ -239,7 +217,6 @@ export function paintwiseStation(viewport: Viewport): PaintwiseLayout {
     panels,
     labels,
     detailPlacement,
-    steps,
     figure: media.figure,
   };
 }

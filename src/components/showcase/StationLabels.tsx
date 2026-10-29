@@ -38,27 +38,6 @@ export default function StationLabels({ labels, onFigure }: StationLabelsProps) 
                 {label.meta && <span className={css.tagMeta}>{label.meta}</span>}
               </div>
             );
-          case "step":
-            return (
-              <div key={label.id} data-label={label.id} className={`${css.label} ${css.tag} ${css.step}`}>
-                <span className={css.tagTitle}>{label.title}</span>
-                <span className={css.stepText} data-text="" />
-              </div>
-            );
-          case "chips":
-            return (
-              <div key={label.id} data-label={label.id} className={`${css.label} ${css.tag}`}>
-                <span className={css.tagTitle}>{label.title}</span>
-                <ol className={css.chips}>
-                  {(label.meta ?? "").split("|").map((chip, i) => (
-                    <li key={chip}>
-                      <span>{i + 1}</span>
-                      {chip}
-                    </li>
-                  ))}
-                </ol>
-              </div>
-            );
           case "figure":
             return (
               <button key={label.id} type="button" tabIndex={-1} data-label={label.id} className={`${css.label} ${css.tag} ${css.figureCaption}`} onClick={onFigure}>

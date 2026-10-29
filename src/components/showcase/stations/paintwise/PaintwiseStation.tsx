@@ -2,8 +2,8 @@
 
 // Paintwise at the centre of the room, drawn from its pure layout: every
 // frame each panel takes its pose for where the scroll is within the station
-// (idle when the camera is elsewhere), the flipbook steps, and the labels
-// are pinned to their panels in the DOM overlay.
+// (idle when the camera is elsewhere), and the labels are pinned to their
+// panels in the DOM overlay.
 
 import { useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
 import { useContext, useMemo, useRef, type RefObject } from "react";
@@ -47,7 +47,7 @@ export default function PaintwiseStation({ layout, station, tier, scroll, openSl
   const spin = useRef<THREE.Group>(null!);
   const handles = useRef(new Map<string, ImagePanelHandle>());
   const labelEls = useRef<Map<string, HTMLElement> | null>(null);
-  const state = useRef({ spin: 0, open: 0, clock: 0, frame: -1, stepText: "" });
+  const state = useRef({ spin: 0, open: 0 });
   const scratch = useMemo(
     () => ({ pose: { position: [0, 0, 0], rotation: [0, 0, 0], scale: 1, opacity: 0 } as PanelPose, p: new THREE.Vector3(), q: new THREE.Vector3() }),
     [],
@@ -55,7 +55,6 @@ export default function PaintwiseStation({ layout, station, tier, scroll, openSl
   const panelById = useMemo(() => new Map(layout.panels.map((p) => [p.id, p])), [layout]);
   const drift = tier === "full" ? SHOWCASE.drift : { lift: 0, sway: 0 };
   const count = layout.beats.length;
-  const steps = layout.steps;
 
   useFrame((frameState, delta) => {
     const dt = Math.min(delta, 0.05);
@@ -89,17 +88,6 @@ export default function PaintwiseStation({ layout, station, tier, scroll, openSl
       handle.setOpacity(pose.opacity);
     });
     spin.current.updateMatrixWorld(true);
-
-    // The flipbook plays from the steps beat on; elsewhere it rests on its last step.
-    const playing = presence > 0.5 && u > 2.5;
-    if (playing) S.clock += dt;
-    else S.clock = 0;
-    const cycle = steps.count * SHOWCASE.flipbook.frame + SHOWCASE.flipbook.hold;
-    const frame = playing ? Math.min(steps.count - 1, Math.floor((S.clock % cycle) / SHOWCASE.flipbook.frame)) : steps.count - 1;
-    if (frame !== S.frame) {
-      S.frame = frame;
-      handles.current.get("flipbook")?.setFrame(frame);
-    }
 
     // Where the figure is on screen, for the hand-off.
     const figure = handles.current.get("figure");
@@ -147,14 +135,6 @@ export default function PaintwiseStation({ layout, station, tier, scroll, openSl
       } else {
         continue;
       }
-      if (label.kind === "step" && opacity > 0) {
-        const text = `${steps.labels[frame]} · ${steps.phase[frame] === 2 ? "detail matching" : "block-in"}`;
-        if (text !== S.stepText) {
-          S.stepText = text;
-          const target = el.querySelector<HTMLElement>("[data-text]");
-          if (target) target.textContent = text;
-        }
-      }
       placeLabel(el, scratch.q, camera, size.width, size.height, opacity, label.align, label.anchor[0], scratch.p);
     }
   });
@@ -198,7 +178,6 @@ export default function PaintwiseStation({ layout, station, tier, scroll, openSl
             lit={panel.kind === "canvas" || panel.kind === "layer" || panel.kind === "object"}
             cutout={panel.kind === "object"}
             canvas={panel.kind === "canvas"}
-            atlas={panel.kind === "flipbook" ? { cols: steps.cols, rows: steps.rows } : undefined}
             {...handlers(panel.id, panel.kind)}
           />
         ))}

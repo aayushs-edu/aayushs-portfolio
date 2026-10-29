@@ -83,7 +83,7 @@ export interface LabelSpec {
   align: "below" | "above" | "left" | "right";
   /** Shown from the first beat to the last (station-local) */
   beats: [number, number];
-  kind: "title" | "tag" | "step" | "chips" | "figure" | "link";
+  kind: "title" | "tag" | "figure" | "link";
   title?: string;
   meta?: string;
   href?: string;

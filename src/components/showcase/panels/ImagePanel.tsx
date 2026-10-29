@@ -2,7 +2,7 @@
 
 // A floating panel: a thin plane showing an image (a flat colour until it
 // loads), that the station poses and fades every frame through its handle.
-// Optionally a stretched canvas's sides behind it, or one frame of an atlas.
+// Optionally a stretched canvas's sides behind it.
 
 import type { ThreeEvent } from "@react-three/fiber";
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef } from "react";
@@ -15,8 +15,6 @@ export interface ImagePanelHandle {
   /** The opacity it was last given */
   opacity: number;
   setOpacity(opacity: number): void;
-  /** Show frame `k` of the atlas */
-  setFrame(k: number): void;
 }
 
 interface ImagePanelProps {
@@ -31,7 +29,6 @@ interface ImagePanelProps {
   lit: boolean;
   /** The image has transparent parts (a cut-out mask) */
   cutout?: boolean;
-  atlas?: { cols: number; rows: number };
   /** A stretched canvas's sides behind it */
   canvas?: boolean;
   onClick?: (event: ThreeEvent<MouseEvent>) => void;
@@ -43,7 +40,7 @@ interface ImagePanelProps {
 const CANVAS_DEPTH = 0.035;
 
 const ImagePanel = forwardRef<ImagePanelHandle, ImagePanelProps>(function ImagePanel(
-  { src, width, height, color, wanted, lit, cutout = false, atlas, canvas = false, onClick, onPointerOver, onPointerOut },
+  { src, width, height, color, wanted, lit, cutout = false, canvas = false, onClick, onPointerOver, onPointerOut },
   ref,
 ) {
   const group = useRef<THREE.Group>(null!);
@@ -62,17 +59,11 @@ const ImagePanel = forwardRef<ImagePanelHandle, ImagePanelProps>(function ImageP
     [face, sides],
   );
 
-  // The atlas frame it was last asked for, applied again when the texture arrives.
-  const frame = useRef(0);
   useEffect(() => {
-    if (texture && atlas) {
-      texture.repeat.set(1 / atlas.cols, 1 / atlas.rows);
-      texture.offset.set((frame.current % atlas.cols) / atlas.cols, 1 - (Math.floor(frame.current / atlas.cols) + 1) / atlas.rows);
-    }
     face.map = texture;
     face.color.set(texture ? (lit ? "#ffffff" : "#ececec") : color);
     face.needsUpdate = true;
-  }, [face, texture, atlas, color, lit]);
+  }, [face, texture, color, lit]);
 
   const state = useRef({ opacity: -1 });
   useImperativeHandle(
@@ -93,15 +84,8 @@ const ImagePanel = forwardRef<ImagePanelHandle, ImagePanelProps>(function ImageP
         if (sides) sides.opacity = opacity;
         group.current.visible = opacity > 0.002;
       },
-      setFrame(k: number) {
-        frame.current = k;
-        if (!texture || !atlas) return;
-        const col = k % atlas.cols;
-        const row = Math.floor(k / atlas.cols);
-        texture.offset.set(col / atlas.cols, 1 - (row + 1) / atlas.rows);
-      },
     }),
-    [face, sides, texture, atlas],
+    [face, sides],
   );
 
   return (

@@ -39,7 +39,6 @@ interface PaintwiseMediaShape {
   canvas: { width: number; height: number };
   layers: { id: string; src: string }[];
   objects: { id: string; src: string; box: [number, number, number, number]; depth: number; color: string }[];
-  steps: { atlas: string; cols: number; rows: number; count: number; aspect: number; labels: string[]; phase: number[] };
   stillLifes: { src: string; aspect: number }[];
   figure: { src: string; aspect: number };
 }
@@ -415,13 +414,14 @@ for (const viewport of VIEWPORTS) {
   const station = paintwiseStation(viewport);
   const ids = new Set(station.panels.map((p) => p.id));
 
-  check(`${label}: five beats, the first presents the work`, () => {
+  check(`${label}: four beats (no flipbook), the first presents the work`, () => {
     const keys = station.beats.map((b) => b.key).join(",");
-    assert(keys === "work:paintwise,paintwise:explode,paintwise:masks,paintwise:steps,paintwise:pipeline", keys);
+    assert(keys === "work:paintwise,paintwise:explode,paintwise:masks,paintwise:pipeline", keys);
+    assert(!ids.has("flipbook") && !station.labels.some((l) => l.id === "pw:step" || l.id === "pw:chips"), "the flipbook and its labels are still there");
   });
 
   check(`${label}: every panel has a finite pose at every beat and in idle`, () => {
-    assert(station.panels.length >= 6 + 8 + 1 + 1 + 8, `${station.panels.length} panels`);
+    assert(station.panels.length >= 6 + 8 + 1 + 8, `${station.panels.length} panels`);
     for (const panel of station.panels) {
       assert(panel.poses.length === station.beats.length, `${panel.id}: ${panel.poses.length} poses`);
       for (const pose of [...panel.poses, panel.idle]) {
@@ -479,7 +479,7 @@ check("room with the real Paintwise: the camera keeps clear of its panels at eve
       assert(Number.isFinite(eye.x + eye.y + eye.z), `NaN at ${k}`);
       assert(flat(eye) >= 2.2, `${viewport.width}: ${flat(eye).toFixed(2)} m from the centre at ${k}`);
     }
-    assert(pw.first === 1 && pw.count === 5, `paintwise beats ${pw.first}+${pw.count}`);
+    assert(pw.first === 1 && pw.count === 4, `paintwise beats ${pw.first}+${pw.count}`);
   }
 });
 
@@ -546,14 +546,9 @@ for (const viewport of VIEWPORTS) {
     });
   });
 
-  check("paintwise media: 23 steps in a 6×4 atlas, each labelled with its phase", () => {
+  check("paintwise media: no step flipbook any more", () => {
     assert(media !== null, "no media");
-    const s = media.steps;
-    assert(exists(s.atlas), `missing ${s.atlas}`);
-    assert(s.count === 23 && s.cols * s.rows >= s.count, `${s.count} steps in ${s.cols}×${s.rows}`);
-    assert(s.labels.length === s.count && s.phase.length === s.count, "labels/phase length");
-    assert(s.labels[0] === "1 · background" && s.labels[22] === "4.3 · fruit", `labels ${s.labels[0]} … ${s.labels[22]}`);
-    assert(s.phase.filter((p) => p === 2).length === 3, "three detail steps");
+    assert(!("steps" in media), "steps are still in the generated media");
   });
 
   check("paintwise media: eight still lifes and the figure", () => {

@@ -11,11 +11,10 @@ edit it by hand; commit both). Sources:
   history into scripts/showcase/sources/paintwise/ (380 px);
 - its depth map: Depth Anything V2, the model Paintwise uses (scripts/hero/depth.py);
 - its objects: the SAM masks image, split by its flat tab20 colours;
-- the grapefruit's 23 steps and the other still lifes: cut from the pipeline
-  grids public/images/paintwise-gallery-*.png;
+- the other still lifes: cut from the pipeline grids public/images/paintwise-gallery-*.png;
 - the figure: public/showcase/paintwise/pipeline.webp (scripts/showcase/paintwise-figure.py).
 
-Images with flat colour (masks, block-in, steps) are enlarged cleanly: upscaled,
+Images with flat colour (masks, block-in) are enlarged cleanly: upscaled,
 then every pixel snapped back to the source's own colours.
 """
 
@@ -52,14 +51,6 @@ TAB20 = [
 ]
 MIN_OBJECT_PX = 80
 MAX_OBJECTS = 28
-STEP_LABELS = [
-    "1 · background", "2", "3.1", "3.2 · banana", "3.3 · orange", "3.4 · leaves", "3.5 · plant",
-    "3.6 · fruit", "3.7 · apple", "3.8 · leaves", "3.9 · leaves", "3.10 · fruit", "3.11 · fruit",
-    "3.12 · banana", "3.13 · apple", "3.14 · banana", "3.15 · plant", "3.16 · apple", "3.17 · apple",
-    "3.18 · apple", "4.1 · orange", "4.2 · fruit", "4.3 · fruit",
-]
-DETAIL_STEPS = 3  # the last three steps are phase 2, detail matching
-ATLAS_COLS, ATLAS_ROWS = 6, 4
 # Other still lifes run through the pipeline: (grid, panel index). Rows are
 # original, SAM masks, block-in / PiDiNet edges, depth, sketch (gallery-2, -3),
 # or original, masks, block-in, edges, sketch per row (gallery-5, -6).
@@ -198,28 +189,6 @@ def build_objects(size, masks, depth):
     return out
 
 
-def build_steps():
-    frames = panels(GALLERY / "paintwise-gallery-4.png")[1:]
-    if len(frames) != len(STEP_LABELS):
-        fail(f"expected {len(STEP_LABELS)} steps in paintwise-gallery-4.png, found {len(frames)}")
-    fw, fh = frames[0].size
-    palette = own_palette(frames[-1].resize((fw, fh), Image.LANCZOS))
-    atlas = Image.new("RGB", (fw * 3 * ATLAS_COLS, fh * 3 * ATLAS_ROWS), "black")
-    for i, frame in enumerate(frames):
-        big = flat_upscale(frame.resize((fw, fh), Image.LANCZOS), 3, palette)
-        atlas.paste(big, ((i % ATLAS_COLS) * fw * 3, (i // ATLAS_COLS) * fh * 3))
-    count = len(frames)
-    return {
-        "atlas": write_webp(atlas, "", "steps"),
-        "cols": ATLAS_COLS,
-        "rows": ATLAS_ROWS,
-        "count": count,
-        "aspect": round(fw / fh, 4),
-        "labels": STEP_LABELS,
-        "phase": [1] * (count - DETAIL_STEPS) + [2] * DETAIL_STEPS,
-    }
-
-
 def build_still_lifes():
     grids = {n: panels(GALLERY / f"paintwise-gallery-{n}.png") for n in sorted({g for g, _ in STILL_LIFES})}
     out = []
@@ -254,14 +223,13 @@ def main():
         "canvas": {"width": size[0], "height": size[1]},
         "layers": layers,
         "objects": build_objects(size, masks, depth),
-        "steps": build_steps(),
         "stillLifes": build_still_lifes(),
         "figure": build_figure(),
     }
     GENERATED.parent.mkdir(parents=True, exist_ok=True)
     GENERATED.write_text(json.dumps(media, indent=2, ensure_ascii=False) + "\n")
     print(
-        f"build-assets: {len(layers)} layers, {len(media['objects'])} objects, {media['steps']['count']} steps, "
+        f"build-assets: {len(layers)} layers, {len(media['objects'])} objects, "
         f"{len(media['stillLifes'])} still lifes -> {GENERATED.relative_to(ROOT)}"
     )
 

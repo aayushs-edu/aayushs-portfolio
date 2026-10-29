@@ -100,7 +100,7 @@ The scene is the whole portfolio on one page. Stage 1 showed every piece the sam
 
 **Idle.** The jug still life, half-exploded into its layers and turning slowly, reads as a sculpture from anywhere in the room.
 
-**Beats.**
+**Beats.** (The step flipbook beat was dropped at the user's request on 2026-10-29.)
 
 1. **Arrive.**
    - The jug still life hangs as a canvas.
@@ -111,13 +111,7 @@ The scene is the whole portfolio on one page. Stage 1 showed every piece the sam
    - Each layer has a floating tag: the model's name and one line on what it sees.
    - The camera drifts round a little so the depth reads.
 3. **What the models see.** The masks layer breaks into one floating shape per object, each pushed out to its own depth from the depth map. The still life becomes a diorama of masks.
-4. **In action.**
-   - The grapefruit still life's real 24-step sequence plays as a flipbook on a large panel.
-   - Its step labels float with it ("1 · background", …, "3.18 · apple", "4.3 · fruit"). The labels for steps 2 and 3.1 are hidden in the source grid, so those two stay unnamed.
-   - Phase 1 is block-in, phase 2 is detail matching.
-   - The painting-order chips from the figure float beside the flipbook.
-   - The jug has no step data, so this beat switches still life rather than inventing an order.
-5. **The whole pipeline.**
+4. **The whole pipeline.**
    - The figure comes front and centre. Clicking it opens it full size (a hand-off).
    - The other still lifes run through the pipeline float round it, cut from `paintwise-gallery-2/-3/-5/-6`.
    - The build log link (`/paintwise`) floats with them.
@@ -224,8 +218,8 @@ A placeholder for now: ExoVision, Lumina, MedAI and StockApp stand as today's sc
   - Per-object masks are cut from the segmentation image by its flat colours.
   - The depth map comes from `scripts/hero/depth.py` (Depth Anything V2, the model Paintwise uses).
 - **Paintwise, from the grids:**
-  - The grapefruit's step frames and the other still lifes are cut from `paintwise-gallery-*.png`.
-  - Flat-colour images (masks, block-in, steps) are enlarged cleanly: upscaled, then each pixel snapped back to the source's colours.
+  - The other still lifes are cut from `paintwise-gallery-*.png`.
+  - Flat-colour images (masks, block-in) are enlarged cleanly: upscaled, then each pixel snapped back to the source's colours.
 - **Paintings:** depth maps for the 10 early works.
 - **Films:**
   - A loop of 6–8 s per film (H.264 MP4, 720p, about 1–2 MB) and a WebP poster, cut with ffmpeg from the release videos. The user may name the moments; otherwise they're picked.
@@ -239,8 +233,7 @@ A placeholder for now: ExoVision, Lumina, MedAI and StockApp stand as today's sc
 
 1. **Paintwise:** every stage at full resolution (1600 px or more) for its best still life: original, raw SAM masks, merged masks, the completed table, depth, block-in, edges, sketch.
 2. **Paintwise:** that still life's per-object data: each merged mask as a transparent PNG, plus JSON with each object's label, depth, prominence score and step. With it, beat 3's masks fly back into the canvas in the real order and paint it.
-3. **Paintwise:** all its generated steps, at full resolution and in order, with labels.
-4. **Games:** a 10–20 s gameplay clip per game (a macOS screen recording is enough), and more screenshots of Biscuit Bandit.
+3. **Games:** a 10–20 s gameplay clip per game (a macOS screen recording is enough), and more screenshots of Biscuit Bandit.
 
 ## 5. Units
 
