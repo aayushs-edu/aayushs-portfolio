@@ -6,16 +6,17 @@ import SplitHero from "../hero/SplitHero";
 import { useHeroTier } from "../hero/useHeroTier";
 import Captions from "./Captions";
 import DetailPanel from "./DetailPanel";
+import FilmPlayer from "./FilmPlayer";
 import GroupBar from "./GroupBar";
 import HandOff, { type HandOffItem } from "./HandOff";
 import type { Viewport } from "./layouts/types";
-import { buildRoom, locate, ROOM } from "./room/ring";
+import { buildRoom, locate, ROOM, stationOf } from "./room/ring";
 import { GROUP_TITLES, type GroupId } from "./room/types";
 import { createScrollMap, progressForBeat, sampleScroll, type ScrollSample } from "./scrollMap";
 import css from "./Showcase.module.css";
 import { SHOWCASE } from "./showcaseConfig";
 import StationLabels from "./StationLabels";
-import { paintwiseStation } from "./stations/paintwise/layout";
+import type { PaintwiseLayout } from "./stations/paintwise/layout";
 import WorkList, { workButtonId, type WorkListGroup } from "./WorkList";
 import { WORKS, type Work } from "./works";
 
@@ -77,14 +78,18 @@ export default function Showcase() {
     window.addEventListener("resize", update);
     return () => window.removeEventListener("resize", update);
   }, []);
-  const paintwise = useMemo(() => paintwiseStation(viewport), [viewport]);
-  const room = useMemo(() => buildRoom(WORKS, viewport, paintwise), [viewport, paintwise]);
+  const room = useMemo(() => buildRoom(WORKS, viewport), [viewport]);
+  const paintwise = stationOf(room, "paintwise")?.layout as PaintwiseLayout | undefined;
   const map = useMemo(() => createScrollMap(room.beats, SHOWCASE.units.entrance, SHOWCASE.dwell), [room]);
   const groups = useMemo(
     () => (threeD ? groupWorks(room.stations.map((s) => ({ title: s.title, slugs: s.layout.works.map((w) => w.slug) }))) : STATIC_GROUPS),
     [threeD, room],
   );
-  const beats = useMemo(() => new Map(map.beats.map((b, i) => [b.key, i])), [map]);
+  /** Beat index by key, and "work:<slug>" for every work → the beat that presents it. */
+  const beats = useMemo(
+    () => new Map([...map.beats.map((b, i): [string, number] => [b.key, i]), ...Object.entries(room.workBeat).map(([slug, i]): [string, number] => [`work:${slug}`, i])]),
+    [map, room],
+  );
   /** The works that get a caption as you pass (Paintwise has its own labels). */
   const captioned = useMemo(() => room.placements.map((p) => BY_SLUG.get(p.slug)!).filter((w) => w.group !== "paintwise"), [room]);
 
@@ -253,12 +258,14 @@ export default function Showcase() {
   const figureRect = useRef<DOMRect | null>(null);
   const [handOff, setHandOff] = useState<HandOffItem | null>(null);
   const openFigure = useCallback(() => {
+    if (!paintwise) return;
     if (threeD && currentRef.current !== "paintwise") {
       jumpToStation("paintwise");
       return;
     }
     setHandOff({ src: paintwise.figure.src, alt: "Figure 1: the Paintwise pipeline, from scene understanding to critique", aspect: paintwise.figure.aspect, from: figureRect.current });
   }, [threeD, jumpToStation, paintwise]);
+  const filmRect = useRef<DOMRect | null>(null);
   const closeFigure = useCallback(() => setHandOff(null), []);
 
   // While it's open the page doesn't scroll; closing returns focus to Paintwise in the list.
@@ -393,7 +400,6 @@ export default function Showcase() {
                 <Scene
                   tier={tier === "full" ? "full" : "lite"}
                   room={room}
-                  paintwise={paintwise}
                   works={BY_SLUG}
                   beatOf={beats}
                   scroll={scrollRef}
@@ -404,6 +410,7 @@ export default function Showcase() {
                   loadAll={loadAll}
                   paused={!!handOff}
                   figureRect={figureRect}
+                  filmRect={filmRect}
                   onOpen={pickWork}
                   onFigure={openFigure}
                   onContextLost={demote}
@@ -414,7 +421,7 @@ export default function Showcase() {
           {threeD && (
             <div ref={overlayRef} className={css.overlay} aria-hidden="true">
               {wantScene && <Captions works={captioned} focusSlug={focusSlug} onOpen={openWork} />}
-              {wantScene && <StationLabels labels={paintwise.labels} onFigure={openFigure} />}
+              {wantScene && paintwise && <StationLabels labels={paintwise.labels} onFigure={openFigure} />}
             </div>
           )}
           <div className={css.hero} data-gone={heroGone} data-opening={opening}>
@@ -432,6 +439,7 @@ export default function Showcase() {
         </div>
         {!threeD && <WorkList groups={groups} mode="grid" onOpen={openWork} onFocusWork={onFocusWork} onBlurWork={onBlurWork} />}
       </section>
+      {threeD && <FilmPlayer src={openWorkObj?.media.film ?? null} poster={openWorkObj?.media.image} title={openWorkObj?.title ?? ""} rect={filmRect} />}
       <DetailPanel work={openWorkObj} onClose={closeWork} scrim={!threeD} />
       <HandOff item={handOff} onClose={closeFigure} />
     </>

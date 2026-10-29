@@ -8,7 +8,7 @@ interface DetailPanelProps {
   /** The open work, or null when closed. */
   work: Work | null;
   onClose: () => void;
-  /** Dim what's behind (the fallback page); in 3D the scene itself frames the work. */
+  /** Dim what's behind (the fallback page); in 3D the scene itself frames the work (and a film plays over its screen). */
   scrim?: boolean;
 }
 
@@ -85,9 +85,14 @@ export default function DetailPanel({ work, onClose, scrim = false }: DetailPane
                 <p key={i}>{paragraph}</p>
               ))}
             </div>
-            {shown.media.video && (
-              <video className={css.video} src={shown.media.video} controls muted playsInline preload="none" />
+            {shown.media.held && (
+              <figure className={css.held}>
+                {/* eslint-disable-next-line @next/next/no-img-element -- a hashed photo from public/showcase */}
+                <img src={shown.media.held.src} alt={`${shown.title}, held`} loading="lazy" decoding="async" />
+                <figcaption>The painting, held</figcaption>
+              </figure>
             )}
+            {scrim && shown.media.film && <video key={shown.media.film} className={css.video} src={shown.media.film} poster={shown.media.image} controls playsInline preload="none" />}
             {shown.links.length > 0 && (
               <ul className={css.links}>
                 {shown.links.map((link) => {

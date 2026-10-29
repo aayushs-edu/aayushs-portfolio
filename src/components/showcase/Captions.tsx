@@ -27,6 +27,7 @@ export default function Captions({ works, focusSlug, onOpen }: CaptionsProps) {
           tabIndex={-1}
           className={css.caption}
           data-caption={work.slug}
+          data-size={work.wall === "early" ? "small" : undefined}
           data-focused={focusSlug === work.slug}
           onClick={() => onOpen(work.slug)}
         >

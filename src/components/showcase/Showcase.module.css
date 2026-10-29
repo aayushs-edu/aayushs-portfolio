@@ -206,3 +206,31 @@
     max-width: 180px;
   }
 }
+
+/* ----------------------------------------------------------------------- */
+/* The full film, laid over its screen in the scene while it's open.        */
+
+.filmPlayer {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 35;
+  visibility: hidden;
+  background: #000;
+  object-fit: contain;
+}
+
+/* Small works (the early paintings) get a smaller caption. */
+.caption[data-size="small"] {
+  max-width: 200px;
+  gap: 3px;
+  padding: 6px 8px;
+}
+
+.caption[data-size="small"] .captionTitle {
+  font-size: 15px;
+}
+
+.caption[data-size="small"] .captionMeta {
+  font-size: 11px;
+}

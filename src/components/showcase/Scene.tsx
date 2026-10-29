@@ -8,12 +8,16 @@ import { detailPose } from "./cameraPose";
 import { Floor } from "./Floor";
 import { EYE, FOV_Y, type Vec3 } from "./layouts/types";
 import PaintingMesh from "./PaintingMesh";
-import { arcLerp, toWorld } from "./room/ring";
+import { arcLerp, stationOf, toWorld } from "./room/ring";
 import type { RoomLayout } from "./room/types";
 import ScreenMesh from "./ScreenMesh";
 import type { ScrollSample } from "./scrollMap";
+import type { AnimationLayout } from "./stations/animation";
+import AnimationStation from "./stations/AnimationStation";
 import type { PaintwiseLayout } from "./stations/paintwise/layout";
 import PaintwiseStation from "./stations/paintwise/PaintwiseStation";
+import type { SalonLayout } from "./stations/salon";
+import SalonStation from "./stations/SalonStation";
 import { SHOWCASE, type SceneTier } from "./showcaseConfig";
 import { InteractionContext, type WorkInteraction } from "./workMesh";
 import type { Work } from "./works";
@@ -21,9 +25,8 @@ import type { Work } from "./works";
 export interface SceneProps {
   tier: SceneTier;
   room: RoomLayout;
-  paintwise: PaintwiseLayout;
   works: ReadonlyMap<string, Work>;
-  /** Beat index by key ("work:<slug>") */
+  /** Beat index by key (every "work:<slug>" names the beat that presents it) */
   beatOf: ReadonlyMap<string, number>;
   /** Where the scroll is (written by the showcase every frame) */
   scroll: RefObject<ScrollSample>;
@@ -40,6 +43,8 @@ export interface SceneProps {
   paused: boolean;
   /** Where Paintwise's figure is on screen (written by its station) */
   figureRect: RefObject<DOMRect | null>;
+  /** Where the open film is on screen (written by the animation station) */
+  filmRect: RefObject<DOMRect | null>;
   onOpen: (slug: string) => void;
   onFigure: () => void;
   onContextLost: () => void;
@@ -210,7 +215,7 @@ function Rig({ tier, room, beatOf, scroll, openSlug, overlay, jump, onBeat }: Pi
   return <directionalLight ref={key} color="#fff0dc" intensity={2.5} />;
 }
 
-function SceneContents({ tier, room, paintwise, works, beatOf, scroll, openSlug, overlay, jump, loadAll, paused, figureRect, onOpen, onFigure }: SceneProps) {
+function SceneContents({ tier, room, works, beatOf, scroll, openSlug, active, overlay, jump, loadAll, paused, figureRect, filmRect, onOpen, onFigure }: SceneProps) {
   const scene = useThree((s) => s.scene);
   const camera = useThree((s) => s.camera);
   const gl = useThree((s) => s.gl);
@@ -241,7 +246,10 @@ function SceneContents({ tier, room, paintwise, works, beatOf, scroll, openSlug,
     advance(performance.now());
   }, [gl, scene, camera, advance]);
 
-  const centre = room.stations.find((s) => s.id === "paintwise");
+  const centre = stationOf(room, "paintwise");
+  const salon = stationOf(room, "paintings");
+  const animation = stationOf(room, "animation");
+  const wanted = (slug: string) => loadAll || Math.abs((beatOf.get(`work:${slug}`) ?? 0) - near) <= SHOWCASE.streamBeats;
 
   return (
     <InteractionContext.Provider value={interaction}>
@@ -257,21 +265,32 @@ function SceneContents({ tier, room, paintwise, works, beatOf, scroll, openSlug,
           />
         ))}
       <Floor centre={room.floor.centre} radius={room.floor.radius} effects={tier === "full"} />
-      {/* The stations that show their works as they are: the salon, the arcs of screens. */}
+      {/* The stations that show their works as they are: the arcs of screens. */}
       {room.placements.map((placement) => {
         const work = works.get(placement.slug);
-        if (!work || work.group === "paintwise") return null;
-        const beat = beatOf.get(`work:${placement.slug}`) ?? 0;
-        const wanted = loadAll || Math.abs(beat - near) <= SHOWCASE.streamBeats;
+        if (!work || (work.group !== "hackathons" && work.group !== "games")) return null;
         return work.kind === "painting" ? (
-          <PaintingMesh key={work.slug} work={work} placement={placement} wanted={wanted} relief={tier === "full"} />
+          <PaintingMesh key={work.slug} work={work} placement={placement} wanted={wanted(work.slug)} relief={tier === "full"} />
         ) : (
-          <ScreenMesh key={work.slug} work={work} placement={placement} wanted={wanted} />
+          <ScreenMesh key={work.slug} work={work} placement={placement} wanted={wanted(work.slug)} />
         );
       })}
+      {salon && <SalonStation layout={salon.layout as SalonLayout} station={salon} tier={tier} works={works} scroll={scroll} openSlug={openSlug} wanted={wanted} />}
+      {animation && (
+        <AnimationStation
+          layout={animation.layout as AnimationLayout}
+          station={animation}
+          tier={tier}
+          scroll={scroll}
+          openSlug={openSlug}
+          active={active}
+          wanted={wanted}
+          filmRect={filmRect}
+        />
+      )}
       {centre && (
         <PaintwiseStation
-          layout={paintwise}
+          layout={centre.layout as PaintwiseLayout}
           station={centre}
           tier={tier}
           scroll={scroll}

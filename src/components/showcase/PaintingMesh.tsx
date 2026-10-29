@@ -17,12 +17,15 @@ interface PaintingMeshProps {
   wanted: boolean;
   /** Full tier: the face is a fine mesh raised by the depth map, so the paint catches the light. */
   relief: boolean;
+  /** A photo on its back (the painting being held), fitted inside it: shown when it turns over */
+  back?: { src: string; aspect: number };
 }
 
 /** A painting hung as a real canvas: stretched canvas sides behind a painted face. */
-export default function PaintingMesh({ work, placement, wanted, relief }: PaintingMeshProps) {
+export default function PaintingMesh({ work, placement, wanted, relief, back }: PaintingMeshProps) {
   const color = useWorkTexture(work.media.image, wanted, true);
   const depth = useWorkTexture(work.media.depth, wanted && relief, false);
+  const backTexture = useWorkTexture(back?.src, wanted && !!back, true);
   const { lift, handlers } = useWorkPointer(work.slug);
   const { width: w, height: h } = placement;
 
@@ -56,6 +59,13 @@ export default function PaintingMesh({ work, placement, wanted, relief }: Painti
           <meshStandardMaterial color="#2b2722" roughness={0.95} />
         </mesh>
         <mesh geometry={geometry} material={material} position-z={0.0015} />
+        {back && (
+          <mesh position-z={-CANVAS_DEPTH - 0.0015} rotation-y={Math.PI}>
+            <planeGeometry args={back.aspect >= w / h ? [w, w / back.aspect] : [h * back.aspect, h]} />
+            {/* Remount when the photo arrives so the material compiles with its map. */}
+            <meshStandardMaterial key={backTexture ? "photo" : "flat"} map={backTexture} color={backTexture ? "#ffffff" : "#3a3530"} roughness={0.7} />
+          </mesh>
+        )}
       </group>
     </group>
   );

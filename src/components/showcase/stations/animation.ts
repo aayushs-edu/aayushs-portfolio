@@ -23,7 +23,7 @@ export interface AnimationLayout extends PosedStationLayout {
 const FILM_W = 2.2;
 const FILM_Y = 1.9;
 const STILL_W = 1.0;
-const MODEL_BOX = 1.2;
+const MODEL_BOX = 1.5;
 const MODEL_Y = 1.35;
 const MODEL_X = 2.4;
 
@@ -71,12 +71,15 @@ export function animationStation(works: readonly Work[], viewport: Viewport): An
     });
   });
 
-  // The Wild West storyboard: a row above and a row below the first film, at its beat.
+  // The Wild West storyboard at its beat: a row above the first film and a column to its left
+  // (its right is where the next films wait; below it, its caption).
   const firstFilm = 0;
   media.stills.forEach((still, k) => {
-    const row = k < 4 ? 1 : -1;
-    const x = -1.8 + 1.2 * (k % 4);
-    const shown = pose(x, FILM_Y + row * 1.12, -0.9, { o: 0.95 });
+    const height = STILL_W / still.aspect;
+    const shown =
+      k < 4
+        ? pose(-1.8 + 1.2 * k, FILM_Y + 1.12, -0.9, { o: 0.95 })
+        : pose(-2.75, FILM_Y + 1.5 * (height + 0.1) - (k - 4) * (height + 0.1) - (height + 0.1) / 2, -0.6, { ry: 0.3, o: 0.95 });
     const gathered = pose(0, FILM_Y, -2.0, { s: 0.4, o: 0 });
     panels.push({
       id: `still:${k}`,
