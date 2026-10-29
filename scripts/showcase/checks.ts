@@ -12,7 +12,9 @@ import { FOV_Y, type Placement, type Vec3, type Viewport } from "../../src/compo
 import { createScrollMap, progressForBeat, sampleScroll, type Beat } from "../../src/components/showcase/scrollMap";
 import type { Work, WorkKind, WorkSide } from "../../src/components/showcase/works";
 import { arcLerp, buildRoom, locate, ROOM, stationPlacement, toWorld } from "../../src/components/showcase/room/ring";
-import type { GroupId, StationLayout } from "../../src/components/showcase/room/types";
+import type { GroupId, PanelPose } from "../../src/components/showcase/room/types";
+import { easeBetween, poseAt, presenceAt } from "../../src/components/showcase/panels/pose";
+import { paintwiseStation } from "../../src/components/showcase/stations/paintwise/layout";
 
 let passed = 0;
 const failures: string[] = [];
@@ -229,14 +231,7 @@ function fill(placement: Placement, eye: THREE.Vector3, target: THREE.Vector3, v
   return [(maxX - minX) / 2, (maxY - minY) / 2];
 }
 
-/** The Paintwise station for these checks (the real one replaces it once it exists). */
-const paintwiseFor = (_viewport: Viewport): StationLayout => ({
-  id: "paintwise",
-  title: "Paintwise",
-  radius: 3,
-  works: [{ slug: "paintwise", position: [0, 1.75, 0], rotationY: 0, width: 1.9, height: 1.56 }],
-  beats: [{ key: "work:paintwise", camera: { position: [0, 1.6, 4.8], target: [0, 1.75, 0] } }],
-});
+const paintwiseFor = (viewport: Viewport) => paintwiseStation(viewport);
 
 check("ring: stations stand on their halves, facing the centre", () => {
   for (const id of ["paintings", "animation", "hackathons", "games"] as const) {
@@ -375,6 +370,119 @@ for (const viewport of VIEWPORTS) {
     );
   });
 }
+// ---------------------------------------------------------------------------
+// Floating panels: poses between beats, and the Paintwise station
+
+const finitePose = (p: PanelPose) => [...p.position, ...p.rotation, p.scale, p.opacity].every(Number.isFinite);
+const samePose = (a: PanelPose, b: PanelPose, eps = 1e-9) =>
+  a.position.every((v, i) => near(v, b.position[i], eps)) && a.rotation.every((v, i) => near(v, b.rotation[i], eps)) && near(a.scale, b.scale, eps) && near(a.opacity, b.opacity, eps);
+const blankPose = (): PanelPose => ({ position: [0, 0, 0], rotation: [0, 0, 0], scale: 1, opacity: 1 });
+
+check("pose: presence is 0 away from a station, 1 through its beats", () => {
+  const count = 5;
+  for (const u of [-3, -1.5, -1, count, count + 2]) assert(presenceAt(u, count) === 0, `presence ${presenceAt(u, count)} at ${u}`);
+  for (const u of [-0.35, 0, 1.5, count - 0.65]) assert(near(presenceAt(u, count), 1), `presence ${presenceAt(u, count)} at ${u}`);
+  let prev = 0;
+  for (let k = 0; k <= 100; k++) {
+    const p = presenceAt(-1 + (k / 100) * 0.65, count);
+    assert(p >= prev - 1e-12, "presence falls while arriving");
+    prev = p;
+  }
+});
+
+check("pose: panels rest at each beat and move between them", () => {
+  assert(easeBetween(0) === 0 && easeBetween(0.2) === 0 && easeBetween(0.8) === 1 && easeBetween(1) === 1, "not resting near beats");
+  assert(near(easeBetween(0.5), 0.5), `halfway ${easeBetween(0.5)}`);
+});
+
+check("pose: poseAt lands on each beat's pose, and on idle when absent", () => {
+  const poses: PanelPose[] = [
+    { position: [0, 1, 0], rotation: [0, 0, 0], scale: 1, opacity: 1 },
+    { position: [2, 1, -1], rotation: [0, 0.5, 0], scale: 0.5, opacity: 0 },
+    { position: [-1, 2, 1], rotation: [0.1, -0.5, 0], scale: 2, opacity: 0.5 },
+  ];
+  const idle: PanelPose = { position: [9, 9, 9], rotation: [0, 1, 0], scale: 0.3, opacity: 0.2 };
+  const out = blankPose();
+  poses.forEach((p, i) => assert(samePose(poseAt(poses, idle, i, 1, out), p), `beat ${i}`));
+  assert(samePose(poseAt(poses, idle, -2, 1, out), poses[0]) && samePose(poseAt(poses, idle, 7, 1, out), poses[2]), "not clamped");
+  assert(samePose(poseAt(poses, idle, 1.3, 0, out), idle), "not idle at presence 0");
+  const mid = poseAt(poses, idle, 0.5, 1, out);
+  assert(near(mid.position[0], 1) && near(mid.opacity, 0.5), `halfway ${JSON.stringify(mid)}`);
+});
+
+for (const viewport of VIEWPORTS) {
+  const label = `paintwise ${viewport.width}×${viewport.height}`;
+  const station = paintwiseStation(viewport);
+  const ids = new Set(station.panels.map((p) => p.id));
+
+  check(`${label}: five beats, the first presents the work`, () => {
+    const keys = station.beats.map((b) => b.key).join(",");
+    assert(keys === "work:paintwise,paintwise:explode,paintwise:masks,paintwise:steps,paintwise:pipeline", keys);
+  });
+
+  check(`${label}: every panel has a finite pose at every beat and in idle`, () => {
+    assert(station.panels.length >= 6 + 8 + 1 + 1 + 8, `${station.panels.length} panels`);
+    for (const panel of station.panels) {
+      assert(panel.poses.length === station.beats.length, `${panel.id}: ${panel.poses.length} poses`);
+      for (const pose of [...panel.poses, panel.idle]) {
+        assert(finitePose(pose), `${panel.id}: not finite`);
+        assert(pose.opacity >= 0 && pose.opacity <= 1 && pose.scale > 0, `${panel.id}: opacity ${pose.opacity}, scale ${pose.scale}`);
+      }
+      assert(panel.width > 0 && panel.height > 0, `${panel.id} size`);
+    }
+  });
+
+  check(`${label}: the fly-in lands on the canvas as it hangs at the first beat`, () => {
+    const canvas = station.panels.find((p) => p.id === "canvas")!;
+    const pose = canvas.poses[0];
+    const d = station.detailPlacement;
+    assert(d.slug === "paintwise" && pose.opacity === 1, "canvas hidden at beat 0");
+    assert(d.position.every((v, i) => near(v, pose.position[i])) && near(d.rotationY, pose.rotation[1]), "detail placement off the canvas");
+    assert(near(d.width, canvas.width * pose.scale) && near(d.height, canvas.height * pose.scale), "detail placement size");
+    assert(station.works.length === 1 && station.works[0] === d, "the station's one work is the canvas");
+  });
+
+  check(`${label}: labels pin to panels that exist, within the beats`, () => {
+    for (const l of station.labels) {
+      assert(!!l.point || (!!l.panel && ids.has(l.panel)), `${l.id} pinned to ${l.panel}`);
+      assert(l.beats[0] >= 0 && l.beats[1] < station.beats.length && l.beats[0] <= l.beats[1], `${l.id} beats ${l.beats}`);
+    }
+  });
+
+  if (landscape(viewport)) {
+    check(`${label}: at each beat the camera keeps clear of every panel it shows`, () => {
+      station.beats.forEach((beat, i) => {
+        const eye = v3(beat.camera.position);
+        for (const panel of station.panels) {
+          const pose = panel.poses[i];
+          if (pose.opacity < 0.05) continue;
+          const d = eye.distanceTo(v3(pose.position));
+          assert(d >= 2.5, `beat ${i}: ${panel.id} ${d.toFixed(2)} m from the camera`);
+        }
+      });
+    });
+  }
+}
+
+check("room with the real Paintwise: the camera keeps clear of its panels at every beat and between", () => {
+  for (const viewport of VIEWPORTS) {
+    const station = paintwiseStation(viewport);
+    const room = buildRoom(WORKS_16, viewport, station);
+    const pw = room.stations.find((s) => s.id === "paintwise")!;
+    const path = createCameraPath(room.cameraPath);
+    const eye = new THREE.Vector3();
+    const target = new THREE.Vector3();
+    const reach = Math.max(...station.panels.flatMap((p) => p.poses.map((q) => Math.hypot(q.position[0], q.position[2]))));
+    assert(station.radius >= reach, `radius ${station.radius.toFixed(2)} < reach ${reach.toFixed(2)}`);
+    for (let k = 0; k <= 2000; k++) {
+      path.at(k / 2000, eye, target);
+      assert(Number.isFinite(eye.x + eye.y + eye.z), `NaN at ${k}`);
+      assert(flat(eye) >= 2.2, `${viewport.width}: ${flat(eye).toFixed(2)} m from the centre at ${k}`);
+    }
+    assert(pw.first === 1 && pw.count === 5, `paintwise beats ${pw.first}+${pw.count}`);
+  }
+});
+
 // ---------------------------------------------------------------------------
 // Flying in to a work
 
