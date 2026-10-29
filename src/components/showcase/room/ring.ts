@@ -7,7 +7,10 @@
 import { EYE, type PathPoint, type Placement, type Vec3, type Viewport } from "../layouts/types";
 import type { Beat } from "../scrollMap";
 import { SHOWCASE } from "../showcaseConfig";
-import { arcStation, salonStation } from "../stations/gallery";
+import { animationStation } from "../stations/animation";
+import { arcStation } from "../stations/gallery";
+import { paintwiseStation } from "../stations/paintwise/layout";
+import { salonStation } from "../stations/salon";
 import type { Work } from "../works";
 import { GROUP_TITLES, type GroupId, type RoomLayout, type RoomStation, type StationLayout, type StationPlacement } from "./types";
 
@@ -15,9 +18,9 @@ export const ROOM = {
   /** Paintwise stands here. The camera enters at the origin, looking down −z. */
   centre: [0, 0, -13] as Vec3,
   /** The stations stand this far from the centre (m) */
-  radius: 12,
+  radius: 14,
   /** The floor fades into the dark by this distance (m) */
-  floorRadius: 16,
+  floorRadius: 18,
   /** Between stations the path swings this close to the centre (m) */
   transit: 5.5,
   /** Directions from the centre: degrees clockwise from north (−z), seen from above */
@@ -71,22 +74,32 @@ function transit(from: PathPoint, to: PathPoint, next: StationPlacement): PathPo
   };
 }
 
+/** Each group's station, laid out for its works. */
+function layoutFor(id: GroupId, works: readonly Work[], viewport: Viewport): StationLayout {
+  switch (id) {
+    case "paintwise":
+      return paintwiseStation(viewport);
+    case "paintings":
+      return salonStation(works, viewport);
+    case "animation":
+      return animationStation(works, viewport);
+    default:
+      return arcStation(id, GROUP_TITLES[id], works, viewport);
+  }
+}
+
 /**
- * The room for these works: the stations that hold any (Paintwise's layout
- * is given; the others are laid out here), the camera path through them and
- * a beat at every stop.
+ * The room for these works: the stations that hold any, the camera path
+ * through them, a beat at every stop, and which beat presents each work.
  */
-export function buildRoom(works: readonly Work[], viewport: Viewport, paintwise: StationLayout): RoomLayout {
+export function buildRoom(works: readonly Work[], viewport: Viewport): RoomLayout {
   const groups = new Map<GroupId, Work[]>();
   for (const work of works) groups.set(work.group, [...(groups.get(work.group) ?? []), work]);
 
   const layouts: StationLayout[] = [];
   for (const id of ROOM.tour) {
     const held = groups.get(id) ?? [];
-    if (!held.length) continue;
-    if (id === "paintwise") layouts.push(paintwise);
-    else if (id === "paintings") layouts.push(salonStation(held, viewport));
-    else layouts.push(arcStation(id, GROUP_TITLES[id], held, viewport));
+    if (held.length) layouts.push(layoutFor(id, held, viewport));
   }
 
   const { overview } = ROOM;
@@ -101,6 +114,7 @@ export function buildRoom(works: readonly Work[], viewport: Viewport, paintwise:
 
   const stations: RoomStation[] = [];
   const placements: Placement[] = [];
+  const workBeat: Record<string, number> = {};
   let last: PathPoint | null = null;
   for (const layout of layouts) {
     const placement = stationPlacement(layout.id);
@@ -108,6 +122,7 @@ export function buildRoom(works: readonly Work[], viewport: Viewport, paintwise:
     if (last) cameraPath.push(transit(last, cameras[0], placement));
     stations.push({ id: layout.id, title: layout.title, at: placement, layout, first: keys.length, count: layout.beats.length });
     layout.beats.forEach((beat, i) => {
+      for (const slug of beat.slugs ?? (beat.key.startsWith("work:") ? [beat.key.slice(5)] : [])) workBeat[slug] ??= keys.length;
       keys.push(beat.key);
       at.push(cameraPath.length);
       cameraPath.push(cameras[i]);
@@ -124,8 +139,10 @@ export function buildRoom(works: readonly Work[], viewport: Viewport, paintwise:
 
   const count = cameraPath.length;
   const beats: Beat[] = keys.map((key, i) => ({ key, t: at[i] / (count - 1), units: SHOWCASE.units.work }));
-  return { stations, cameraPath, beats, placements, floor: { centre: ROOM.centre, radius: ROOM.floorRadius } };
+  return { stations, cameraPath, beats, placements, workBeat, floor: { centre: ROOM.centre, radius: ROOM.floorRadius } };
 }
+
+export const stationOf = (room: RoomLayout, id: GroupId): RoomStation | undefined => room.stations.find((s) => s.id === id);
 
 /** Which station a continuous beat index is in, and where within it (0 at its first beat). Null on the overview. */
 export function locate(room: RoomLayout, beat: number): { station: RoomStation | null; local: number } {

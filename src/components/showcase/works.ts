@@ -1,14 +1,18 @@
-// The works the showcase holds, as one typed list. Stage 1: the hero gallery's
-// paintings and projects (images and depth maps from public/hero/), with their
-// stories and links taken from the old pages.
+// The works the showcase holds, as one typed list: the hero gallery's
+// paintings and projects (images and depth maps from public/hero/), the early
+// paintings and the "Where it all started" photo (public/showcase/paintings),
+// the films and the 3D models (public/showcase/animation), with their stories
+// and links taken from the old pages.
 
 import { GALLERY, type GalleryItem } from "../hero/heroConfig";
 import type { GroupId } from "./room/types";
+import animationMedia from "./stations/animation/animation.generated.json";
+import paintingsMedia from "./stations/paintings/paintings.generated.json";
 import paintwiseMedia from "./stations/paintwise/paintwise.generated.json";
 
 export { GROUP_TITLES } from "./room/types";
 
-export type WorkKind = "painting" | "project" | "game" | "animation" | "hackathon";
+export type WorkKind = "painting" | "project" | "game" | "animation" | "model" | "hackathon";
 export type WorkSide = "art" | "code" | "both";
 
 export interface WorkLink {
@@ -25,6 +29,13 @@ export interface WorkMedia {
   avgColor: string;
   /** A figure that stands for the work without 3D (Paintwise's pipeline) */
   figure?: string;
+  /** A photo of the painting being held */
+  held?: { src: string; aspect: number };
+  /** A film: its short muted loop (same-origin), and the full film */
+  loop?: string;
+  film?: string;
+  /** A 3D model (GLB, Draco-compressed) */
+  model?: string;
 }
 
 export interface Work {
@@ -34,6 +45,8 @@ export interface Work {
   side: WorkSide;
   /** The station that holds it */
   group: GroupId;
+  /** Paintings: on the main wall, or the early work round its edges */
+  wall?: "portfolio" | "early";
   title: string;
   year?: string;
   /** Medium (art) or stack (code): one line */
@@ -45,15 +58,6 @@ export interface Work {
 }
 
 export const isExternal = (href: string) => /^https?:\/\//.test(href);
-
-/** Each kind's heading, in the order the fallback page lists them. */
-export const KIND_TITLES: Record<WorkKind, string> = {
-  painting: "Paintings",
-  project: "Projects",
-  game: "Games",
-  animation: "Animation",
-  hackathon: "Hackathons",
-};
 
 interface Extra {
   side?: WorkSide;
@@ -214,8 +218,112 @@ function toWork(item: GalleryItem): Work {
     line: item.detail,
     story: extra.story,
     links: extra.links,
-    media: { image: item.assets.color, depth: item.assets.depth, aspect: item.aspect, avgColor: item.avgColor, ...(extra.figure ? { figure: extra.figure } : {}) },
+    ...(painting ? { wall: "portfolio" as const } : {}),
+    media: {
+      image: item.assets.color,
+      depth: item.assets.depth,
+      aspect: item.aspect,
+      avgColor: item.avgColor,
+      ...(extra.figure ? { figure: extra.figure } : {}),
+      ...(HELD[item.slug] ? { held: HELD[item.slug] } : {}),
+    },
   };
 }
 
-export const WORKS: Work[] = [...GALLERY.art, ...GALLERY.code].map(toWork);
+const HELD: Record<string, { src: string; aspect: number }> = paintingsMedia.held;
+
+/** The paintings from before the portfolio, from public/paintings/manifest.json (by the asset script). */
+const EARLY: Work[] = paintingsMedia.early.map((p) => ({
+  slug: p.slug,
+  kind: "painting",
+  side: "art",
+  group: "paintings",
+  wall: "early",
+  title: p.title,
+  year: p.year,
+  line: "Early work",
+  story: [p.story],
+  links: [ALL_PAINTINGS],
+  media: { image: p.image, depth: p.depth, aspect: p.aspect, avgColor: p.avgColor, ...(HELD[p.slug] ? { held: HELD[p.slug] } : {}) },
+}));
+
+/** From the /paintings page's "Where it all started". */
+const ORIGIN: Work = {
+  slug: "where-it-all-started",
+  kind: "painting",
+  side: "art",
+  group: "paintings",
+  wall: "early",
+  title: "Where It All Started",
+  line: "The beginning",
+  story: [
+    "This all started when Ms. Hromec asked me to draw a book cover on the whiteboard and I left the class in awe.",
+    "She saw something in me and informed my parents about my artistic talent. They immediately enrolled me in art class, and from then I have been improving my craft.",
+  ],
+  links: [ALL_PAINTINGS],
+  media: { image: paintingsMedia.origin.image, aspect: paintingsMedia.origin.aspect, avgColor: paintingsMedia.origin.avgColor },
+};
+
+const ALL_ANIMATION: WorkLink = { label: "All animation", href: "/animation" };
+const MAYA = "Autodesk Maya · Arnold · Premiere Pro";
+
+/** The films (drafts from what each film shows: rewrite freely). */
+const FILM_TEXT: Record<string, { title: string; year: string; story: string[] }> = {
+  "wild-west": {
+    title: "Wild West",
+    year: "2024",
+    story: ["A Wild West short: inside the saloon with its regulars, then out in the dusty street. Modelled, rigged and animated in Autodesk Maya, rendered with Arnold."],
+  },
+  "soccer-star": {
+    title: "Soccer Star",
+    year: "2024",
+    story: ["A stadium under the lights, one kick, and a crowd on its feet. Modelled and animated in Autodesk Maya, rendered with Arnold."],
+  },
+  sanctuary: {
+    title: "Sanctuary",
+    year: "2023",
+    story: ["A flight over floating islands, waterfalls and low-poly trees. Modelled and animated in Autodesk Maya, rendered with Arnold."],
+  },
+};
+
+const FILMS: Work[] = animationMedia.films.map((f) => {
+  const text = FILM_TEXT[f.slug];
+  if (!text) throw new Error(`Showcase: no text for film ${f.slug} in works.ts`);
+  return {
+    slug: f.slug,
+    kind: "animation",
+    side: "art",
+    group: "animation",
+    title: text.title,
+    year: text.year,
+    line: MAYA,
+    story: text.story,
+    links: [ALL_ANIMATION],
+    media: { image: f.poster, aspect: f.aspect, avgColor: "#1d1d1d", loop: f.loop, film: f.film },
+  };
+});
+
+/** The 3D models from the Wild West short (on Sketchfab). */
+const MODEL_TEXT: Record<string, { title: string; story: string[] }> = {
+  "main-character": { title: "Main Character", story: ["The Wild West short's lead: modelled, textured and rigged in Autodesk Maya."] },
+  "banana-gun": { title: "Banana Gun", story: ["A prop from the Wild West short, modelled in Autodesk Maya."] },
+  saloon: { title: "Saloon", story: ["The Wild West short's saloon, modelled and textured in Autodesk Maya."] },
+};
+
+const MODELS: Work[] = animationMedia.models.map((m) => {
+  const text = MODEL_TEXT[m.slug];
+  if (!text) throw new Error(`Showcase: no text for model ${m.slug} in works.ts`);
+  return {
+    slug: m.slug,
+    kind: "model",
+    side: "art",
+    group: "animation",
+    title: text.title,
+    line: "3D model · Autodesk Maya",
+    story: text.story,
+    links: [{ label: "View on Sketchfab", href: `https://sketchfab.com/3d-models/${m.uid}` }, ALL_ANIMATION],
+    media: { image: m.thumb, aspect: 16 / 9, avgColor: "#1d1d1d", model: m.glb },
+  };
+});
+
+export const WORKS: Work[] = [...GALLERY.art.map(toWork), ...EARLY, ORIGIN, ...FILMS, ...MODELS, ...GALLERY.code.map(toWork)];

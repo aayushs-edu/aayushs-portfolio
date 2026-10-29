@@ -10,29 +10,19 @@
 // The station's frame faces +z, toward the entrance.
 
 import { presentDistance, type PathPoint, type Placement, type Vec3, type Viewport } from "../../layouts/types";
-import { GROUP_TITLES, type LabelSpec, type PanelPose, type StationBeat, type StationLayout } from "../../room/types";
+import { GROUP_TITLES, type LabelSpec, type PanelPose, type PosedPanel, type PosedStationLayout, type StationBeat } from "../../room/types";
 import media from "./paintwise.generated.json";
 
 export type PaintwiseMedia = typeof media;
 
-export interface PaintwisePanel {
-  id: string;
+export interface PaintwisePanel extends PosedPanel {
   kind: "canvas" | "layer" | "object" | "figure" | "still";
   /** Its image (null: a flat colour) */
   src: string | null;
-  /** Size at scale 1 (m) */
-  width: number;
-  height: number;
-  /** Shown until the image is in, and behind transparent parts */
-  color: string;
-  /** One per beat */
-  poses: PanelPose[];
-  idle: PanelPose;
 }
 
-export interface PaintwiseLayout extends StationLayout {
+export interface PaintwiseLayout extends PosedStationLayout {
   panels: PaintwisePanel[];
-  labels: LabelSpec[];
   /** Where the canvas hangs at the first beat: what the camera flies in to */
   detailPlacement: Placement;
   figure: PaintwiseMedia["figure"];

@@ -27,8 +27,10 @@ export interface PanelPose {
 }
 
 export interface StationBeat {
-  /** "work:<slug>" when the beat presents a work, else "<station>:<name>" */
+  /** Unique: "work:<slug>" when the beat presents one work, else "<station>:<name>" */
   key: string;
+  /** The works it presents, when they aren't named by the key (a column of paintings, the models) */
+  slugs?: string[];
   /** The camera at this beat, in the station's frame */
   camera: PathPoint;
 }
@@ -41,6 +43,29 @@ export interface StationLayout {
   works: Placement[];
   /** How far its panels reach from its origin (m) */
   radius: number;
+}
+
+/** A panel a station poses every frame (Paintwise's layers, the salon's paintings, the films, the models). */
+export interface PosedPanel {
+  id: string;
+  kind: string;
+  /** The work it shows, if it is one */
+  slug?: string;
+  src?: string | null;
+  /** Size at scale 1 (m) */
+  width: number;
+  height: number;
+  /** Shown until its image is in */
+  color: string;
+  /** One per beat */
+  poses: PanelPose[];
+  idle: PanelPose;
+}
+
+/** A station whose panels move between its beats. */
+export interface PosedStationLayout extends StationLayout {
+  panels: PosedPanel[];
+  labels: LabelSpec[];
 }
 
 /** Where a station stands: its origin, and its turn about y (its frame's +z, in the world). */
@@ -66,8 +91,10 @@ export interface RoomLayout {
   cameraPath: PathPoint[];
   /** The overview, then every station's beats, in path order */
   beats: Beat[];
-  /** Every work, world space */
+  /** Every work, world space (where it is when presented) */
   placements: Placement[];
+  /** Each work's slug → the index of the beat that presents it */
+  workBeat: Record<string, number>;
   floor: { centre: Vec3; radius: number };
 }
 

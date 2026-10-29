@@ -11,8 +11,8 @@ import { freeArea, SHOWCASE } from "../../src/components/showcase/showcaseConfig
 import { FOV_Y, type Placement, type Vec3, type Viewport } from "../../src/components/showcase/layouts/types";
 import { createScrollMap, progressForBeat, sampleScroll, type Beat } from "../../src/components/showcase/scrollMap";
 import type { Work, WorkKind, WorkSide } from "../../src/components/showcase/works";
-import { arcLerp, buildRoom, locate, ROOM, stationPlacement, toWorld } from "../../src/components/showcase/room/ring";
-import type { GroupId, PanelPose } from "../../src/components/showcase/room/types";
+import { arcLerp, buildRoom, locate, ROOM, stationOf, stationPlacement, toWorld } from "../../src/components/showcase/room/ring";
+import type { GroupId, PanelPose, PosedStationLayout } from "../../src/components/showcase/room/types";
 import { easeBetween, poseAt, presenceAt } from "../../src/components/showcase/panels/pose";
 import { paintwiseStation } from "../../src/components/showcase/stations/paintwise/layout";
 
@@ -150,7 +150,7 @@ for (const [w, h, seamX, u] of [
 // ---------------------------------------------------------------------------
 // The room: the ring, its stations and the camera path
 
-const fake = (slug: string, kind: WorkKind, side: WorkSide, group: GroupId, aspect: number): Work => ({
+const fake = (slug: string, kind: WorkKind, side: WorkSide, group: GroupId, aspect: number, extra: Partial<Work> = {}): Work => ({
   slug,
   kind,
   side,
@@ -159,11 +159,12 @@ const fake = (slug: string, kind: WorkKind, side: WorkSide, group: GroupId, aspe
   line: "",
   story: [],
   links: [],
-  media: { image: "", aspect, avgColor: "#808080" },
+  ...extra,
+  media: { image: "", aspect, avgColor: "#808080", ...extra.media },
 });
 
-/** The real works' slugs, groups and aspects (stage 1). */
-const WORKS_16: Work[] = [
+/** The real works' slugs, groups and aspects. */
+const ROOM_WORKS: Work[] = [
   ...(
     [
       ["snorkeling-hawaii", 1.34],
@@ -174,7 +175,24 @@ const WORKS_16: Work[] = [
       ["red-dead-redemption", 0.74],
       ["childhood-toys", 1.25],
     ] as const
-  ).map(([slug, a]) => fake(slug, "painting", "art", "paintings", a)),
+  ).map(([slug, a]) => fake(slug, "painting", "art", "paintings", a, { wall: "portfolio" })),
+  ...(
+    [
+      ["snowy-cabin", 1.2],
+      ["golden-songbird", 0.79],
+      ["country-path", 1.27],
+      ["forest-cottage", 1.26],
+      ["hillside-house", 1.27],
+      ["river-bend", 1.25],
+      ["autumn-lake", 1.26],
+      ["lone-boat", 1.25],
+      ["covid", 1.32],
+      ["asthma", 0.8],
+    ] as const
+  ).map(([slug, a]) => fake(slug, "painting", "art", "paintings", a, { wall: "early" })),
+  fake("where-it-all-started", "painting", "art", "paintings", 1.33, { wall: "early" }),
+  ...["wild-west", "soccer-star", "sanctuary"].map((slug) => fake(slug, "animation", "art", "animation", 1.78)),
+  ...["main-character", "banana-gun", "saloon"].map((slug) => fake(slug, "model", "art", "animation", 1.78)),
   fake("paintwise", "project", "both", "paintwise", 1.21),
   ...(
     [
@@ -193,6 +211,8 @@ const WORKS_16: Work[] = [
     ] as const
   ).map(([slug, a]) => fake(slug, "project", "code", "games", a)),
 ];
+/** Works that are presented one per beat, on an arc of screens. */
+const ARC_WORKS = ROOM_WORKS.filter((w) => w.group === "hackathons" || w.group === "games");
 
 const VIEWPORTS: Viewport[] = [
   { width: 1440, height: 900 },
@@ -242,8 +262,6 @@ function fill(placement: Placement, eye: THREE.Vector3, target: THREE.Vector3, v
   return [(maxX - minX) / 2, (maxY - minY) / 2];
 }
 
-const paintwiseFor = (viewport: Viewport) => paintwiseStation(viewport);
-
 check("ring: stations stand on their halves, facing the centre", () => {
   for (const id of ["paintings", "animation", "hackathons", "games"] as const) {
     const at = stationPlacement(id);
@@ -269,25 +287,29 @@ check("ring: arcLerp ends where it should and keeps its distance from the centre
 
 for (const viewport of VIEWPORTS) {
   const label = `room ${viewport.width}×${viewport.height}`;
-  const room = buildRoom(WORKS_16, viewport, paintwiseFor(viewport));
+  const room = buildRoom(ROOM_WORKS, viewport);
   const path = createCameraPath(room.cameraPath);
   const byslug = new Map(room.placements.map((p) => [p.slug, p]));
   const keyIndex = new Map(room.beats.map((b, i) => [b.key, i]));
   const eye = new THREE.Vector3();
   const target = new THREE.Vector3();
 
-  check(`${label}: every work has one placement and one beat`, () => {
-    assert(room.placements.length === WORKS_16.length, `${room.placements.length} placements`);
-    for (const work of WORKS_16) {
+  check(`${label}: every work has one placement and a beat that presents it`, () => {
+    assert(room.placements.length === ROOM_WORKS.length, `${room.placements.length} placements`);
+    assert(new Set(room.beats.map((b) => b.key)).size === room.beats.length, "beat keys repeat");
+    for (const work of ROOM_WORKS) {
       assert(room.placements.filter((p) => p.slug === work.slug).length === 1, `placements of ${work.slug}`);
-      assert(room.beats.filter((b) => b.key === `work:${work.slug}`).length === 1, `beats of ${work.slug}`);
+      const beat = room.workBeat[work.slug];
+      assert(Number.isInteger(beat) && beat > 0 && beat < room.beats.length, `${work.slug}: beat ${beat}`);
+      const station = locate(room, beat).station;
+      assert(station?.id === work.group, `${work.slug} presented in ${station?.id}`);
     }
   });
 
   check(`${label}: the overview first, then the stations in tour order`, () => {
     assert(room.beats[0].key === "room:overview", `first beat ${room.beats[0].key}`);
     const order = room.stations.map((s) => s.id).join(",");
-    assert(order === "paintwise,paintings,hackathons,games", `stations ${order}`);
+    assert(order === "paintwise,paintings,animation,hackathons,games", `stations ${order}`);
     room.stations.forEach((s, i) => {
       const next = room.stations[i + 1];
       assert(s.first === (i === 0 ? 1 : room.stations[i - 1].first + room.stations[i - 1].count), `${s.id} starts at ${s.first}`);
@@ -307,16 +329,15 @@ for (const viewport of VIEWPORTS) {
     });
   });
 
-  check(`${label}: at a gallery work's beat the camera looks at it`, () => {
-    for (const work of WORKS_16) {
-      if (work.group === "paintwise") continue;
+  check(`${label}: at a screen's beat the camera looks at it`, () => {
+    for (const work of ARC_WORKS) {
       path.at(room.beats[keyIndex.get(`work:${work.slug}`)!].t, eye, target);
       assert(target.distanceTo(v3(byslug.get(work.slug)!.position)) < 1e-6, `${work.slug}: not looking at it`);
     }
   });
 
-  check(`${label}: stations keep apart (with room for animation)`, () => {
-    const ring = [...room.stations.map((s) => ({ id: s.id, p: s.at.position, r: s.layout.radius })), { id: "animation", p: stationPlacement("animation").position, r: 4 }];
+  check(`${label}: stations keep apart`, () => {
+    const ring = room.stations.map((s) => ({ id: s.id, p: s.at.position, r: s.layout.radius }));
     ring.forEach((a, i) =>
       ring.slice(i + 1).forEach((b) => {
         const d = Math.hypot(a.p[0] - b.p[0], a.p[2] - b.p[2]);
@@ -337,25 +358,64 @@ for (const viewport of VIEWPORTS) {
     }
   });
 
-  check(`${label}: works in a station stand apart`, () => {
+  check(`${label}: works shown at the same moment don't overlap`, () => {
+    const apart = (a: Placement, b: Placement, when: string) => {
+      if (Math.abs(a.rotationY - b.rotationY) < 1e-6) {
+        // Side by side in one plane: their rectangles keep a gap.
+        const right = new THREE.Vector3(Math.cos(a.rotationY), 0, -Math.sin(a.rotationY));
+        const normal = new THREE.Vector3(Math.sin(a.rotationY), 0, Math.cos(a.rotationY));
+        const d = v3(b.position).sub(v3(a.position));
+        if (Math.abs(d.dot(normal)) > 0.05) return;
+        const gapX = Math.abs(d.dot(right)) - (a.width + b.width) / 2;
+        const gapY = Math.abs(d.y) - (a.height + b.height) / 2;
+        assert(Math.max(gapX, gapY) >= 0.1, `${when}: ${a.slug} and ${b.slug} overlap (${gapX.toFixed(2)}, ${gapY.toFixed(2)})`);
+      } else {
+        const d = v3(a.position).distanceTo(v3(b.position));
+        assert(d >= 0.3, `${when}: ${a.slug} and ${b.slug} ${d.toFixed(2)} m apart`);
+      }
+    };
+    const pairs = (list: Placement[], when: string) => list.forEach((a, i) => list.slice(i + 1).forEach((b) => apart(a, b, when)));
     for (const s of room.stations) {
-      s.layout.works.forEach((a, i) =>
-        s.layout.works.slice(i + 1).forEach((b) => {
-          const d = v3(a.position).distanceTo(v3(b.position));
-          assert(d >= 1.0, `${a.slug} and ${b.slug} ${d.toFixed(2)} m apart`);
-        }),
-      );
+      const posed = (s.layout as Partial<PosedStationLayout>).panels;
+      if (!posed) {
+        pairs(s.layout.works, s.id);
+        continue;
+      }
+      s.layout.beats.forEach((beat, b) => {
+        const shown = posed
+          .filter((p) => p.slug && p.poses[b].opacity > 0.05)
+          .map((p) => ({ slug: p.slug!, position: p.poses[b].position, rotationY: p.poses[b].rotation[1], width: p.width * p.poses[b].scale, height: p.height * p.poses[b].scale }));
+        pairs(shown, `${s.id} ${beat.key}`);
+      });
     }
   });
 
   if (landscape(viewport)) {
-    check(`${label}: a presented gallery work fills a good part of the view, not all of it`, () => {
-      for (const work of WORKS_16) {
-        if (work.group === "paintwise") continue;
+    check(`${label}: a presented screen fills a good part of the view, not all of it`, () => {
+      for (const work of ARC_WORKS) {
         path.at(room.beats[keyIndex.get(`work:${work.slug}`)!].t, eye, target);
         const [w, h] = fill(byslug.get(work.slug)!, eye, target, viewport);
         assert(w <= 0.7 && h <= 0.7, `${work.slug} fills ${w.toFixed(2)} × ${h.toFixed(2)}`);
         assert(Math.max(w, h) >= 0.35, `${work.slug} only fills ${w.toFixed(2)} × ${h.toFixed(2)}`);
+      }
+    });
+  }
+
+  if (landscape(viewport)) {
+    check(`${label}: every work a beat presents is in view at that beat`, () => {
+      for (const work of ROOM_WORKS) {
+        const beat = room.workBeat[work.slug];
+        path.at(room.beats[beat].t, eye, target);
+        const camera = new THREE.PerspectiveCamera(FOV_Y, viewport.width / viewport.height, 0.05, 1000);
+        camera.position.copy(eye);
+        camera.lookAt(target);
+        camera.updateMatrixWorld();
+        const p = byslug.get(work.slug)!;
+        const right = new THREE.Vector3(Math.cos(p.rotationY), 0, -Math.sin(p.rotationY));
+        for (const [sx, sy] of [[-0.4, -0.4], [0.4, -0.4], [0.4, 0.4], [-0.4, 0.4]]) {
+          const c = v3(p.position).addScaledVector(right, sx * p.width).add(new THREE.Vector3(0, sy * p.height, 0)).project(camera);
+          assert(Math.abs(c.x) <= 1 && Math.abs(c.y) <= 1 && c.z < 1, `${work.slug} out of view at beat ${beat} (${c.x.toFixed(2)}, ${c.y.toFixed(2)})`);
+        }
       }
     });
   }
@@ -476,11 +536,38 @@ for (const viewport of VIEWPORTS) {
   }
 }
 
+for (const viewport of VIEWPORTS) {
+  const room = buildRoom(ROOM_WORKS, viewport);
+  for (const id of ["paintings", "animation"] as const) {
+    const station = stationOf(room, id)!;
+    const layout = station.layout as PosedStationLayout;
+    check(`${id} ${viewport.width}×${viewport.height}: every panel has a finite pose at every beat and in idle`, () => {
+      assert(layout.panels.length > 0, "no panels");
+      for (const panel of layout.panels) {
+        assert(panel.poses.length === layout.beats.length, `${panel.id}: ${panel.poses.length} poses`);
+        for (const pose of [...panel.poses, panel.idle]) assert(finitePose(pose) && pose.scale > 0 && pose.opacity >= 0 && pose.opacity <= 1, `${panel.id}: bad pose`);
+      }
+      const reach = Math.max(...layout.panels.flatMap((p) => [...p.poses, p.idle].map((q) => Math.hypot(q.position[0], q.position[2]))));
+      assert(layout.radius >= reach, `radius ${layout.radius.toFixed(2)} < reach ${reach.toFixed(2)}`);
+    });
+    check(`${id} ${viewport.width}×${viewport.height}: an open work's fly-in lands on it as its beat presents it`, () => {
+      for (const work of layout.works) {
+        const panel = layout.panels.find((p) => p.slug === work.slug);
+        assert(!!panel, `${work.slug}: no panel`);
+        const local = room.workBeat[work.slug] - station.first;
+        const pose = panel.poses[local];
+        assert(pose.position.every((v, i) => near(v, work.position[i])) && near(pose.rotation[1], work.rotationY), `${work.slug}: placement off its beat pose`);
+        assert(near(work.width, panel.width * pose.scale) && near(work.height, panel.height * pose.scale), `${work.slug}: size`);
+      }
+    });
+  }
+}
+
 check("room with the real Paintwise: the camera keeps clear of its panels at every beat and between", () => {
   for (const viewport of VIEWPORTS) {
-    const station = paintwiseStation(viewport);
-    const room = buildRoom(WORKS_16, viewport, station);
-    const pw = room.stations.find((s) => s.id === "paintwise")!;
+    const room = buildRoom(ROOM_WORKS, viewport);
+    const pw = stationOf(room, "paintwise")!;
+    const station = pw.layout as ReturnType<typeof paintwiseStation>;
     const path = createCameraPath(room.cameraPath);
     const eye = new THREE.Vector3();
     const target = new THREE.Vector3();
