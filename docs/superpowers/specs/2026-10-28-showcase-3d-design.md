@@ -1,5 +1,7 @@
 # Showcase: scrolling from the split hero into a 3D scene of the work
 
+> **Superseded on 2026-11-03** by `2026-11-03-home-unzip-design.md`: the 3D scene was dropped for a plain page. Kept for the record; the code is in git history up to `6307a3f`.
+
 Branch `hero-split`. Builds on the split hero (`docs/superpowers/specs/2026-10-27-split-hero-seam-design.md`), first previewed at `/split`, now the home page.
 
 ## Intent

@@ -1,5 +1,7 @@
 # Showcase: one room, a station per group
 
+> **Superseded on 2026-11-03** by `2026-11-03-home-unzip-design.md`: the 3D scene was dropped for a plain page. Kept for the record; the code is in git history up to `6307a3f`.
+
 Branch `hero-split`. This replaces the **organisation and layout** of `2026-10-28-showcase-3d-design.md` (the straight corridor of alternating works). From that spec it keeps:
 
 - the entrance (the hero tears open along its line);
