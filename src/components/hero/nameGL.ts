@@ -1,17 +1,15 @@
-// The name in WebGL: its textures, the fluid it flows through, and the loose
-// digits knocked off its binary letters. Shares the seam's WebGL2 context.
+// The name in WebGL: its textures and the fluid the paint flows through. Shares
+// the seam's WebGL2 context.
 //
 // The fluid is a small stable-fluids simulation over the title box (velocity,
 // pressure projection, so the flow swirls rather than smears). Alongside it
 // runs a map from each point to where its paint came from: advected by the
 // flow and relaxed back to "here" every frame, so pushed letters flow back into
-// shape. The seam shader draws the painted name through that map, and picks
-// each binary cell's digit from the cell the map points at.
+// shape. The seam shader draws the painted name through that map.
 
-import { DESIGN, NAME } from "./heroConfig";
+import { DESIGN } from "./heroConfig";
 import type { NameTouch, Push } from "./nameTouch";
 import { buildBinaryGrid, paintNameCanvas, type BinaryGrid } from "./nameRaster";
-import { CURVE_GLSL } from "./seamShader";
 import { TOUCH, type SplitLayout } from "./splitConfig";
 
 const QUAD_VS = /* glsl */ `#version 300 es
@@ -116,51 +114,6 @@ void main() {
 }
 `;
 
-// Loose digits: one instanced quad per digit.
-const BITS_VS = /* glsl */ `#version 300 es
-layout(location = 0) in vec4 aBit; // x, y (canvas CSS px, top-left), digit, opacity
-uniform vec2 uRes;
-uniform float uDpr;
-uniform vec2 uCell;
-uniform float uOpen; // the code half has moved right this far (CSS px)
-out vec2 vLocal;
-out vec2 vPos;
-flat out float vDigit;
-out float vAlpha;
-void main() {
-  int v = gl_VertexID;
-  vec2 corner = vec2(v == 1 || v == 4 || v == 5 ? 1.0 : 0.0, v == 2 || v == 3 || v == 5 ? 1.0 : 0.0);
-  vec2 pos = aBit.xy + corner * uCell;
-  vPos = pos;
-  pos.x += uOpen;
-  vLocal = corner * uCell * uDpr;
-  vDigit = aBit.z;
-  vAlpha = aBit.w;
-  gl_Position = vec4(pos.x * uDpr / uRes.x * 2.0 - 1.0, 1.0 - pos.y * uDpr / uRes.y * 2.0, 0.0, 1.0);
-}
-`;
-
-const BITS_FS = /* glsl */ `#version 300 es
-precision highp float;
-in vec2 vLocal;
-in vec2 vPos;
-flat in float vDigit;
-in float vAlpha;
-uniform sampler2D uGlyphs;
-uniform vec2 uGlyphRes;
-uniform float uGlyphSlot;
-uniform float uSeam;
-uniform vec3 uInk;
-${CURVE_GLSL}
-out vec4 o;
-void main() {
-  // Loose digits stay on the binary side of the line.
-  if (vPos.x - uSeam < curveAt(vPos.y)) discard;
-  float g = texture(uGlyphs, (vec2(vDigit * uGlyphSlot, 0.0) + vLocal) / uGlyphRes).a * vAlpha;
-  o = vec4(uInk * g, g);
-}
-`;
-
 type Program = { program: WebGLProgram; loc: (name: string) => WebGLUniformLocation | null };
 
 function program(gl: WebGL2RenderingContext, vs: string, fs: string): Program {
@@ -189,11 +142,6 @@ function program(gl: WebGL2RenderingContext, vs: string, fs: string): Program {
 interface Target {
   tex: WebGLTexture;
   fbo: WebGLFramebuffer;
-}
-
-function rgb(color: string): [number, number, number] {
-  const n = parseInt(color.slice(1), 16);
-  return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255];
 }
 
 /** A small stable-fluids simulation over the title box. */
@@ -362,14 +310,14 @@ class Fluid {
 }
 
 /** Texture units the seam shader reads the name from. */
-export const NAME_UNITS = { paint: 1, mask: 2, holes: 3, flow: 4 } as const;
+export const NAME_UNITS = { paint: 1, mask: 2, flicker: 3, flow: 4 } as const;
 
 export class NameGL {
   grid: BinaryGrid | null = null;
   ready = false;
   private paintTex: WebGLTexture;
   private maskTex: WebGLTexture;
-  private holesTex: WebGLTexture;
+  private flickerTex: WebGLTexture;
   private vao: WebGLVertexArrayObject;
   private fluid: Fluid | null = null;
   private fluidFailed = false;
@@ -378,27 +326,14 @@ export class NameGL {
   private flow = 0;
   private family: string | null = null;
   private scale = 0;
-  private bitsProgram: Program;
-  private bitsVao: WebGLVertexArrayObject;
-  private bitsBuffer: WebGLBuffer;
 
   constructor(private gl: WebGL2RenderingContext) {
     this.vao = gl.createVertexArray()!;
     this.paintTex = this.texture(gl.LINEAR);
     this.maskTex = this.texture(gl.NEAREST);
-    this.holesTex = this.texture(gl.NEAREST);
+    this.flickerTex = this.texture(gl.NEAREST);
     // Half-float render targets for the fluid; without them the name stays still.
     if (!gl.getExtension("EXT_color_buffer_float") && !gl.getExtension("EXT_color_buffer_half_float")) this.fluidFailed = true;
-
-    this.bitsProgram = program(gl, BITS_VS, BITS_FS);
-    this.bitsVao = gl.createVertexArray()!;
-    this.bitsBuffer = gl.createBuffer()!;
-    gl.bindVertexArray(this.bitsVao);
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.bitsBuffer);
-    gl.enableVertexAttribArray(0);
-    gl.vertexAttribPointer(0, 4, gl.FLOAT, false, 16, 0);
-    gl.vertexAttribDivisor(0, 1);
-    gl.bindVertexArray(null);
   }
 
   /** How much of the flow the shader should apply, 0..1 (0: the name as drawn). */
@@ -430,8 +365,8 @@ export class NameGL {
     gl.activeTexture(gl.TEXTURE0 + NAME_UNITS.mask);
     gl.bindTexture(gl.TEXTURE_2D, this.maskTex);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.R8, grid.cols, grid.rows, 0, gl.RED, gl.UNSIGNED_BYTE, mask);
-    gl.activeTexture(gl.TEXTURE0 + NAME_UNITS.holes);
-    gl.bindTexture(gl.TEXTURE_2D, this.holesTex);
+    gl.activeTexture(gl.TEXTURE0 + NAME_UNITS.flicker);
+    gl.bindTexture(gl.TEXTURE_2D, this.flickerTex);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.R8, grid.cols, grid.rows, 0, gl.RED, gl.UNSIGNED_BYTE, new Uint8Array(grid.cells.length));
     this.grid = grid;
 
@@ -447,15 +382,15 @@ export class NameGL {
     return grid;
   }
 
-  /** Runs the flow for this frame (and uploads knocked-out cells). Leaves the default framebuffer bound. */
+  /** Runs the flow for this frame (and uploads flickering cells). Leaves the default framebuffer bound. */
   update(dt: number, t: number, touch: NameTouch | undefined, layout: SplitLayout) {
     const { gl } = this;
-    if (touch?.holesDirty && this.grid && touch.holes.length === this.grid.cells.length) {
+    if (touch?.flickerDirty && this.grid && touch.flicker.length === this.grid.cells.length) {
       gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
-      gl.activeTexture(gl.TEXTURE0 + NAME_UNITS.holes);
-      gl.bindTexture(gl.TEXTURE_2D, this.holesTex);
-      gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, this.grid.cols, this.grid.rows, gl.RED, gl.UNSIGNED_BYTE, touch.holes);
-      touch.holesDirty = false;
+      gl.activeTexture(gl.TEXTURE0 + NAME_UNITS.flicker);
+      gl.bindTexture(gl.TEXTURE_2D, this.flickerTex);
+      gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, this.grid.cols, this.grid.rows, gl.RED, gl.UNSIGNED_BYTE, touch.flicker);
+      touch.flickerDirty = false;
     }
     const pushes = touch?.pushes ?? [];
     if (pushes.length) this.lastPush = t;
@@ -478,7 +413,7 @@ export class NameGL {
     const pairs: [number, WebGLTexture][] = [
       [NAME_UNITS.paint, this.paintTex],
       [NAME_UNITS.mask, this.maskTex],
-      [NAME_UNITS.holes, this.holesTex],
+      [NAME_UNITS.flicker, this.flickerTex],
       [NAME_UNITS.flow, this.fluid?.mapTexture ?? this.maskTex],
     ];
     for (const [unit, tex] of pairs) {
@@ -487,49 +422,11 @@ export class NameGL {
     }
   }
 
-  /** Draws the loose digits over the binary side (glyph atlas on unit 0). */
-  drawBits(
-    touch: NameTouch,
-    curve: Float32Array,
-    layout: SplitLayout,
-    canvas: { width: number; height: number },
-    dpr: number,
-    glyph: { w: number; h: number; slot: number },
-    open = 0,
-  ) {
-    if (!touch.bitCount) return;
-    const { gl } = this;
-    const { program: prog, loc } = this.bitsProgram;
-    gl.useProgram(prog);
-    gl.uniform2f(loc("uRes"), canvas.width, canvas.height);
-    gl.uniform1f(loc("uDpr"), dpr);
-    gl.uniform2f(loc("uCell"), layout.cellW, layout.cellH);
-    gl.uniform1f(loc("uSeam"), layout.seamX);
-    gl.uniform1f(loc("uOpen"), open);
-    gl.uniform1f(loc("uHeight"), layout.h);
-    gl.uniform4fv(loc("uCurve"), curve);
-    gl.uniform3f(loc("uInk"), ...rgb(NAME.paint));
-    gl.uniform1i(loc("uGlyphs"), 0);
-    gl.uniform2f(loc("uGlyphRes"), glyph.w, glyph.h);
-    gl.uniform1f(loc("uGlyphSlot"), glyph.slot);
-    gl.bindVertexArray(this.bitsVao);
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.bitsBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, touch.bits.subarray(0, touch.bitCount * 4), gl.DYNAMIC_DRAW);
-    gl.enable(gl.BLEND);
-    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-    gl.drawArraysInstanced(gl.TRIANGLES, 0, 6, touch.bitCount);
-    gl.disable(gl.BLEND);
-    gl.bindVertexArray(null);
-  }
-
   destroy() {
     const { gl } = this;
     this.fluid?.destroy();
-    for (const t of [this.paintTex, this.maskTex, this.holesTex]) gl.deleteTexture(t);
+    for (const t of [this.paintTex, this.maskTex, this.flickerTex]) gl.deleteTexture(t);
     gl.deleteVertexArray(this.vao);
-    gl.deleteVertexArray(this.bitsVao);
-    gl.deleteBuffer(this.bitsBuffer);
-    gl.deleteProgram(this.bitsProgram.program);
   }
 
   private texture(filter: number): WebGLTexture {

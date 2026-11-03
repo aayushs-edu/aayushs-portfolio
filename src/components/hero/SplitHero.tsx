@@ -27,9 +27,9 @@ function sameLayout(a: SplitLayout, b: SplitLayout) {
 /**
  * The split hero: Art on the left, Code on the right, at once. A fluid line
  * runs down the middle; the wall and the name split on it, paint floats out of
- * its left side and bits out of its right. The name is fluid to the touch:
- * moving through it pushes the letters around and bits come loose from the
- * binary ones; grab it to pull the line through it.
+ * its left side and bits out of its right. The name answers the cursor: moving
+ * through the painted letters pushes them around like fluid, the binary digits
+ * under it flicker; grab it to pull the line through it.
  *
  * Under the showcase, `entrance` (0..1) tears it open along the line: the
  * halves part, the tagline lifts away, and the name stops responding to touch.

@@ -132,8 +132,8 @@ export const TOUCH = {
   /** Movement (CSS px) before a press counts as a drag. */
   dragSlop: 8,
   /**
-   * The name is fluid: moving through it pushes the letters around (smoothly on
-   * the paint side, cell by cell on the binary side) and they flow back into shape.
+   * The painted name is fluid: moving through it pushes the letters around and
+   * they flow back into shape.
    */
   fluid: {
     /** Simulation cells across the title box. */
@@ -149,21 +149,12 @@ export const TOUCH = {
     idle: 6,
     fadeOut: 1.5,
   },
-  /** Binary letters: the cells under the moving cursor come loose and fly off. */
-  knock: {
+  /** Binary letters: the cells under the cursor flicker. */
+  hover: {
     /** Reach around the cursor, in cells across and rows down. */
     cols: 3.5,
     rows: 1.6,
-    /** Cursor speed (CSS px/s) needed to knock cells loose. */
-    minSpeed: 40,
-    /** A knocked-out cell is retyped after this long (s), flickering for `retype` s. */
-    refill: [1.0, 2.2] as [number, number],
-    retype: 0.2,
-    /** Loose digits: life (s), throw (design px/s), share of the cursor's speed they take, drift away from the paint (design px/s). */
-    life: [1.0, 2.0] as [number, number],
-    burst: [60, 220] as [number, number],
-    carry: 0.45,
-    drift: 30,
-    max: 900,
+    /** A cell keeps flickering this long (s) after the cursor leaves it. */
+    linger: 0.15,
   },
 } as const;

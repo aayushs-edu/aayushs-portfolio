@@ -11,7 +11,7 @@ import { MAX_POPS, MAX_STREAMS } from "./seamField";
 import { BITS, CURVE } from "./splitConfig";
 
 /** The line: its samples, and where it is at height y (x from the centre, CSS px). */
-export const CURVE_GLSL = /* glsl */ `
+const CURVE_GLSL = /* glsl */ `
 #define CURVE_SAMPLES ${CURVE.samples}
 uniform vec4 uCurve[CURVE_SAMPLES / 4];
 uniform float uHeight;
@@ -78,7 +78,7 @@ uniform vec3 uNameInk;        // binary digits
 uniform vec3 uNameBacking;    // binary cells
 uniform sampler2D uNamePaint; // the painted name (premultiplied)
 uniform sampler2D uNameMask;  // binary cells: 0 none, 0.5 a "0", 1 a "1"
-uniform sampler2D uNameHoles; // 1 knocked out, 0.5 being retyped
+uniform sampler2D uNameFlicker; // 1 flickering (the cursor is on it)
 uniform sampler2D uFlow;      // where each point's paint came from (uv over the title box)
 ${CURVE_GLSL}
 
@@ -334,21 +334,19 @@ vec4 paintedName(vec2 p) {
   return texture(uNamePaint, uv + (waver * 10.0 + grain * 4.0) / DESIGN_BOX);
 }
 
-// The binary name: each cell shows the digit of the cell the flow brought here,
-// unless it has been knocked out (or is being retyped).
+// The binary name: each cell shows its digit, flickering under the cursor.
 vec4 binaryName(vec2 p) {
   vec2 cell = vec2(floor(p.x / uCell.x), floor((p.y - uGridY) / uCell.y));
-  vec2 centre = vec2((cell.x + 0.5) * uCell.x, uGridY + (cell.y + 0.5) * uCell.y);
-  vec2 from = flowFrom(boxUv(centre)) * uBox.zw + uBox.xy;
-  ivec2 src = ivec2(floor((from.x - uSeam) / uCell.x) - uGridInfo.x, floor((from.y - uGridY) / uCell.y));
+  ivec2 src = ivec2(cell.x - uGridInfo.x, cell.y);
   if (src.x < 0 || src.y < 0 || src.x >= int(uGridInfo.y) || src.y >= int(uGridInfo.z)) return vec4(0.0);
   float v = texelFetch(uNameMask, src, 0).r;
   if (v < 0.2) return vec4(0.0);
-  float hole = texelFetch(uNameHoles, src, 0).r;
-  if (hole > 0.75) return vec4(0.0);
   float bit = v > 0.75 ? 1.0 : 0.0;
-  // Being retyped: the digit flickers before it settles.
-  if (hole > 0.25) bit = step(0.5, hash21(vec2(src) + floor(uTime * 24.0)));
+  if (texelFetch(uNameFlicker, src, 0).r > 0.5) {
+    // Each cell ticks on its own beat, so they don't all change together.
+    float tick = floor(uTime * 16.0 + hash21(vec2(src)));
+    bit = step(0.5, hash21(vec2(src) + tick * vec2(0.37, 0.73)));
+  }
   vec2 local = (p - vec2(cell.x * uCell.x, uGridY + cell.y * uCell.y)) * uDpr;
   float glyph = texture(uGlyphs, (vec2(bit * uGlyphSlot, 0.0) + local) / uGlyphRes).a;
   return vec4(mix(uNameBacking, uNameInk, glyph), 1.0);

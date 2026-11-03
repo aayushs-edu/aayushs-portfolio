@@ -1,11 +1,10 @@
 // Touching the name (pure state: fed by pointer events, stepped by the seam's
 // frame loop, read by the line and the WebGL name).
 //
-// - Moving through the name pushes it like fluid: this collects the pushes;
-//   the WebGL name runs the flow and draws the letters through it.
-// - On the binary side, the cells under the moving cursor come loose: each
-//   leaves a hole in its letter and flies off as a white digit; the hole is
-//   retyped a moment later.
+// - Moving through the painted name pushes it like fluid: this collects the
+//   pushes; the WebGL name runs the flow and draws the letters through it.
+// - On the binary side, the cells under the cursor flicker, and settle a moment
+//   after it leaves.
 // - Press and drag on the name to pull the line through it: the line bends
 //   toward the pointer on a spring and wobbles back when let go.
 
@@ -20,21 +19,12 @@ export interface Push {
   vy: number;
 }
 
-const rand = (a: number, b: number) => a + Math.random() * (b - a);
-const smooth = (e0: number, e1: number, x: number) => {
-  const t = Math.min(1, Math.max(0, (x - e0) / (e1 - e0)));
-  return t * t * (3 - 2 * t);
-};
-
 export class NameTouch {
   /** Pushes since the last frame (the WebGL name drains these). */
   pushes: Push[] = [];
-  /** Loose digits for the shader: x, y (canvas CSS px, cell top-left), digit, opacity. */
-  bits = new Float32Array(TOUCH.knock.max * 4);
-  bitCount = 0;
-  /** Per grid cell: 255 knocked out, 128 being retyped, 0 in place. */
-  holes = new Uint8Array(0);
-  holesDirty = false;
+  /** Per grid cell: 255 flickering, 0 settled. */
+  flicker = new Uint8Array(0);
+  flickerDirty = false;
 
   private grid: BinaryGrid | null = null;
   private layout: SplitLayout | null = null;
@@ -44,16 +34,15 @@ export class NameTouch {
   private amp = 0;
   private ampV = 0;
   private centre = 0;
-  private refillAt = new Float64Array(0);
-  private loose = new Set<number>();
-  private flying: { x: number; y: number; vx: number; vy: number; bit: number; age: number; life: number }[] = [];
+  private settleAt = new Float64Array(0);
+  private flickering = new Set<number>();
 
   setGrid(grid: BinaryGrid) {
     this.grid = grid;
-    this.holes = new Uint8Array(grid.cols * grid.rows);
-    this.refillAt = new Float64Array(grid.cols * grid.rows);
-    this.loose.clear();
-    this.holesDirty = true;
+    this.flicker = new Uint8Array(grid.cols * grid.rows);
+    this.settleAt = new Float64Array(grid.cols * grid.rows);
+    this.flickering.clear();
+    this.flickerDirty = true;
   }
 
   setLayout(layout: SplitLayout) {
@@ -152,95 +141,55 @@ export class NameTouch {
       this.ampV = Math.max(0, this.ampV);
     }
 
-    // Moving through the name pushes it (not while holding the line).
-    const speed = Math.hypot(p.vx, p.vy);
-    if (p.moved && p.inside && !p.touch && !this.dragging && this.overName(p.x, p.y) && speed > 1) {
-      this.pushes.push({ x: p.x, y: p.y, vx: p.vx, vy: p.vy });
-      if (rel >= lineAt(p.y) && speed > TOUCH.knock.minSpeed) this.knock(rel, p.y, t, lineAt);
+    // On the name (not while holding the line): the cursor pushes the paint and
+    // flickers the binary.
+    if (p.inside && !p.touch && !this.dragging && this.overName(p.x, p.y)) {
+      if (rel >= lineAt(p.y)) this.hover(rel, p.y, t);
+      else if (p.moved && Math.hypot(p.vx, p.vy) > 1) this.pushes.push({ x: p.x, y: p.y, vx: p.vx, vy: p.vy });
     }
     p.moved = false;
 
-    this.refill(t);
-    this.fly(dt, layout);
+    this.settle(t);
   }
 
-  // ---- loose digits ------------------------------------------------------------
+  // ---- flickering digits ---------------------------------------------------------
 
-  /** Knocks loose the binary cells around the cursor that are still in place. */
-  private knock(rel: number, y: number, t: number, lineAt: (y: number) => number) {
+  /** Sets the binary cells around the cursor flickering. */
+  private hover(rel: number, y: number, t: number) {
     const g = this.grid;
     const l = this.layout;
     if (!g || !l) return;
-    const K = TOUCH.knock;
+    const H = TOUCH.hover;
     const pc = rel / l.cellW;
     const pr = (y - l.gridY) / l.cellH;
-    const p = this.pointer;
-    for (let r = Math.floor(pr - K.rows); r <= Math.ceil(pr + K.rows); r++) {
+    for (let r = Math.floor(pr - H.rows); r <= Math.ceil(pr + H.rows); r++) {
       if (r < 0 || r >= g.rows) continue;
-      for (let c = Math.floor(pc - K.cols); c <= Math.ceil(pc + K.cols); c++) {
+      for (let c = Math.floor(pc - H.cols); c <= Math.ceil(pc + H.cols); c++) {
         const i = c - g.c0;
         if (i < 0 || i >= g.cols) continue;
         const idx = r * g.cols + i;
-        if (!g.cells[idx] || this.holes[idx]) continue;
-        const dx = (c + 0.5 - pc) / K.cols;
-        const dy = (r + 0.5 - pr) / K.rows;
+        if (!g.cells[idx]) continue;
+        const dx = (c + 0.5 - pc) / H.cols;
+        const dy = (r + 0.5 - pr) / H.rows;
         if (dx * dx + dy * dy > 1) continue;
-        const x = c * l.cellW;
-        const top = l.gridY + r * l.cellH;
-        // Only cells on the binary side of the line are binary.
-        if (x < lineAt(top + l.cellH / 2)) continue;
-        this.holes[idx] = 255;
-        this.refillAt[idx] = t + rand(K.refill[0], K.refill[1]);
-        this.loose.add(idx);
-        this.holesDirty = true;
-        if (this.flying.length >= K.max) this.flying.shift();
-        // Thrown away from the cursor, carrying some of its motion.
-        const ax = c + 0.5 - pc;
-        const ay = (r + 0.5 - pr) * (l.cellH / l.cellW);
-        const len = Math.hypot(ax, ay) || 1;
-        const burst = rand(K.burst[0], K.burst[1]) * l.u;
-        this.flying.push({
-          x: l.seamX + x,
-          y: top,
-          vx: (ax / len) * burst + p.vx * K.carry,
-          vy: (ay / len) * burst + p.vy * K.carry,
-          bit: g.cells[idx] === 2 ? 1 : 0,
-          age: 0,
-          life: rand(K.life[0], K.life[1]),
-        });
+        this.settleAt[idx] = t + H.linger;
+        if (!this.flicker[idx]) {
+          this.flicker[idx] = 255;
+          this.flickering.add(idx);
+          this.flickerDirty = true;
+        }
       }
     }
   }
 
-  /** Knocked-out cells are retyped after a while (flickering briefly first). */
-  private refill(t: number) {
-    for (const idx of this.loose) {
-      const at = this.refillAt[idx];
-      if (t >= at + TOUCH.knock.retype) {
-        this.holes[idx] = 0;
-        this.loose.delete(idx);
-        this.holesDirty = true;
-      } else if (t >= at && this.holes[idx] !== 128) {
-        this.holes[idx] = 128;
-        this.holesDirty = true;
+  /** Cells the cursor has left settle back to their own digit. */
+  private settle(t: number) {
+    for (const idx of this.flickering) {
+      if (t >= this.settleAt[idx]) {
+        this.flicker[idx] = 0;
+        this.flickering.delete(idx);
+        this.flickerDirty = true;
       }
     }
-  }
-
-  private fly(dt: number, l: SplitLayout) {
-    const K = TOUCH.knock;
-    const drag = Math.exp(-dt * 1.8);
-    let n = 0;
-    const out = this.flying.filter((b) => (b.age += dt) < b.life);
-    for (const b of out) {
-      b.vx = b.vx * drag + K.drift * l.u * (1 - drag);
-      b.vy *= drag;
-      b.x += b.vx * dt;
-      b.y += b.vy * dt;
-      this.bits.set([b.x, b.y, b.bit, 1 - smooth(0.45 * b.life, b.life, b.age)], n * 4);
-      n++;
-    }
-    this.flying = out;
-    this.bitCount = n;
   }
 }

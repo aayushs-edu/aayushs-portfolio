@@ -22,7 +22,7 @@ const UNIFORMS = [
   "uRes", "uDpr", "uSeam", "uUnit", "uCell", "uGridY", "uTime", "uCount", "uCurve", "uHeight",
   "uA", "uB", "uC", "uPalette", "uBitPalette", "uBead", "uBeadSwell", "uBlend",
   "uGlyphs", "uGlyphRes", "uGlyphSlot", "uPopCount", "uPop", "uBitShape", "uBurst", "uBitTime", "uOpen",
-  "uNameOn", "uFlowOn", "uBox", "uGridInfo", "uNameInk", "uNameBacking", "uNamePaint", "uNameMask", "uNameHoles", "uFlow",
+  "uNameOn", "uFlowOn", "uBox", "uGridInfo", "uNameInk", "uNameBacking", "uNamePaint", "uNameMask", "uNameFlicker", "uFlow",
 ] as const;
 type UniformName = (typeof UNIFORMS)[number];
 
@@ -76,7 +76,7 @@ class SeamRenderer {
     gl.uniform1i(this.loc.uGlyphs, 0);
     gl.uniform1i(this.loc.uNamePaint, NAME_UNITS.paint);
     gl.uniform1i(this.loc.uNameMask, NAME_UNITS.mask);
-    gl.uniform1i(this.loc.uNameHoles, NAME_UNITS.holes);
+    gl.uniform1i(this.loc.uNameFlicker, NAME_UNITS.flicker);
     gl.uniform1i(this.loc.uFlow, NAME_UNITS.flow);
     gl.uniform3f(this.loc.uNameInk, ...rgb(NAME.paint));
     gl.uniform3f(this.loc.uNameBacking, ...rgb(NAME_BACKING));
@@ -205,12 +205,6 @@ class SeamRenderer {
     gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
-
-    if (nameOn && touch) {
-      gl.activeTexture(gl.TEXTURE0);
-      gl.bindTexture(gl.TEXTURE_2D, this.atlas);
-      name!.drawBits(touch, state.curve, layout, this.canvas, this.dpr, this.atlasSize, open);
-    }
   }
 
   destroy() {
@@ -227,7 +221,7 @@ interface SeamCanvasProps {
   layout: SplitLayout | null;
   /** Gets --seam-left / --seam-right: clip-paths for each side of the line, every frame. */
   clipRef: RefObject<HTMLElement | null>;
-  /** Touching the name: it bends the line, flows, and its binary cells come loose. */
+  /** Touching the name: it bends the line, its paint flows, and its binary cells flicker. */
   touch?: NameTouch;
   /** Called once the canvas draws the name itself (the DOM name can hide). */
   onNameReady?: () => void;
