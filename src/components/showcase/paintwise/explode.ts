@@ -1,32 +1,37 @@
-// Paintwise's exploded still life on a CSS 3D stage (pure; checked by
-// showcase:check). The jug still life is a stack of its pipeline's layers.
-// At rest it reads as the canvas. "layers" fans the six layers out in depth,
-// seen from the right, with a tag on each. "masks" pushes every object of the
-// masks layer out to its own depth, seen from the left. The spacing and the
-// angles are the old 3D room's (its canvas was 1.9 m wide).
+// Paintwise's two exploded views of its still life, each on its own CSS 3D
+// stage (pure; checked by showcase:check). The jug still life is a stack of
+// its pipeline's layers; each stage starts as the jug (rest) and comes apart
+// into its view. "layers" fans the six layers out in depth, seen from the
+// right, with a tag on each. "masks" pushes every object of the masks layer
+// out to its own depth, seen from the left. The spacing and the angles are
+// the old 3D room's (its canvas was 1.9 m wide).
 //
 // Items are placed in canvas widths (the jug is 1 wide), y down, z toward the
-// viewer. Each state also gets a rig: the turn it's seen at, and the scale and
-// offset that fit it in the stage (in stage widths, from the stage's centre).
-// The stage's CSS uses 1 canvas width = 100cqw before the rig's scale.
+// viewer. Each view's stage has its own shape; for both its states it gets a
+// rig: the turn it's seen at, and the scale and offset that fit it in the
+// stage (in stage widths, from the stage's centre). The stage's CSS uses
+// 1 canvas width = 100cqw before the rig's scale.
 
 import media from "../stations/paintwise/paintwise.generated.json";
 
-export type ExplodeState = "rest" | "layers" | "masks";
-export const EXPLODE_STATES: readonly ExplodeState[] = ["rest", "layers", "masks"];
+export type View = "layers" | "masks";
+export const VIEWS: readonly View[] = ["layers", "masks"];
+export type ExplodeState = "rest" | View;
+export const EXPLODE_STATES: readonly ExplodeState[] = ["rest", ...VIEWS];
 
 export type Vec3 = [number, number, number];
 
 export const STAGE = {
-  /** Height / width. */
-  aspect: 0.66,
   /** CSS perspective, in stage widths. */
   perspective: 1.8,
-  /** How much of the stage each state may fill (its wider share of width or height); the rest is room for the tags. */
-  fill: { rest: 0.86, layers: 0.92, masks: 0.9 } as Record<ExplodeState, number>,
-  /** The turn each state is seen at (degrees): rotateX, rotateY. */
-  turn: { rest: [0, 0], layers: [-7, -49], masks: [-6, 43] } as Record<ExplodeState, [number, number]>,
-} as const;
+  /** At rest each stage shows the jug, square on, filling this much of it (its wider share of width or height). */
+  restFill: 0.8,
+  /** Each view's stage: its shape (height / width), how much of it the view fills (the rest is room for tags), and the turn it's seen at (degrees: rotateX, rotateY). */
+  view: {
+    layers: { aspect: 0.6, fill: 0.92, turn: [-7, -49] },
+    masks: { aspect: 0.66, fill: 0.88, turn: [-6, 43] },
+  } as Record<View, { aspect: number; fill: number; turn: readonly [number, number] }>,
+};
 
 /** Each layer's tag: the model, and what it sees. */
 export const LAYER_COPY: Record<string, { title: string; line: string }> = {
@@ -58,6 +63,8 @@ export interface ExplodeItem {
 }
 
 export interface Rig {
+  /** Its stage's height / width */
+  aspect: number;
   /** Turned about this point (canvas widths) */
   centre: Vec3;
   /** rotateX, rotateY (degrees) */
@@ -69,7 +76,6 @@ export interface Rig {
 
 export interface Tag {
   id: string;
-  state: ExplodeState;
   title: string;
   line: string;
   /** Where it pins, in stage widths from the stage's top left */
@@ -155,7 +161,7 @@ export function toStage(p: Vec3, rig: Rig): Vec3 {
 export function project(p: Vec3, rig: Rig): [number, number] {
   const [x, y, z] = toStage(p, rig);
   const k = STAGE.perspective / (STAGE.perspective - z);
-  return [0.5 + x * k, STAGE.aspect / 2 + y * k];
+  return [0.5 + x * k, rig.aspect / 2 + y * k];
 }
 
 /** An item's four corners in its pose. */
@@ -173,8 +179,13 @@ export function corners(item: ExplodeItem, state: ExplodeState): Vec3[] {
 
 const visible = (item: ExplodeItem, state: ExplodeState) => item.poses[state].opacity > 0.01;
 
-/** Turns the state's composition and fits it in the stage, centred, filling STAGE.fill of it. */
-function fitRig(state: ExplodeState): Rig {
+/** How much of its view's stage a state fills. */
+export const fillOf = (view: View, state: ExplodeState) => (state === "rest" ? STAGE.restFill : STAGE.view[view].fill);
+
+/** Turns the state's composition and fits it in its view's stage, centred, filling fillOf of it. */
+function fitRig(view: View, state: ExplodeState): Rig {
+  const { aspect } = STAGE.view[view];
+  const fill = fillOf(view, state);
   const points = ITEMS.filter((item) => visible(item, state)).flatMap((item) => corners(item, state));
   const lo: Vec3 = [Infinity, Infinity, Infinity];
   const hi: Vec3 = [-Infinity, -Infinity, -Infinity];
@@ -184,7 +195,8 @@ function fitRig(state: ExplodeState): Rig {
       hi[i] = Math.max(hi[i], p[i]);
     }
   }
-  const rig: Rig = { centre: [(lo[0] + hi[0]) / 2, (lo[1] + hi[1]) / 2, (lo[2] + hi[2]) / 2], turn: STAGE.turn[state], scale: 0.5, offset: [0, 0] };
+  const turn = state === "rest" ? ([0, 0] as const) : STAGE.view[view].turn;
+  const rig: Rig = { aspect, centre: [(lo[0] + hi[0]) / 2, (lo[1] + hi[1]) / 2, (lo[2] + hi[2]) / 2], turn, scale: 0.5, offset: [0, 0] };
   const box = () => {
     const xy = points.map((p) => project(p, rig));
     const xs = xy.map((p) => p[0]);
@@ -194,26 +206,43 @@ function fitRig(state: ExplodeState): Rig {
   // Perspective makes size and position depend on each other a little: settle both.
   for (let i = 0; i < 12; i++) {
     const [x0, x1, y0, y1] = box();
-    rig.scale *= STAGE.fill[state] * Math.min(1 / (x1 - x0), STAGE.aspect / (y1 - y0));
+    rig.scale *= fill * Math.min(1 / (x1 - x0), aspect / (y1 - y0));
     const [a0, a1, b0, b1] = box();
-    rig.offset = [rig.offset[0] - ((a0 + a1) / 2 - 0.5), rig.offset[1] - ((b0 + b1) / 2 - STAGE.aspect / 2)];
+    rig.offset = [rig.offset[0] - ((a0 + a1) / 2 - 0.5), rig.offset[1] - ((b0 + b1) / 2 - aspect / 2)];
   }
   return rig;
 }
 
-export const RIGS: Record<ExplodeState, Rig> = { rest: fitRig("rest"), layers: fitRig("layers"), masks: fitRig("masks") };
+/** Each view's stage: the jug at rest, and the view itself. */
+export const RIGS: Record<View, Record<"rest" | "view", Rig>> = {
+  layers: { rest: fitRig("layers", "rest"), view: fitRig("layers", "layers") },
+  masks: { rest: fitRig("masks", "rest"), view: fitRig("masks", "masks") },
+};
 
-/** The tags: one per layer when they fan out (alternately above and below, on the dark between them), one for the masks. */
-export const TAGS: Tag[] = [
-  ...LAYERS.map((layer, k): Tag => {
+/**
+ * The tags: one per fanned-out layer, in two rows (alternately above and below
+ * the whole fan, each over its layer's middle, clear of the layers behind it),
+ * and one for the masks.
+ */
+const LAYER_SPAN = (() => {
+  const ys = LAYERS.flatMap((l) => corners(l, "layers")).map((p) => project(p, RIGS.layers.view)[1]);
+  return [Math.min(...ys), Math.max(...ys)];
+})();
+
+export const TAGS: Record<View, Tag[]> = {
+  layers: LAYERS.map((layer, k): Tag => {
     const { x, y, z } = layer.poses.layers;
     const above = k % 2 === 0;
-    const [px, py] = project([x, y + (above ? -1 : 1) * (layer.height / 2), z], RIGS.layers);
+    const [px] = project([x, y + (above ? -1 : 1) * (layer.height / 2), z], RIGS.layers.view);
     const id = layer.id.slice("layer:".length);
-    return { id: `tag:${id}`, state: "layers", ...LAYER_COPY[id], x: px, y: py, align: above ? "above" : "below" };
+    return { id: `tag:${id}`, ...LAYER_COPY[id], x: px, y: above ? LAYER_SPAN[0] : LAYER_SPAN[1], align: above ? "above" : "below" };
   }),
-  (() => {
-    const [px, py] = project([0, -(CANVAS_H / 2 + 0.45 * M), 0.6 * M], RIGS.masks);
-    return { id: "tag:objects", state: "masks" as const, ...MASKS_COPY, x: px, y: py, align: "above" as const };
-  })(),
-];
+  // Over the middle of the masks, just above the highest of them on screen.
+  masks: [
+    (() => {
+      const xy = OBJECTS.flatMap((o) => corners(o, "masks")).map((p) => project(p, RIGS.masks.view));
+      const xs = xy.map((p) => p[0]);
+      return { id: "tag:objects", ...MASKS_COPY, x: (Math.min(...xs) + Math.max(...xs)) / 2, y: Math.min(...xy.map((p) => p[1])), align: "above" as const };
+    })(),
+  ],
+};

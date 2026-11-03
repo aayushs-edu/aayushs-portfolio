@@ -1,8 +1,8 @@
 "use client";
 
-import { useRef, useState, type CSSProperties, type MouseEvent, type PointerEvent } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import media from "../stations/paintwise/paintwise.generated.json";
-import { ITEMS, LAYER_COPY, RIGS, STAGE, TAGS, type ExplodeState, type Rig } from "./explode";
+import { ITEMS, LAYER_COPY, RIGS, STAGE, TAGS, type Rig, type View } from "./explode";
 import css from "./PaintwiseSection.module.css";
 
 const cqw = (v: number) => `${(v * 100).toFixed(3)}cqw`;
@@ -18,20 +18,92 @@ function rigTransform(rig: Rig): string {
   ].join(" ");
 }
 
-/** Hover (or keyboard focus) takes it apart; a click (or a tap, after the first) shows what the models see. */
-const NEXT_TAP: Record<ExplodeState, ExplodeState> = { rest: "layers", layers: "masks", masks: "rest" };
-
-const STATE_LABEL: Record<ExplodeState, string> = {
-  rest: "the still life, whole",
-  layers: "taken apart into the six layers its pipeline makes",
-  masks: "every object's mask pushed out to its depth",
+const VIEW_TEXT: Record<View, { title: string; label: string }> = {
+  layers: {
+    title: "The layers",
+    label: `The still life taken apart into the six layers its pipeline makes: ${media.layers.map((l) => `${LAYER_COPY[l.id]?.title}, ${LAYER_COPY[l.id]?.line}`).join("; ")}.`,
+  },
+  masks: {
+    title: "What the models see",
+    label: "Every object SAM 2.1 segments in the still life, pushed out to the depth Depth Anything V2 gives it.",
+  },
 };
 
-const HINT: Record<ExplodeState, { pointer: string; touch: string }> = {
-  rest: { pointer: "Hover to take it apart", touch: "Tap to take it apart" },
-  layers: { pointer: "Click to see what the models see", touch: "Tap to see what the models see" },
-  masks: { pointer: "Click to go back to the layers", touch: "Tap to put it back together" },
+/** The objects only ever show in the masks view. */
+const VIEW_ITEMS: Record<View, typeof ITEMS> = {
+  layers: ITEMS.filter((item) => item.kind === "layer"),
+  masks: ITEMS,
 };
+
+/** One exploded view: the jug, which comes apart into the view once it scrolls into sight. */
+function ExplodedView({ view }: { view: View }) {
+  const [apart, setApart] = useState(false);
+  const stageRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const stage = stageRef.current;
+    if (!stage) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return;
+        setApart(true);
+        observer.disconnect();
+      },
+      { threshold: 0.45 },
+    );
+    observer.observe(stage);
+    return () => observer.disconnect();
+  }, []);
+
+  const state = apart ? view : "rest";
+  const { aspect } = STAGE.view[view];
+  return (
+    <figure className={css.view}>
+      <div
+        ref={stageRef}
+        className={css.stage}
+        data-apart={apart}
+        style={{ aspectRatio: `1 / ${aspect}`, perspective: cqw(STAGE.perspective) } as CSSProperties}
+        role="img"
+        aria-label={VIEW_TEXT[view].label}
+      >
+        <span className={css.rig} style={{ transform: rigTransform(apart ? RIGS[view].view : RIGS[view].rest) }}>
+          {VIEW_ITEMS[view].map((item, i) => {
+            const p = item.poses[state];
+            return (
+              <span
+                key={item.id}
+                className={css.item}
+                data-kind={item.kind}
+                style={
+                  {
+                    left: cqw(-item.width / 2),
+                    top: cqw(-item.height / 2),
+                    width: cqw(item.width),
+                    height: cqw(item.height),
+                    transform: `translate3d(${cqw(p.x)}, ${cqw(p.y)}, ${cqw(p.z)})`,
+                    opacity: p.opacity,
+                    "--i": item.kind === "layer" ? i : 4 + (i - 6) * 0.35,
+                  } as CSSProperties
+                }
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element -- hashed, pre-sized layers from public/showcase */}
+                <img src={item.src} alt="" loading="lazy" decoding="async" draggable={false} />
+              </span>
+            );
+          })}
+        </span>
+        {TAGS[view].map((tag) => (
+          <span key={tag.id} className={css.tag} data-align={tag.align} style={{ left: cqw(tag.x), top: cqw(tag.y) }} aria-hidden="true">
+            <span className={css.tagTitle}>{tag.title}</span>
+            <span className={css.tagLine}>{tag.line}</span>
+          </span>
+        ))}
+      </div>
+      <figcaption className={css.viewTitle}>{VIEW_TEXT[view].title}</figcaption>
+    </figure>
+  );
+}
 
 interface PaintwiseSectionProps {
   /** Ids for the story button and the figure, so focus can come back to them. */
@@ -44,112 +116,33 @@ interface PaintwiseSectionProps {
 }
 
 /**
- * Paintwise, first under the hero: the pitch, the exploded still life (hover
- * fans out its pipeline's layers, a click pushes the masks out to their
- * depths), and beside it the pipeline figure and the other still lifes run
- * through it.
+ * Paintwise, first under the hero: the pitch beside the pipeline figure, then
+ * the old room's two exploded views of its still life side by side, each
+ * coming apart as it scrolls into sight: the layers its pipeline makes, and
+ * what the models see.
  */
 export default function PaintwiseSection({ storyId, figureId, onStory, onFigure }: PaintwiseSectionProps) {
-  const [state, setState] = useState<ExplodeState>("rest");
-  const pointer = useRef("mouse");
   const figureRef = useRef<HTMLImageElement | null>(null);
-
-  const onEnter = (event: PointerEvent) => {
-    if (event.pointerType === "mouse") setState((s) => (s === "rest" ? "layers" : s));
-  };
-  const onLeave = (event: PointerEvent) => {
-    if (event.pointerType === "mouse") setState("rest");
-  };
-  const onClick = (event: MouseEvent) => {
-    // A mouse is already hovering (layers), so its click toggles the masks; touch and keys step through.
-    const mouse = event.detail > 0 && pointer.current === "mouse";
-    setState((s) => (mouse ? (s === "masks" ? "layers" : "masks") : NEXT_TAP[s]));
-  };
+  // Both stages are the same height: each takes width in proportion to its shape.
+  const columns = `${(1 / STAGE.view.layers.aspect).toFixed(4)}fr ${(1 / STAGE.view.masks.aspect).toFixed(4)}fr`;
 
   return (
     <section className={css.section} aria-labelledby="paintwise-title">
-      <div className={css.lead}>
-        <h2 id="paintwise-title" className={css.title}>
-          Paintwise
-        </h2>
-        <p className={css.pitch}>Teaches you to paint a picture the way an artist would, one step at a time.</p>
-        <p className={css.links}>
-          <button id={storyId} type="button" className={css.link} onClick={onStory}>
-            The story
-          </button>
-          <a className={css.link} href="/paintwise">
-            Read the build log <span aria-hidden="true">→</span>
-          </a>
-        </p>
-      </div>
-
-      <div className={css.jug}>
-        <button
-          type="button"
-          className={css.stage}
-          data-state={state}
-          style={{ aspectRatio: `1 / ${STAGE.aspect}`, perspective: cqw(STAGE.perspective) } as CSSProperties}
-          aria-label={`Paintwise's pipeline on a still life: ${STATE_LABEL[state]}`}
-          aria-describedby="paintwise-layers"
-          onPointerDown={(event) => (pointer.current = event.pointerType)}
-          onPointerEnter={onEnter}
-          onPointerLeave={onLeave}
-          onFocus={(event) => {
-            if (event.currentTarget.matches(":focus-visible")) setState((s) => (s === "rest" ? "layers" : s));
-          }}
-          onBlur={() => setState("rest")}
-          onClick={onClick}
-        >
-          <span className={css.rig} style={{ transform: rigTransform(RIGS[state]) }}>
-            {ITEMS.map((item, i) => {
-              const p = item.poses[state];
-              return (
-                <span
-                  key={item.id}
-                  className={css.item}
-                  data-kind={item.kind}
-                  style={
-                    {
-                      left: cqw(-item.width / 2),
-                      top: cqw(-item.height / 2),
-                      width: cqw(item.width),
-                      height: cqw(item.height),
-                      transform: `translate3d(${cqw(p.x)}, ${cqw(p.y)}, ${cqw(p.z)})`,
-                      opacity: p.opacity,
-                      "--i": item.kind === "layer" ? i : i * 0.3,
-                    } as CSSProperties
-                  }
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element -- hashed, pre-sized layers from public/showcase */}
-                  <img src={item.src} alt="" loading="lazy" decoding="async" draggable={false} />
-                </span>
-              );
-            })}
-          </span>
-          {TAGS.map((tag) => (
-            <span
-              key={tag.id}
-              className={css.tag}
-              data-align={tag.align}
-              data-on={tag.state === state}
-              style={{ left: cqw(tag.x), top: cqw(tag.y) }}
-              aria-hidden="true"
-            >
-              <span className={css.tagTitle}>{tag.title}</span>
-              <span className={css.tagLine}>{tag.line}</span>
-            </span>
-          ))}
-        </button>
-        <p className={css.hint} aria-hidden="true">
-          <span className={css.hintPointer}>{HINT[state].pointer}</span>
-          <span className={css.hintTouch}>{HINT[state].touch}</span>
-        </p>
-        <p id="paintwise-layers" className={css.srOnly}>
-          {`Its layers: ${media.layers.map((l) => `${LAYER_COPY[l.id]?.title}, ${LAYER_COPY[l.id]?.line}`).join("; ")}.`}
-        </p>
-      </div>
-
-      <div className={css.side}>
+      <div className={css.top}>
+        <div className={css.lead}>
+          <h2 id="paintwise-title" className={css.title}>
+            Paintwise
+          </h2>
+          <p className={css.pitch}>Teaches you to paint a picture the way an artist would, one step at a time.</p>
+          <p className={css.links}>
+            <button id={storyId} type="button" className={css.link} onClick={onStory}>
+              The story
+            </button>
+            <a className={css.link} href="/paintwise">
+              Read the build log <span aria-hidden="true">→</span>
+            </a>
+          </p>
+        </div>
         <figure className={css.figure}>
           <button id={figureId} type="button" className={css.figureButton} onClick={() => onFigure(figureRef.current?.getBoundingClientRect() ?? null)}>
             {/* eslint-disable-next-line @next/next/no-img-element -- a hashed, pre-sized figure from public/showcase */}
@@ -164,17 +157,11 @@ export default function PaintwiseSection({ storyId, figureId, onStory, onFigure 
           </button>
           <figcaption className={css.caption}>Figure 1 · the Paintwise pipeline · click to enlarge</figcaption>
         </figure>
-        <ul className={css.stills} aria-label="Other still lifes run through the pipeline">
-          {media.stillLifes.map((still) => (
-            <li key={still.src}>
-              {/* eslint-disable-next-line @next/next/no-img-element -- hashed, pre-sized still lifes from public/showcase */}
-              <img src={still.src} alt="" loading="lazy" decoding="async" />
-            </li>
-          ))}
-        </ul>
-        <p className={css.caption} aria-hidden="true">
-          Other still lifes, run through the same pipeline
-        </p>
+      </div>
+
+      <div className={css.views} style={{ "--columns": columns } as CSSProperties}>
+        <ExplodedView view="layers" />
+        <ExplodedView view="masks" />
       </div>
     </section>
   );

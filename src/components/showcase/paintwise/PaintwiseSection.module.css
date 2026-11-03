@@ -1,47 +1,27 @@
-/* Paintwise, first under the hero: the pitch and the exploded still life on
-   the left; the pipeline figure and the other still lifes on the right. */
+/* Paintwise, first under the hero: the pitch beside the pipeline figure, then
+   the two exploded views side by side, wider than the rest of the page. */
 
 .section {
-  display: grid;
-  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
-  grid-template-rows: auto 1fr;
-  grid-template-areas:
-    "lead side"
-    "jug side";
-  column-gap: clamp(32px, 5vw, 72px);
   max-width: 1200px;
   margin: 0 auto;
   padding: 112px 24px 48px;
   color: #fff;
 }
 
-.lead {
-  grid-area: lead;
-}
-
-.jug {
-  grid-area: jug;
-}
-
-.side {
-  grid-area: side;
-  align-self: start;
-  padding-top: 12px;
+.top {
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+  align-items: center;
+  gap: 32px clamp(32px, 5vw, 72px);
 }
 
 @media (max-width: 860px) {
   .section {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: none;
-    grid-template-areas:
-      "lead"
-      "jug"
-      "side";
     padding-top: 88px;
   }
 
-  .side {
-    padding-top: 40px;
+  .top {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
@@ -93,133 +73,7 @@
 }
 
 /* ----------------------------------------------------------------------- */
-/* The exploded still life: a CSS 3D stage (explode.ts). 1 canvas width is  */
-/* 100cqw before the rig's scale; the rig sits at the stage's centre.        */
-
-.stage {
-  position: relative;
-  display: block;
-  width: 100%;
-  margin-top: 24px;
-  padding: 0;
-  border: 0;
-  background: none;
-  container-type: inline-size;
-  perspective-origin: 50% 50%;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  touch-action: manipulation;
-}
-
-.stage:focus-visible {
-  outline: 2px solid #ece4d4;
-  outline-offset: 4px;
-  border-radius: 6px;
-}
-
-.rig {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 0;
-  height: 0;
-  transform-style: preserve-3d;
-  transition: transform 900ms cubic-bezier(0.22, 0.8, 0.2, 1);
-}
-
-.item {
-  position: absolute;
-  display: block;
-  transition:
-    transform 900ms cubic-bezier(0.22, 0.8, 0.2, 1),
-    opacity 500ms ease;
-  transition-delay: calc(var(--i) * 45ms);
-}
-
-.item img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  user-select: none;
-}
-
-/* The layers are canvases: a flat colour until the image is in, and a soft shadow. */
-.item[data-kind="layer"] {
-  background: #1d1d1d;
-  box-shadow: 0 18px 40px -18px rgb(0 0 0 / 0.85);
-}
-
-/* Each tag pins above or below its layer, and comes in once the layers have landed. */
-.tag {
-  position: absolute;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  max-width: 30cqw;
-  transform: translate(-50%, calc(-100% - 8px));
-  text-align: center;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 180ms ease;
-}
-
-.tag[data-align="below"] {
-  transform: translate(-50%, 8px);
-}
-
-.tag[data-on="true"] {
-  opacity: 1;
-  transition: opacity 400ms ease 650ms;
-}
-
-.tagTitle {
-  font: 600 12px/1.3 var(--font-geist-mono), monospace;
-  white-space: nowrap;
-  color: #fff;
-}
-
-.tagLine {
-  font: 400 11px/1.35 var(--font-geist-mono), monospace;
-  text-wrap: balance;
-  color: rgb(255 255 255 / 0.6);
-}
-
-@media (max-width: 640px) {
-  .tagTitle {
-    font-size: 10px;
-  }
-
-  .tagLine {
-    display: none;
-  }
-}
-
-.hint {
-  margin: 12px 0 0;
-  font: 400 12px/1.5 var(--font-geist-mono), monospace;
-  letter-spacing: 0.04em;
-  text-align: center;
-  color: rgb(255 255 255 / 0.5);
-}
-
-.hintTouch {
-  display: none;
-}
-
-@media (hover: none) {
-  .hintPointer {
-    display: none;
-  }
-
-  .hintTouch {
-    display: inline;
-  }
-}
-
-/* ----------------------------------------------------------------------- */
-/* The figure (white paper, click to enlarge) and the other still lifes     */
+/* The figure (white paper, click to enlarge)                               */
 
 .figure {
   margin: 0;
@@ -258,40 +112,135 @@
   color: rgb(255 255 255 / 0.55);
 }
 
-.stills {
+/* ----------------------------------------------------------------------- */
+/* The two exploded views: CSS 3D stages (explode.ts), the same height,     */
+/* each as wide as its shape needs. They run wider than the section.        */
+
+.views {
+  --wide: min(1392px, 100vw - 48px);
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
-  margin: 32px 0 0;
-  padding: 0;
-  list-style: none;
+  grid-template-columns: var(--columns);
+  gap: 32px;
+  width: var(--wide);
+  margin: 72px calc((100% - var(--wide)) / 2) 0;
 }
 
-.stills img {
+@media (max-width: 860px) {
+  .views {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 48px;
+    margin-top: 56px;
+  }
+}
+
+.view {
+  min-width: 0;
+  margin: 0;
+}
+
+/* 1 canvas width is 100cqw before the rig's scale; the rig sits at the stage's centre. */
+.stage {
+  position: relative;
+  container-type: inline-size;
+  perspective-origin: 50% 50%;
+}
+
+.rig {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0;
+  height: 0;
+  transform-style: preserve-3d;
+  transition: transform 1400ms cubic-bezier(0.22, 0.8, 0.2, 1);
+}
+
+.item {
+  position: absolute;
+  display: block;
+  transition:
+    transform 1400ms cubic-bezier(0.22, 0.8, 0.2, 1),
+    opacity 700ms ease;
+  transition-delay: calc(var(--i) * 70ms);
+}
+
+.item img {
   display: block;
   width: 100%;
-  aspect-ratio: 1;
-  object-fit: cover;
-  border-radius: 3px;
+  height: 100%;
+  pointer-events: none;
+  user-select: none;
 }
 
-.srOnly {
+/* The layers are canvases: a flat colour until the image is in, and a soft shadow. */
+.item[data-kind="layer"] {
+  background: #1d1d1d;
+  box-shadow: 0 18px 40px -18px rgb(0 0 0 / 0.85);
+}
+
+/* Each tag pins above or below its layer, and comes in once the layers have landed. */
+.tag {
   position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 24cqw;
+  transform: translate(-50%, calc(-100% - 8px));
+  text-align: center;
+  /* A soft dark halo, so a tag stays legible where it crosses the layer behind. */
+  text-shadow:
+    0 1px 2px rgb(13 13 13 / 0.95),
+    0 0 10px rgb(13 13 13 / 0.9);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 500ms ease 1300ms;
+}
+
+.tag[data-align="below"] {
+  transform: translate(-50%, 8px);
+}
+
+.stage[data-apart="true"] .tag {
+  opacity: 1;
+}
+
+.tagTitle {
+  font: 600 12px/1.3 var(--font-geist-mono), monospace;
   white-space: nowrap;
-  border: 0;
+  color: #fff;
+}
+
+.tagLine {
+  font: 400 11px/1.35 var(--font-geist-mono), monospace;
+  text-wrap: balance;
+  color: rgb(255 255 255 / 0.6);
+}
+
+@media (max-width: 640px) {
+  .tagTitle {
+    font-size: 10px;
+    white-space: normal;
+  }
+
+  .tagLine {
+    display: none;
+  }
+}
+
+.viewTitle {
+  margin: 14px 0 0;
+  font: 400 12px/1.5 var(--font-geist-mono), monospace;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-align: center;
+  color: rgb(255 255 255 / 0.55);
 }
 
 @media (prefers-reduced-motion: reduce) {
   .rig,
   .item,
   .tag,
-  .tag[data-on="true"],
   .figureButton img {
     transition: none;
   }

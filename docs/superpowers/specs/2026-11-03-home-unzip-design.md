@@ -11,7 +11,7 @@ The user wanted something simpler than a 3D room with a moving camera, while kee
 - **Drop the whole 3D scene.** The sky prototype (painted dusk and ASCII night over the room) is deleted too, not kept on a branch.
 - **This round:** clear the ground, rebuild Paintwise without 3D, and show the other groups as a plain grid for now. Then design Paintings, Animation, Games and Hackathons one at a time.
 - **The hero unzips like an upside-down zip** (chosen over "the page lives inside the zip" after scrolling both as prototypes). The line splits into two raw edges, with no teeth or pull.
-- **Paintwise:** the jug and the figure side by side. Hover fans out the layers; a click pushes the masks out. Built with CSS 3D ("do the simplest one").
+- **Paintwise:** built with CSS 3D ("do the simplest one"). First the jug and the figure side by side, with hover to fan out the layers and a click for the masks. Then, because that was too cramped: the still lifes removed, and both exploded views side by side, coming apart as they scroll into view.
 - Left to me, for stability and efficiency: commit the user's pending hero edits separately first; take three.js and R3F off the page.
 
 ## 1. The zip
@@ -47,28 +47,27 @@ The user wanted something simpler than a 3D room with a moving camera, while kee
 
 ## 2. Paintwise
 
-**Layout** (`showcase/paintwise/PaintwiseSection.tsx`):
-- **Left:** the title, the pitch, *The story* (opens `#work/paintwise`) and *Read the build log →* (`/paintwise`), with the exploded still life under them.
-- **Right:** the pipeline figure on white (a click opens it full size via `HandOff`), and the eight other still lifes under it.
-- On narrow screens everything stacks.
+Revised the same day at the user's request. The first layout (the jug beside the figure, with the still lifes under it) was "too cramped", so the still lifes were removed and both of the room's exploded views are shown.
 
-**The exploded still life** (`showcase/paintwise/explode.ts`, pure):
-- **Three states:**
-  - `rest`: the canvas.
-  - `layers`: the six layers fan out right and back, seen from the right (rotateX −7°, rotateY −49°), with a tag on each, alternating above and below.
-  - `masks`: the layers dim to 0.25 and push back, the masks layer gives way, and its 28 objects push out to their depths, seen from the left (−6°, 43°). One tag: "SAM 2.1 × Depth Anything V2".
+**Layout** (`showcase/paintwise/PaintwiseSection.tsx`):
+- **Top:** the title, the pitch, *The story* (opens `#work/paintwise`) and *Read the build log →* (`/paintwise`) on the left; the pipeline figure on white on the right (a click opens it full size via `HandOff`).
+- **Under them:** the two exploded views side by side, wider than the section (up to 1392px):
+  - *The layers* on the left;
+  - *What the models see* on the right.
+- The two stages are the same height, each as wide as its shape needs. On narrow screens everything stacks.
+
+**The exploded views** (`showcase/paintwise/explode.ts`, pure):
+- **Each view has its own stage** (`STAGE.view`):
+  - *layers*: aspect 0.6, filling 0.92. The six layers fan out right and back, seen from the right (rotateX −7°, rotateY −49°). A tag per layer, in two rows above and below the whole fan, each over its layer's middle.
+  - *masks*: aspect 0.66, filling 0.88. The layers dim to 0.25 and push back, the masks layer gives way, and its 28 objects push out to their depths, seen from the left (−6°, 43°). One tag, "SAM 2.1 × Depth Anything V2", over the middle of the masks.
+- **Coming apart:** each stage starts as the jug, square on and filling 0.8 of its stage. Once 45% of it is in view, it comes apart into its view. This happens once, staggered layer by layer; the tags come in after the layers land.
 - **Geometry:** spacing and angles are the old room's, with metres converted to canvas widths.
-- **The stage:**
-  - It is a CSS 3D scene: a button with `perspective` and `container-type: inline-size`.
-  - One canvas width is `100cqw` before the rig's scale.
-  - Each state's rig (turn, scale, offset) is fitted to the stage by projecting every visible corner with the browser's own maths, so the stage needs no measuring at runtime.
-  - The tags are 2D, pinned at their projected points.
-- **Interaction:**
-  - **Mouse:** hover takes it apart, and a click toggles the masks.
-  - **Touch and keyboard:** taps or Enter step rest → layers → masks → rest. Focus-visible shows the layers.
-  - A hint under the stage says what the next step does, with separate wording for hover and touch.
-- **Reduced motion:** no transitions; the states switch at once.
-- **Screen readers:** the button's label names the state, and a hidden line lists the layers.
+- **The stages:**
+  - Each is a CSS 3D scene with `perspective` and `container-type: inline-size`; one canvas width is `100cqw` before the rig's scale.
+  - Each rig (turn, scale, offset) is fitted to its stage by projecting every visible corner with the browser's own maths, so nothing is measured at runtime.
+  - The tags are 2D, with a dark halo for legibility.
+- **Reduced motion:** no transitions; each view is simply there once it's in view.
+- **Screen readers:** each stage is an image whose label describes its view (the layers view lists the layers).
 
 ## 3. The rest of the page
 
@@ -90,12 +89,13 @@ The user wanted something simpler than a 3D room with a moving camera, while kee
   - the three GLB models
   - the eight storyboard stills
   - the film loops (each film's poster shows in the grid)
+  - Paintwise's eight other still lifes (taken off the section at the user's request)
 - **Retiring the old pages** (`/paintings`, `/animation`, `/games`, `/hackathons`, `/paintwise`).
 
 ## 6. Verification
 
 - `npm run showcase:check` covers both pure modules and the media:
   - **The zip:** closed at the top; widens downward and with scroll; gone exactly at `goneAt`; the line runs on smoothly; the clip-paths trace the line when closed and never cross when open.
-  - **The exploded view:** the states' contents; every state fits, centred, at its fill, in front of the viewer; the tags sit on the stage.
+  - **The exploded views:** the states' contents; in both stages every state fits, centred, at its fill, in front of the viewer; the jug is the same size in both; the tags sit on their stages.
   - **The works:** each is in a group, and slugs are unique.
 - `npx tsc --noEmit` and `npm run lint` run as usual.

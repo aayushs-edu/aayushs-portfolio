@@ -4,7 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { CURVE, ZIP, type SplitLayout } from "../../src/components/hero/splitConfig";
 import { CLOSED, goneAt, lineAt, openAt, swing, zipClipPaths, zipFor } from "../../src/components/hero/zipper";
-import { CANVAS_H, corners, EXPLODE_STATES, ITEMS, RIGS, STAGE, TAGS, toStage, project } from "../../src/components/showcase/paintwise/explode";
+import { CANVAS_H, corners, EXPLODE_STATES, fillOf, ITEMS, RIGS, STAGE, TAGS, toStage, project, VIEWS } from "../../src/components/showcase/paintwise/explode";
 import { GROUP_ORDER, WORKS } from "../../src/components/showcase/works";
 
 let passed = 0;
@@ -141,10 +141,16 @@ check("explode: six layers then every object, with a finite pose in each state",
   }
 });
 
-check("explode: at rest it's the canvas, square on, alone", () => {
-  assert(RIGS.rest.turn[0] === 0 && RIGS.rest.turn[1] === 0, "turned at rest");
+check("explode: at rest it's the canvas, square on, alone, the same size in both stages (they're the same height)", () => {
+  for (const view of VIEWS) assert(RIGS[view].rest.turn[0] === 0 && RIGS[view].rest.turn[1] === 0, `${view}: turned at rest`);
   const shown = ITEMS.filter((i) => i.poses.rest.opacity > 0.01).map((i) => i.id);
   assert(shown.join() === "layer:original", `shown at rest: ${shown}`);
+  // Same height stages: the jug's height in stage heights matches.
+  const height = (view: (typeof VIEWS)[number]) => {
+    const ys = corners(ITEMS[0], "rest").map((p) => project(p, RIGS[view].rest)[1]);
+    return (Math.max(...ys) - Math.min(...ys)) / STAGE.view[view].aspect;
+  };
+  assert(near(height("layers"), height("masks"), 0.01), `jug ${height("layers").toFixed(3)} vs ${height("masks").toFixed(3)} of the stage's height`);
 });
 
 check("explode: fanned out, every layer shows and no object does; for the masks, the objects show and the masks layer doesn't", () => {
@@ -159,18 +165,23 @@ check("explode: fanned out, every layer shows and no object does; for the masks,
   }
 });
 
-for (const state of EXPLODE_STATES) {
-  check(`explode ${state}: inside the stage, centred, filling about ${STAGE.fill[state]} of it, in front of the viewer`, () => {
-    const points = ITEMS.filter((i) => i.poses[state].opacity > 0.01).flatMap((i) => corners(i, state));
-    const xy = points.map((p) => project(p, RIGS[state]));
-    const [x0, x1] = [Math.min(...xy.map((p) => p[0])), Math.max(...xy.map((p) => p[0]))];
-    const [y0, y1] = [Math.min(...xy.map((p) => p[1])), Math.max(...xy.map((p) => p[1]))];
-    assert(x0 >= 0 && x1 <= 1 && y0 >= 0 && y1 <= STAGE.aspect, `box ${[x0, x1, y0, y1].map((v) => v.toFixed(3))}`);
-    assert(near((x0 + x1) / 2, 0.5, 0.005) && near((y0 + y1) / 2, STAGE.aspect / 2, 0.005), "off centre");
-    const share = Math.max(x1 - x0, (y1 - y0) / STAGE.aspect);
-    assert(near(share, STAGE.fill[state], 0.01), `fills ${share.toFixed(3)}`);
-    for (const p of points) assert(toStage(p, RIGS[state])[2] < STAGE.perspective * 0.6, "too close to the viewer");
-  });
+for (const view of VIEWS) {
+  for (const state of ["rest", view] as const) {
+    const rig = state === "rest" ? RIGS[view].rest : RIGS[view].view;
+    const fill = fillOf(view, state);
+    check(`explode ${view} stage, ${state}: inside, centred, filling about ${fill}, in front of the viewer`, () => {
+      const { aspect } = STAGE.view[view];
+      const points = ITEMS.filter((i) => i.poses[state].opacity > 0.01).flatMap((i) => corners(i, state));
+      const xy = points.map((p) => project(p, rig));
+      const [x0, x1] = [Math.min(...xy.map((p) => p[0])), Math.max(...xy.map((p) => p[0]))];
+      const [y0, y1] = [Math.min(...xy.map((p) => p[1])), Math.max(...xy.map((p) => p[1]))];
+      assert(x0 >= 0 && x1 <= 1 && y0 >= 0 && y1 <= aspect, `box ${[x0, x1, y0, y1].map((v) => v.toFixed(3))}`);
+      assert(near((x0 + x1) / 2, 0.5, 0.005) && near((y0 + y1) / 2, aspect / 2, 0.005), "off centre");
+      const share = Math.max(x1 - x0, (y1 - y0) / aspect);
+      assert(near(share, fill, 0.01), `fills ${share.toFixed(3)}`);
+      for (const p of points) assert(toStage(p, rig)[2] < STAGE.perspective * 0.6, "too close to the viewer");
+    });
+  }
 }
 
 check("explode: the layers fan out toward the back, and the masks sit in front of their layers", () => {
@@ -181,11 +192,13 @@ check("explode: the layers fan out toward the back, and the masks sit in front o
   assert(CANVAS_H > 0.5 && CANVAS_H < 1.2, `canvas height ${CANVAS_H}`);
 });
 
-check("explode: a tag per layer when fanned out, one for the masks, all on the stage", () => {
-  assert(TAGS.filter((t) => t.state === "layers").length === 6 && TAGS.filter((t) => t.state === "masks").length === 1, "tag count");
-  for (const t of TAGS) {
-    assert(!!t.title && !!t.line, `${t.id} text`);
-    assert(t.x > 0.02 && t.x < 0.98 && t.y > 0 && t.y < STAGE.aspect, `${t.id} at ${t.x.toFixed(3)}, ${t.y.toFixed(3)}`);
+check("explode: a tag per layer when fanned out, one for the masks, each pinned on its stage", () => {
+  assert(TAGS.layers.length === 6 && TAGS.masks.length === 1, "tag count");
+  for (const view of VIEWS) {
+    for (const t of TAGS[view]) {
+      assert(!!t.title && !!t.line, `${t.id} text`);
+      assert(t.x > 0.02 && t.x < 0.98 && t.y > 0 && t.y < STAGE.view[view].aspect, `${view} ${t.id} at ${t.x.toFixed(3)}, ${t.y.toFixed(3)}`);
+    }
   }
 });
 
