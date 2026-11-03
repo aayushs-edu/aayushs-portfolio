@@ -1,6 +1,5 @@
 "use client";
 
-import type { FocusEvent } from "react";
 import css from "./WorkList.module.css";
 import { isExternal, type Work } from "./works";
 
@@ -11,54 +10,38 @@ export interface WorkListGroup {
 
 interface WorkListProps {
   groups: WorkListGroup[];
-  /** "hidden": for screen readers and the keyboard, under the 3D scene. "grid": the calm fallback page. */
-  mode: "hidden" | "grid";
   onOpen: (slug: string) => void;
-  /** A work's button took focus (`visible`: it shows a focus ring). */
-  onFocusWork?: (slug: string, visible: boolean) => void;
-  onBlurWork?: (slug: string) => void;
 }
 
 export const workButtonId = (slug: string) => `work-open-${slug}`;
 
 /**
- * Every work as semantic DOM: a heading per group, a heading, text and real
- * links per work, and one button per work that opens its detail view (the
- * only tab stop per work, in path order). Screen readers and search engines
- * read this, not the canvas. Without 3D it is the page itself: a grid.
+ * Every work of a group as a grid: a heading per group, and per work its
+ * image, title and line, with its story and real links for screen readers and
+ * search engines, and one button that opens its detail view (the only tab
+ * stop per work).
  */
-export default function WorkList({ groups, mode, onOpen, onFocusWork, onBlurWork }: WorkListProps) {
-  const grid = mode === "grid";
-  const focus = (slug: string) => (event: FocusEvent<HTMLButtonElement>) => onFocusWork?.(slug, event.currentTarget.matches(":focus-visible"));
-
+export default function WorkList({ groups, onOpen }: WorkListProps) {
   return (
-    <section className={grid ? css.page : css.hidden} aria-label="Work">
+    <section className={css.page} aria-label="Work">
       {groups.map((group, g) => (
-        <section key={group.title} className={css.group} aria-labelledby={`${mode}-group-${g}`}>
-          <h2 id={`${mode}-group-${g}`} className={css.groupTitle}>
+        <section key={group.title} className={css.group} aria-labelledby={`group-${g}`}>
+          <h2 id={`group-${g}`} className={css.groupTitle}>
             {group.title}
           </h2>
           <ol className={css.grid}>
             {group.works.map((work) => (
-              <li key={work.slug} className={css.item} data-wide={grid && !!work.media.figure}>
-                <article aria-labelledby={`${mode}-title-${work.slug}`}>
-                  {grid &&
-                    (work.media.figure ? (
-                      <div className={css.figure}>
-                        {/* eslint-disable-next-line @next/next/no-img-element -- a hashed figure from public/showcase */}
-                        <img src={work.media.figure} alt={`${work.title}: how it works`} loading="lazy" decoding="async" />
-                      </div>
-                    ) : (
-                      <div className={css.thumb} data-kind={work.kind}>
-                        {/* eslint-disable-next-line @next/next/no-img-element -- hashed, pre-sized assets from public/hero */}
-                        <img src={work.media.image} alt="" loading="lazy" decoding="async" />
-                      </div>
-                    ))}
-                  <h3 id={`${mode}-title-${work.slug}`} className={css.title}>
+              <li key={work.slug} className={css.item}>
+                <article aria-labelledby={`title-${work.slug}`}>
+                  <div className={css.thumb} data-kind={work.kind}>
+                    {/* eslint-disable-next-line @next/next/no-img-element -- hashed, pre-sized assets from public/hero and public/showcase */}
+                    <img src={work.media.image} alt="" loading="lazy" decoding="async" />
+                  </div>
+                  <h3 id={`title-${work.slug}`} className={css.title}>
                     {work.title}
                   </h3>
                   <p className={css.meta}>{[work.year, work.line].filter(Boolean).join(" · ")}</p>
-                  <div className={grid ? css.srOnly : undefined}>
+                  <div className={css.srOnly}>
                     {work.story.map((paragraph, i) => (
                       <p key={i}>{paragraph}</p>
                     ))}
@@ -73,14 +56,7 @@ export default function WorkList({ groups, mode, onOpen, onFocusWork, onBlurWork
                       ))}
                     </ul>
                   </div>
-                  <button
-                    id={workButtonId(work.slug)}
-                    type="button"
-                    className={css.open}
-                    onClick={() => onOpen(work.slug)}
-                    onFocus={focus(work.slug)}
-                    onBlur={() => onBlurWork?.(work.slug)}
-                  >
+                  <button id={workButtonId(work.slug)} type="button" className={css.open} onClick={() => onOpen(work.slug)}>
                     <span className={css.srOnly}>Open {work.title}</span>
                   </button>
                 </article>

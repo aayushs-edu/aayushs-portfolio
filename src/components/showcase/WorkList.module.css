@@ -1,7 +1,6 @@
-/* The semantic list of works: hidden under the 3D scene, or the calm fallback page. */
+/* The works of each group as a grid; their stories and links are there for screen readers. */
 
-.srOnly,
-.hidden {
+.srOnly {
   position: absolute;
   width: 1px;
   height: 1px;
@@ -13,17 +12,13 @@
   border: 0;
 }
 
-.hidden .srOnly {
-  position: static;
-}
-
 /* ----------------------------------------------------------------------- */
-/* The fallback page (reduced motion, no WebGL2)                            */
+/* The grid of each group under Paintwise                                   */
 
 .page {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 96px 24px 128px;
+  padding: 112px 24px 128px;
   color: #fff;
 }
 
@@ -52,23 +47,6 @@
 
 .item {
   position: relative;
-}
-
-/* A figure (Paintwise's pipeline) takes the whole row, on white paper. */
-.item[data-wide="true"] {
-  grid-column: 1 / -1;
-}
-
-.figure {
-  overflow: hidden;
-  border-radius: 6px;
-  background: #fff;
-}
-
-.figure img {
-  display: block;
-  width: 100%;
-  height: auto;
 }
 
 .thumb {
@@ -126,7 +104,7 @@
 }
 
 /* The whole card opens the work. */
-.page .open {
+.open {
   position: absolute;
   inset: -8px;
   border: 0;
@@ -135,7 +113,7 @@
   cursor: pointer;
 }
 
-.page .open:focus-visible {
+.open:focus-visible {
   outline: 2px solid #ece4d4;
   outline-offset: 2px;
 }

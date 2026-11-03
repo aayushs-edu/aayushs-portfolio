@@ -1,5 +1,5 @@
-/* The detail view. Sizes match SHOWCASE.panel in showcaseConfig.ts:
-   a side panel 440px wide (at most 42vw) from 768px up, a 58svh bottom sheet below. */
+/* The detail view: a side panel 440px wide (at most 42vw) from 768px up,
+   a 58svh bottom sheet below, over a dimmed page. */
 
 .root {
   position: fixed;

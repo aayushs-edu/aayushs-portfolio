@@ -8,19 +8,16 @@ interface DetailPanelProps {
   /** The open work, or null when closed. */
   work: Work | null;
   onClose: () => void;
-  /** Dim what's behind (the fallback page); in 3D the scene itself frames the work (and a film plays over its screen). */
-  scrim?: boolean;
 }
 
 const FOCUSABLE = 'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 /**
- * A work's full story: a panel on the free side of the flown-in work (a bottom
- * sheet on phones). It's a modal dialog: focus moves in and stays in until it
- * closes (Esc, the close button; the showcase also closes it on a scroll
- * gesture or browser Back).
+ * A work's full story: a side panel over a dimmed page (a bottom sheet on
+ * phones). It's a modal dialog: focus moves in and stays in until it closes
+ * (Esc, the close button, a click on the dimmed page, or browser Back).
  */
-export default function DetailPanel({ work, onClose, scrim = false }: DetailPanelProps) {
+export default function DetailPanel({ work, onClose }: DetailPanelProps) {
   // Keep showing the last work while the panel slides out.
   const [shown, setShown] = useState<Work | null>(work);
   if (work && work !== shown) setShown(work);
@@ -59,8 +56,8 @@ export default function DetailPanel({ work, onClose, scrim = false }: DetailPane
   };
 
   return (
-    <div className={css.root} data-open={open} data-scrim={scrim} inert={!open}>
-      {scrim && <div className={css.scrim} onClick={onClose} aria-hidden="true" />}
+    <div className={css.root} data-open={open} inert={!open}>
+      <div className={css.scrim} onClick={onClose} aria-hidden="true" />
       <aside
         ref={panelRef}
         className={css.panel}
@@ -92,7 +89,7 @@ export default function DetailPanel({ work, onClose, scrim = false }: DetailPane
                 <figcaption>The painting, held</figcaption>
               </figure>
             )}
-            {scrim && shown.media.film && <video key={shown.media.film} className={css.video} src={shown.media.film} poster={shown.media.image} controls playsInline preload="none" />}
+            {shown.media.film && <video key={shown.media.film} className={css.video} src={shown.media.film} poster={shown.media.image} controls playsInline preload="none" />}
             {shown.links.length > 0 && (
               <ul className={css.links}>
                 {shown.links.map((link) => {

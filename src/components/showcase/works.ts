@@ -5,12 +5,23 @@
 // and links taken from the old pages.
 
 import { GALLERY, type GalleryItem } from "../hero/heroConfig";
-import type { GroupId } from "./room/types";
 import animationMedia from "./stations/animation/animation.generated.json";
 import paintingsMedia from "./stations/paintings/paintings.generated.json";
 import paintwiseMedia from "./stations/paintwise/paintwise.generated.json";
 
-export { GROUP_TITLES } from "./room/types";
+export type GroupId = "paintwise" | "paintings" | "animation" | "hackathons" | "games";
+
+/** Each group's name, as its section heading shows it. */
+export const GROUP_TITLES: Record<GroupId, string> = {
+  paintwise: "Paintwise",
+  paintings: "Paintings",
+  animation: "Animation",
+  hackathons: "Hackathons",
+  games: "Games",
+};
+
+/** The page's order: Paintwise first, then the art half, then the code half. */
+export const GROUP_ORDER: GroupId[] = ["paintwise", "paintings", "animation", "hackathons", "games"];
 
 export type WorkKind = "painting" | "project" | "game" | "animation" | "model" | "hackathon";
 export type WorkSide = "art" | "code" | "both";

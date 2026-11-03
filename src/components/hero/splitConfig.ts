@@ -87,6 +87,27 @@ export const CURVE = {
 } as const;
 
 /**
+ * Scrolling unzips the hero from below, like an upside-down zip (zipper.ts).
+ * The point where the halves still meet starts just under the hero's bottom
+ * edge and climbs the line as the page scrolls. Below it each half moves off
+ * the line by k1·d + k2·d²/h (d below the point, h the hero's height), so the
+ * halves curl away to the sides and the page comes up through the gap.
+ */
+export const ZIP = {
+  /** Where the point starts, as a fraction of the hero's height. */
+  start: 1.02,
+  /** How far it climbs the line per pixel scrolled (on top of the hero moving up with the page). */
+  climb: 0.6,
+  /** The opening below the point. */
+  k1: 0.42,
+  k2: 0.9,
+  /** Below the hero the line runs on along its last direction, straightening out over about this many design px. */
+  runOn: 160,
+  /** …at no steeper than this (px across per px down). */
+  maxSlope: 0.5,
+} as const;
+
+/**
  * The right side: bits popping out of the line. Spots along the line pop every
  * few seconds; each pop spits a small splash of digit packets across a few
  * neighbouring rows. They burst out fast, brake, drift and fade, leaving the

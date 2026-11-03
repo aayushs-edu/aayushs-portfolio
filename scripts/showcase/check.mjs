@@ -1,4 +1,4 @@
-// Unit-checks the showcase's pure modules (scroll map, layouts, camera path) in Node:
+// Unit-checks the home page's pure modules (the zip, the exploded still life) and media in Node:
 // compiles scripts/showcase/checks.ts with tsc into node_modules/.cache, then runs it.
 import { execFileSync } from "node:child_process";
 import path from "node:path";

@@ -8,7 +8,7 @@ export interface HandOffItem {
   alt: string;
   /** width / height */
   aspect: number;
-  /** Where the panel was on screen: the image grows from there */
+  /** Where it was on screen: the image grows from there */
   from: DOMRect | null;
 }
 
@@ -18,9 +18,9 @@ interface HandOffProps {
 }
 
 /**
- * Something in the scene shown full size over it (the Paintwise figure): it
- * grows out of its panel's place on screen. A modal dialog: Esc, the close
- * button or a click outside it closes it.
+ * An image shown full size over the page (the Paintwise figure): it grows out
+ * of its place on the page. A modal dialog: Esc, the close button or a click
+ * outside it closes it.
  */
 export default function HandOff({ item, onClose }: HandOffProps) {
   // Keep showing the last item while it fades out.

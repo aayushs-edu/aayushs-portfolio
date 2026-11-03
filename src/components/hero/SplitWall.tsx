@@ -48,11 +48,11 @@ export default function SplitWall({ layout }: { layout: SplitLayout | null }) {
     el.style.backgroundSize = `${WALL.weave.tile}px ${WALL.weave.tile}px`;
   }, []);
 
-  // One dot every other cell, centred in the cells of the title's grid (column 0 starts at the centre).
+  // One dot every other cell, centred in the cells of the title's grid (column 0 starts at the centre); they move up with the page.
   const dots = layout
     ? {
         backgroundSize: `${layout.cellW * 2}px ${layout.cellH}px`,
-        backgroundPosition: `${layout.seamX - layout.cellW / 2}px ${layout.gridY}px`,
+        backgroundPosition: `${layout.seamX - layout.cellW / 2}px calc(${layout.gridY}px - var(--scroll, 0px))`,
       }
     : undefined;
 

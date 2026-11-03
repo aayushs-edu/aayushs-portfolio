@@ -7,9 +7,8 @@ import SeamCanvas from "./SeamCanvas";
 import { NameTouch } from "./nameTouch";
 import { BinaryName, PaintedName, Tagline } from "./SplitTitle";
 import SplitWall from "./SplitWall";
-import { DESIGN, SYNTAX_PALETTE } from "./heroConfig";
+import { DESIGN, SYNTAX_PALETTE, type Tier } from "./heroConfig";
 import { GRID, SEAM_X, type SplitLayout } from "./splitConfig";
-import { useHeroTier } from "./useHeroTier";
 
 const SECTION_STYLE = {
   "--syn-kw": SYNTAX_PALETTE.kw,
@@ -31,12 +30,24 @@ function sameLayout(a: SplitLayout, b: SplitLayout) {
  * through the painted letters pushes them around like fluid, the binary digits
  * under it flicker; grab it to pull the line through it.
  *
- * Under the showcase, `entrance` (0..1) tears it open along the line: the
- * halves part, the tagline lifts away, and the name stops responding to touch.
- * `paused` stops its frame loop once it is gone.
+ * With `zip`, it is fixed over the top of the page and unzips from below as
+ * the page scrolls (zipper.ts): the halves curl away, the tagline lifts off,
+ * and the name stops responding to touch. `paused` stops its frame loop once
+ * it is gone. The page picks the tier (static: no zip, one still frame).
  */
-export default function SplitHero({ entrance, paused = false }: { entrance?: { readonly current: number }; paused?: boolean }) {
-  const [tier] = useHeroTier();
+export default function SplitHero({
+  tier,
+  zip = false,
+  paused = false,
+  onGoneAt,
+  onFail,
+}: {
+  tier: Tier;
+  zip?: boolean;
+  paused?: boolean;
+  onGoneAt?: (scroll: number) => void;
+  onFail?: () => void;
+}) {
   const [layout, setLayout] = useState<SplitLayout | null>(null);
   const stageRef = useRef<HTMLDivElement | null>(null);
   const titleRef = useRef<HTMLDivElement | null>(null);
@@ -70,12 +81,12 @@ export default function SplitHero({ entrance, paused = false }: { entrance?: { r
     return () => observer.disconnect();
   }, []);
 
-  // Pointer input for touching the name (until the hero starts to open).
+  // Pointer input for touching the name (until the hero starts to unzip).
   useEffect(() => {
     const stage = stageRef.current;
     if (!stage) return;
     const opening = () => {
-      if ((entrance?.current ?? 0) <= 0) return false;
+      if (!zip || window.scrollY <= 0) return false;
       touch.leave();
       stage.style.cursor = "";
       return true;
@@ -120,11 +131,11 @@ export default function SplitHero({ entrance, paused = false }: { entrance?: { r
       stage.removeEventListener("pointerleave", onLeave);
       stage.removeEventListener("pointercancel", onLeave);
     };
-  }, [touch, entrance]);
+  }, [touch, zip]);
 
   return (
     <section className={styles.hero} style={SECTION_STYLE} aria-label="Aayush Sharma: art and code" data-tier={tier}>
-      <div ref={stageRef} className={split.stage} data-gl-name={glName}>
+      <div ref={stageRef} className={split.stage} data-gl-name={glName} data-zip={zip}>
         <div className={split.layer}>
           <SplitWall layout={layout} />
           <SeamCanvas
@@ -133,7 +144,9 @@ export default function SplitHero({ entrance, paused = false }: { entrance?: { r
             clipRef={stageRef}
             touch={touch}
             onNameReady={() => setGlName(true)}
-            entrance={entrance}
+            zip={zip}
+            onGoneAt={onGoneAt}
+            onFail={onFail}
             paused={paused}
           />
           {/* The name twice, each clipped to its side of the line; the tagline over both. */}

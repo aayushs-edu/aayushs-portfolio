@@ -4,15 +4,20 @@
   /* Each side of the seam's fluid line; the seam's frame loop keeps these current. */
   --seam-left: inset(0 50% 0 0);
   --seam-right: inset(0 0 0 50%);
-  /* How far the halves have parted (the showcase's entrance) and how far through it is, 0..1. */
-  --open: 0px;
-  --entrance: 0;
+  /* Unzipping (zip mode): how far the page has scrolled, and how far the hero is to gone, 0..1. */
+  --scroll: 0px;
+  --unzip: 0;
   position: relative;
   height: 100svh;
   min-height: 420px;
   overflow: hidden;
   container-type: size;
   /* No background of its own: the wall halves carry it, so the gap between them is open. */
+}
+
+/* Fixed over the page: it covers the whole screen, the address bar's share too. */
+.stage[data-zip="true"] {
+  height: 100lvh;
 }
 
 /* --u: CSS px per design px, the same scale as the gallery hero's title. */
@@ -53,7 +58,7 @@
   pointer-events: none;
 }
 
-/* Clipped to one side of the line, and moved away from it as the hero opens. */
+/* Clipped to one side of the line (the clip-paths follow the edges as it unzips). */
 .artSide,
 .codeSide {
   position: absolute;
@@ -62,26 +67,25 @@
 
 .artSide {
   clip-path: var(--seam-left);
-  transform: translate3d(calc(-1 * var(--open)), 0, 0);
 }
 
 .codeSide {
   clip-path: var(--seam-right);
-  transform: translate3d(var(--open), 0, 0);
 }
 
 .wallFill {
   background-color: var(--wall);
 }
 
-/* "Art x Code" lifts and fades over the first third of the opening. */
+/* "Art x Code" moves up with the page, and lifts and fades over the first third of the unzipping. */
 .taglineLift {
-  opacity: clamp(0, calc(1 - var(--entrance) * 3), 1);
-  transform: translate3d(0, calc(var(--entrance) * -180px), 0);
+  opacity: clamp(0, calc(1 - var(--unzip) * 3), 1);
+  transform: translate3d(0, calc(-1 * var(--scroll) - var(--unzip) * 180px), 0);
 }
 
-/* The DOM name is the fallback: once the canvas draws the name, it hides. */
-.stage[data-gl-name="true"] .domName {
+/* The DOM name is the fallback: once the canvas draws the name, it hides (and it doesn't unzip). */
+.stage[data-gl-name="true"] .domName,
+.stage[data-opening="true"] .domName {
   visibility: hidden;
 }
 
@@ -94,6 +98,7 @@
   position: absolute;
   inset: 0;
   opacity: 0.5;
+  background-position: 0 calc(-1 * var(--scroll));
 }
 
 .dots {

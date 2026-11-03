@@ -3,12 +3,14 @@
 // paint), and over them the painted name. Right of it: bits pop out of the
 // line (splashes of digit packets along the binary grid's rows that burst out,
 // brake, drift and fade), and over them the binary name. Both halves of the
-// name are drawn through the fluid flow of nameGL.ts. When the showcase opens,
-// the two halves part along the line (uOpen) and the gap between is left clear.
+// name are drawn through the fluid flow of nameGL.ts. As the page scrolls, the
+// hero moves up (uScroll) and unzips from below (uZip, zipper.ts): under the
+// point where the halves still meet, each half moves off the line, more the
+// further down, and the gap between is left clear.
 
 import { DESIGN } from "./heroConfig";
 import { MAX_POPS, MAX_STREAMS } from "./seamField";
-import { BITS, CURVE } from "./splitConfig";
+import { BITS, CURVE, ZIP } from "./splitConfig";
 
 /** The line: its samples, and where it is at height y (x from the centre, CSS px). */
 const CURVE_GLSL = /* glsl */ `
@@ -21,9 +23,16 @@ float curveSample(int i) {
   return k == 0 ? v.x : k == 1 ? v.y : k == 2 ? v.z : v.w;
 }
 
-// Where the line is at height y (x from the centre, CSS px).
+// Where the line is at height y (x from the centre, CSS px). Below the hero it
+// runs on along its last direction and straightens out (lineAt in zipper.ts).
 float curveAt(float y) {
-  float f = clamp(y / uHeight, 0.0, 1.0) * float(CURVE_SAMPLES - 1);
+  if (y > uHeight) {
+    float last = curveSample(CURVE_SAMPLES - 1);
+    float slope = clamp((last - curveSample(CURVE_SAMPLES - 2)) * float(CURVE_SAMPLES - 1) / uHeight, -${ZIP.maxSlope.toFixed(3)}, ${ZIP.maxSlope.toFixed(3)});
+    float runOn = ${ZIP.runOn.toFixed(1)} * uUnit;
+    return last + slope * runOn * tanh((y - uHeight) / runOn);
+  }
+  float f = max(y / uHeight, 0.0) * float(CURVE_SAMPLES - 1);
   int i = min(int(floor(f)), CURVE_SAMPLES - 2);
   return mix(curveSample(i), curveSample(i + 1), f - float(i));
 }
@@ -68,7 +77,8 @@ uniform vec4 uPop[MAX_POPS];  // centre row, age (s), seed (negative: flies left
 uniform vec4 uBitShape;       // rows either side, row chance, max packet length, flip rate
 uniform vec4 uBurst;          // burst speed min/max, drift speed min/max (CSS px/s)
 uniform vec4 uBitTime;        // burst decay (s), life min/max (s), cooling time (s)
-uniform float uOpen;          // how far each half has moved away from the line (CSS px)
+uniform float uScroll;        // how far the page has scrolled: the hero has moved up this much (CSS px)
+uniform vec3 uZip;            // where the halves still meet (hero px), then the opening below it: k1, k2
 // The name
 uniform float uNameOn;        // 0 until the name's textures are ready (the DOM name shows meanwhile)
 uniform float uFlowOn;        // how much of the fluid's flow shows, 0..1 (fades out before it stops)
@@ -352,31 +362,38 @@ vec4 binaryName(vec2 p) {
   return vec4(mix(uNameBacking, uNameInk, glyph), 1.0);
 }
 
-// ---- The tear ----------------------------------------------------------------
+// ---- The zip -----------------------------------------------------------------
+
+// How far each half has moved off the line at hero height y (openAt in zipper.ts).
+float openAt(float y) {
+  float d = y - uZip.x;
+  return d > 0.0 ? d * (uZip.y + d * uZip.z) : 0.0;
+}
 
 // Once the halves part, the code half gets the other side of the line's bead as its raw edge.
-vec4 rawEdge(vec2 p) {
-  float a = clamp(0.5 - bead(p) * uDpr, 0.0, 1.0) * clamp(uOpen / (4.0 * uUnit), 0.0, 1.0);
+vec4 rawEdge(vec2 p, float open) {
+  float a = clamp(0.5 - bead(p) * uDpr, 0.0, 1.0) * clamp(open / (4.0 * uUnit), 0.0, 1.0);
   return vec4(uPalette[6] * 0.92 * a, a);
 }
 
 void main() {
   vec2 frag = vec2(gl_FragCoord.x, uRes.y - gl_FragCoord.y); // device px, y down
-  vec2 p = vec2(frag.x / uDpr - uSeam, frag.y / uDpr);
+  vec2 p = vec2(frag.x / uDpr - uSeam, frag.y / uDpr + uScroll);
   float line = curveAt(p.y);
+  float open = openAt(p.y);
   vec4 under;
   vec4 name = vec4(0.0);
-  if (p.x < line - uOpen) {
-    // The art half, moved left by uOpen.
-    p.x += uOpen;
+  if (p.x < line - open) {
+    // The art half, moved left off the line.
+    p.x += open;
     under = paint(p);
     if (uNameOn > 0.5) name = paintedName(p);
-  } else if (p.x >= line + uOpen) {
-    // The code half, moved right by uOpen.
-    p.x -= uOpen;
+  } else if (p.x >= line + open) {
+    // The code half, moved right off the line.
+    p.x -= open;
     under = bits(p);
-    if (uOpen > 0.0) {
-      vec4 edge = rawEdge(p);
+    if (open > 0.0) {
+      vec4 edge = rawEdge(p, open);
       under = edge + under * (1.0 - edge.a);
     }
     if (uNameOn > 0.5) name = binaryName(p);

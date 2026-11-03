@@ -236,35 +236,6 @@ export function writeCurve(
   seen.forEach((v, k) => origins.set(k, v));
 }
 
-/**
- * How far each half has moved away from the line (CSS px) when the hero is
- * `entrance` (0..1) of the way through tearing open. Eases in as the line first
- * parts; at 1 both halves, and everything the line can swing to, are off screen.
- */
-export function openFor(entrance: number, layout: SplitLayout): number {
-  const e = clamp01(entrance);
-  const full = Math.max(layout.seamX, layout.w - layout.seamX) + (CURVE.amp + 40) * layout.u;
-  return e * e * (3 - 2 * e) * full;
-}
-
-/** clip-path polygons for the two sides of the line, in the hero's own coordinates. */
-export function clipPaths(curve: Float32Array, layout: SplitLayout): { left: string; right: string } {
-  const { w, h, seamX } = layout;
-  const points: string[] = [];
-  for (let k = 0; k < CURVE.clipPoints; k++) {
-    const y = (k / (CURVE.clipPoints - 1)) * h;
-    points.push(`${(seamX + curveAt(curve, y, h)).toFixed(2)}px ${y.toFixed(2)}px`);
-  }
-  // Run past the hero's edges so nothing antialiases along them.
-  const top = `${(seamX + curve[0]).toFixed(2)}px -2px`;
-  const bottom = `${(seamX + curve[curve.length - 1]).toFixed(2)}px ${h + 2}px`;
-  const line = [top, ...points, bottom].join(",");
-  return {
-    left: `polygon(-2px -2px,${line},-2px ${h + 2}px)`,
-    right: `polygon(${w + 2}px -2px,${line},${w + 2}px ${h + 2}px)`,
-  };
-}
-
 /** Everything one frame of the seam needs: the ribbons, the pops and the line. */
 export class SeamState {
   streams = createStreamBuffers();

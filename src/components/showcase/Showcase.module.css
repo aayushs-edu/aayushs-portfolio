@@ -1,236 +1,34 @@
-/* The showcase: one tall scroll section, one pinned viewport.
-   Layers, back to front: the 3D scene, the DOM overlay (captions), the hero. */
+/* The home page: the split hero, then the work. With the zip, the hero is
+   fixed over the top of the page and unzips from below as it scrolls (the
+   spacer holds its place); without it (static), it's an ordinary first section. */
 
-.section {
-  --units: 1;
+.page {
   position: relative;
-  height: calc((var(--units) + 1) * 100svh);
   background: #0d0d0d;
   color: #fff;
 }
 
-.sticky {
-  position: sticky;
-  top: 0;
-  height: 100svh;
-  min-height: 420px;
-  overflow: hidden;
+.hero[data-zip="true"] {
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 2;
 }
 
-.scene,
-.overlay,
-.hero {
-  position: absolute;
-  inset: 0;
-}
-
-.overlay {
-  pointer-events: none;
-}
-
-/* Once the hero starts to open, clicks go through the gap to the scene. */
+/* Once it starts to unzip, clicks go through the gap to the page. */
 .hero[data-opening="true"] {
   pointer-events: none;
 }
 
-/* Fully open: the hero is off screen; drop it from the page's layers. */
+/* Fully unzipped: both halves are off screen; drop it from the page's layers. */
 .hero[data-gone="true"] {
   visibility: hidden;
 }
 
-/* Without the scene: the hero, then the fallback page. */
-.section[data-mode="static"] {
-  height: auto;
+.spacer {
+  height: max(100lvh, 420px);
 }
 
-.section[data-mode="static"] .sticky {
+.work {
   position: relative;
-  height: auto;
-  min-height: 0;
-  overflow: visible;
-}
-
-.section[data-mode="static"] .hero {
-  position: relative;
-}
-
-/* ----------------------------------------------------------------------- */
-/* Captions: the scene positions and fades them.                            */
-
-.caption {
-  position: absolute;
-  left: 0;
-  top: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  max-width: min(440px, 86vw);
-  padding: 8px 14px;
-  border: 0;
-  border-radius: 8px;
-  background: none;
-  color: #fff;
-  text-align: center;
-  cursor: pointer;
-  opacity: 0;
-  visibility: hidden;
-  will-change: transform, opacity;
-}
-
-.caption[data-focused="true"] {
-  outline: 2px solid #ece4d4;
-  outline-offset: 2px;
-}
-
-.captionTitle {
-  font-family: var(--font-poppins), sans-serif;
-  font-weight: 800;
-  font-size: 24px;
-  line-height: 1.1;
-}
-
-.captionMeta {
-  font-family: var(--font-geist-mono), monospace;
-  font-size: 12px;
-  line-height: 1.4;
-  color: rgb(255 255 255 / 0.55);
-}
-
-@media (max-width: 639px) {
-  .captionTitle {
-    font-size: 19px;
-  }
-}
-
-/* ----------------------------------------------------------------------- */
-/* Station labels: pinned to panels by the scene (Paintwise's title, tags,  */
-/* figure caption, build-log link).                                         */
-
-.label {
-  position: absolute;
-  left: 0;
-  top: 0;
-  opacity: 0;
-  visibility: hidden;
-  color: #fff;
-  will-change: transform, opacity;
-}
-
-.stationTitle {
-  display: flex;
-  align-items: flex-end;
-  gap: 14px;
-  max-width: min(460px, 80vw);
-}
-
-.stationTitle img {
-  flex: none;
-  width: 48px;
-  height: auto;
-}
-
-.stationName {
-  display: block;
-  font-family: var(--font-poppins), sans-serif;
-  font-weight: 800;
-  font-size: 34px;
-  line-height: 1;
-}
-
-.stationPitch {
-  display: block;
-  margin-top: 6px;
-  font-family: var(--font-geist-mono), monospace;
-  font-size: 12px;
-  line-height: 1.45;
-  color: rgb(255 255 255 / 0.6);
-}
-
-.tag {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  max-width: 170px;
-  font-family: var(--font-geist-mono), monospace;
-  /* Legible where a tag falls over a busy image. */
-  text-shadow:
-    0 1px 2px rgb(0 0 0 / 0.85),
-    0 0 10px rgb(0 0 0 / 0.7);
-}
-
-.tagTitle {
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: rgb(255 255 255 / 0.85);
-}
-
-.tagMeta {
-  font-size: 13px;
-  line-height: 1.35;
-  color: rgb(255 255 255 / 0.6);
-}
-
-.figureCaption {
-  align-items: center;
-  max-width: none;
-  padding: 6px 12px;
-  border: 0;
-  border-radius: 8px;
-  background: none;
-  text-align: center;
-  cursor: zoom-in;
-}
-
-.figureTitle {
-  font-family: var(--font-poppins), sans-serif;
-  font-weight: 800;
-  font-size: 18px;
-}
-
-.tagLink {
-  font-family: var(--font-geist-mono), monospace;
-  font-size: 13px;
-  color: #ece4d4;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-
-@media (max-width: 639px) {
-  .stationName {
-    font-size: 26px;
-  }
-
-  .tag {
-    max-width: 180px;
-  }
-}
-
-/* ----------------------------------------------------------------------- */
-/* The full film, laid over its screen in the scene while it's open.        */
-
-.filmPlayer {
-  position: fixed;
-  left: 0;
-  top: 0;
-  z-index: 35;
-  visibility: hidden;
-  background: #000;
-  object-fit: contain;
-}
-
-/* Small works (the early paintings) get a smaller caption. */
-.caption[data-size="small"] {
-  max-width: 200px;
-  gap: 3px;
-  padding: 6px 8px;
-}
-
-.caption[data-size="small"] .captionTitle {
-  font-size: 15px;
-}
-
-.caption[data-size="small"] .captionMeta {
-  font-size: 11px;
+  z-index: 1;
 }
