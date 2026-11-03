@@ -14,6 +14,11 @@ Paintwise:
   history into scripts/showcase/sources/paintwise/ (380 px);
 - its depth map: Depth Anything V2, the model Paintwise uses (scripts/hero/depth.py);
 - its objects: the SAM masks image, split by its flat tab20 colours;
+- the fruit still life (the figure's, for "what the models see"): its six
+  stages cut from public/images/paintwise-gallery-1.png (167 px), enlarged 4×
+  (Swin2SR for the photo-like ones, snapped back to their own colours for the
+  flat ones), and its objects split from its masks with Depth Anything V2's
+  depth;
 - the other still lifes: cut from the pipeline grids public/images/paintwise-gallery-*.png;
 - the figure: public/showcase/paintwise/pipeline.webp (scripts/showcase/paintwise-figure.py).
 
@@ -43,7 +48,7 @@ from collections import deque
 from pathlib import Path
 
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageFilter
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
@@ -71,6 +76,10 @@ TAB20 = [
 ]
 MIN_OBJECT_PX = 80
 MAX_OBJECTS = 28
+# The fruit still life is only in the pipeline grid, 167 px wide: enlarged 4×, with smaller objects kept.
+FRUIT_K = 4
+FRUIT_MIN_OBJECT_PX = 12
+SR_MODEL = "caidas/swin2SR-classical-sr-x4-64"
 # Other still lifes run through the pipeline: (grid, panel index). Rows are
 # original, SAM masks, block-in / PiDiNet edges, depth, sketch (gallery-2, -3),
 # or original, masks, block-in, edges, sketch per row (gallery-5, -6).
@@ -181,14 +190,34 @@ def build_layers(estimator):
     return size, masks, depth, [{"id": lid, "src": write_webp(im, "layers", lid)} for lid, im in layers]
 
 
-def build_objects(size, masks, depth):
+def load_upscaler():
+    from transformers import Swin2SRForImageSuperResolution
+
+    return Swin2SRForImageSuperResolution.from_pretrained(SR_MODEL).eval()
+
+
+def upscale4(model, image):
+    """4× super-resolution (Swin2SR) for photo-like images too small to enlarge plainly."""
+    import torch
+
+    x = torch.from_numpy(np.asarray(image.convert("RGB"), dtype=np.float32) / 255.0).permute(2, 0, 1)[None]
+    h, w = x.shape[-2:]
+    # The model works in 8 px windows: pad up to a multiple, then crop the result back.
+    x = torch.nn.functional.pad(x, (0, (8 - w % 8) % 8, 0, (8 - h % 8) % 8), mode="reflect")
+    with torch.no_grad():
+        y = model(pixel_values=x).reconstruction[0, :, : h * 4, : w * 4].clamp(0, 1)
+    return Image.fromarray((y.permute(1, 2, 0).numpy() * 255 + 0.5).astype(np.uint8), "RGB")
+
+
+def build_objects(size, masks, depth, k=3, min_px=MIN_OBJECT_PX, rel_dir="objects", smooth=0.0):
+    """Each mask's pieces as flat-colour cut-outs, enlarged k×; `smooth` (× k px) rounds off a small source's pixel steps."""
     width, height = size
     labels = snap(np.asarray(masks), TAB20 + [(0, 0, 0)])
     near = np.asarray(depth, dtype=np.float32) / 255.0
     found = []
     for index, color in enumerate(TAB20):
         for pixels in components(labels, index):
-            if len(pixels) >= MIN_OBJECT_PX:
+            if len(pixels) >= min_px:
                 found.append((color, pixels))
     found.sort(key=lambda item: -len(item[1]))
     found = found[:MAX_OBJECTS]
@@ -200,8 +229,12 @@ def build_objects(size, masks, depth):
         y0, y1 = max(0, ys.min() - 2), min(height, ys.max() + 3)
         mask = np.zeros((y1 - y0, x1 - x0), dtype=np.uint8)
         mask[ys - y0, xs - x0] = 255
-        big = Image.fromarray(mask, "L").resize(((x1 - x0) * 3, (y1 - y0) * 3), Image.LANCZOS)
-        alpha = np.clip((np.asarray(big, dtype=np.int32) - 96) * 2, 0, 255).astype(np.uint8)
+        big = Image.fromarray(mask, "L").resize(((x1 - x0) * k, (y1 - y0) * k), Image.LANCZOS)
+        if smooth:
+            big = big.filter(ImageFilter.GaussianBlur(smooth * k))
+            alpha = np.clip((np.asarray(big, dtype=np.int32) - 128) * 3 + 128, 0, 255).astype(np.uint8)
+        else:
+            alpha = np.clip((np.asarray(big, dtype=np.int32) - 96) * 2, 0, 255).astype(np.uint8)
         rgba = np.zeros((*alpha.shape, 4), dtype=np.uint8)
         rgba[..., :3] = color
         rgba[..., 3] = alpha
@@ -220,13 +253,39 @@ def build_objects(size, masks, depth):
         out.append(
             {
                 "id": oid,
-                "src": write_webp(o["image"], "objects", oid, lossless=True),
+                "src": write_webp(o["image"], rel_dir, oid, lossless=True),
                 "box": [round(v, 5) for v in o["box"]],
                 "depth": round(o["depth"], 4),
                 "color": o["color"],
             }
         )
     return out
+
+
+def build_fruit(estimator, upscaler):
+    stages = panels(GALLERY / "paintwise-gallery-1.png")
+    if len(stages) != 6:
+        fail(f"paintwise-gallery-1.png: expected 6 stages, found {len(stages)}")
+    # The grid's order: original, SAM masks, value block-in, PiDiNet edges, depth map, pencil sketch.
+    original, masks, blockin, edges, depth_map, sketch = (im.convert("RGB") for im in stages)
+    size = original.size
+    masks = masks.resize(size, Image.NEAREST)
+    sharp = upscale4(upscaler, original)
+    depth = hero_depth.estimate(estimator, sharp).resize(size, Image.LANCZOS)
+    k = FRUIT_K
+    layers = [
+        ("original", sharp),
+        ("masks", flat_upscale(masks, k, palette_image(TAB20 + [(0, 0, 0)]))),
+        ("depth", upscale4(upscaler, depth_map.resize(size, Image.LANCZOS))),
+        ("blockin", flat_upscale(blockin.resize(size, Image.LANCZOS), k, own_palette(blockin))),
+        ("edges", upscale4(upscaler, edges.resize(size, Image.LANCZOS))),
+        ("sketch", upscale4(upscaler, sketch.resize(size, Image.LANCZOS))),
+    ]
+    return {
+        "canvas": {"width": size[0], "height": size[1]},
+        "layers": [{"id": lid, "src": write_webp(im, "fruit/layers", lid)} for lid, im in layers],
+        "objects": build_objects(size, masks, depth, k=k, min_px=FRUIT_MIN_OBJECT_PX, rel_dir="fruit/objects", smooth=0.45),
+    }
 
 
 def build_still_lifes():
@@ -252,7 +311,7 @@ def build_figure():
 
 
 def paintwise_step(estimator):
-    for stale in ("layers", "objects", "stills"):
+    for stale in ("layers", "objects", "stills", "fruit"):
         shutil.rmtree(OUT / stale, ignore_errors=True)
     for stale in [*OUT.glob("steps.*.webp"), *OUT.glob("figure.*.webp")]:
         stale.unlink()
@@ -262,12 +321,14 @@ def paintwise_step(estimator):
         "canvas": {"width": size[0], "height": size[1]},
         "layers": layers,
         "objects": build_objects(size, masks, depth),
+        "fruit": build_fruit(estimator, load_upscaler()),
         "stillLifes": build_still_lifes(),
         "figure": build_figure(),
     }
     write_json(GENERATED, media)
     print(
         f"build-assets: paintwise: {len(layers)} layers, {len(media['objects'])} objects, "
+        f"the fruit with {len(media['fruit']['objects'])} objects, "
         f"{len(media['stillLifes'])} still lifes -> {GENERATED.relative_to(ROOT)}"
     )
 

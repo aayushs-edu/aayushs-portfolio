@@ -59,8 +59,13 @@ Revised the same day at the user's request. The first layout (the jug beside the
 **The exploded views** (`showcase/paintwise/explode.ts`, pure):
 - **Each view has its own stage** (`STAGE.view`):
   - *layers*: aspect 0.6, filling 0.92. The six layers fan out right and back, seen from the right (rotateX −7°, rotateY −49°). A tag per layer, in two rows above and below the whole fan, each over its layer's middle.
-  - *masks*: aspect 0.66, filling 0.88. The layers dim to 0.25 and push back, the masks layer gives way, and its 28 objects push out to their depths, seen from the left (−6°, 43°). One tag, "SAM 2.1 × Depth Anything V2", over the middle of the masks.
-- **Coming apart:** each stage starts as the jug, square on and filling 0.8 of its stage. Once 45% of it is in view, it comes apart into its view. This happens once, staggered layer by layer; the tags come in after the layers land.
+  - *masks*: aspect 0.66, filling 0.88. It uses the fruit still life (grapefruit, lemon, kiwi, blueberries), the pipeline figure's example, at the user's request: a better example than the jug.
+    - Its masks push out to their depths, seen from the left (−6°, 43°).
+    - SAM's two scene masks, the wall and the table, are left out. They are the full-width masks and their pieces at the canvas's edges; pushed out, they would be sheets full of holes. That leaves 20 of the 23.
+    - Its other layers sit behind the masks as a faint stack (0.2), slid along the line of sight so they stay right behind them. The masks layer itself gives way to the cut-outs.
+    - The view is fitted to the masks alone, and the stage clips its sides.
+    - One tag: "SAM 2.1 × Depth Anything V2 · each object's mask, pushed out to its depth".
+- **Coming apart:** each stage starts as its still life (the jug, or the fruit), square on and filling 0.8 of its stage. Once 45% of it is in view, it comes apart into its view. This happens once, staggered layer by layer; the tags come in after the layers land.
 - **Geometry:** spacing and angles are the old room's, with metres converted to canvas widths.
 - **The stages:**
   - Each is a CSS 3D scene with `perspective` and `container-type: inline-size`; one canvas width is `100cqw` before the rig's scale.
@@ -90,6 +95,14 @@ Revised the same day at the user's request. The first layout (the jug beside the
   - the eight storyboard stills
   - the film loops (each film's poster shows in the grid)
   - Paintwise's eight other still lifes (taken off the section at the user's request)
+
+**The fruit still life's media.**
+- It exists only as 167×110 panels in `public/images/paintwise-gallery-1.png`. The user chose to build from that rather than supply a larger original.
+- `build-assets.py` (`build_fruit`) enlarges it 4×:
+  - the photo-like layers with Swin2SR (`caidas/swin2SR-classical-sr-x4-64`, via transformers);
+  - the flat ones (masks, block-in) snapped back to their own colours.
+- Its 23 objects are split from its masks, with smoothed edges, and each gets Depth Anything V2's depth from the enlarged photo.
+- The output goes to `public/showcase/paintwise/fruit/` and the `fruit` entry of `paintwise.generated.json`. The photo is noticeably softer than the jug.
 - **Retiring the old pages** (`/paintings`, `/animation`, `/games`, `/hackathons`, `/paintwise`).
 
 ## 6. Verification

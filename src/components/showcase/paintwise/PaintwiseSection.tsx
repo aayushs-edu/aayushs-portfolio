@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import media from "../stations/paintwise/paintwise.generated.json";
-import { ITEMS, LAYER_COPY, RIGS, STAGE, TAGS, type Rig, type View } from "./explode";
+import { LAYER_COPY, RIGS, STAGE, TAGS, VIEW_ITEMS, type Rig, type View } from "./explode";
 import css from "./PaintwiseSection.module.css";
 
 const cqw = (v: number) => `${(v * 100).toFixed(3)}cqw`;
@@ -25,17 +25,11 @@ const VIEW_TEXT: Record<View, { title: string; label: string }> = {
   },
   masks: {
     title: "What the models see",
-    label: "Every object SAM 2.1 segments in the still life, pushed out to the depth Depth Anything V2 gives it.",
+    label: "A still life of grapefruit, lemon, kiwi and blueberries: every object SAM 2.1 segments in it, pushed out to the depth Depth Anything V2 gives it.",
   },
 };
 
-/** The objects only ever show in the masks view. */
-const VIEW_ITEMS: Record<View, typeof ITEMS> = {
-  layers: ITEMS.filter((item) => item.kind === "layer"),
-  masks: ITEMS,
-};
-
-/** One exploded view: the jug, which comes apart into the view once it scrolls into sight. */
+/** One exploded view: its still life, which comes apart into the view once it scrolls into sight. */
 function ExplodedView({ view }: { view: View }) {
   const [apart, setApart] = useState(false);
   const stageRef = useRef<HTMLDivElement | null>(null);
@@ -62,6 +56,7 @@ function ExplodedView({ view }: { view: View }) {
       <div
         ref={stageRef}
         className={css.stage}
+        data-view={view}
         data-apart={apart}
         style={{ aspectRatio: `1 / ${aspect}`, perspective: cqw(STAGE.perspective) } as CSSProperties}
         role="img"
@@ -117,9 +112,9 @@ interface PaintwiseSectionProps {
 
 /**
  * Paintwise, first under the hero: the pitch beside the pipeline figure, then
- * the old room's two exploded views of its still life side by side, each
- * coming apart as it scrolls into sight: the layers its pipeline makes, and
- * what the models see.
+ * the old room's two exploded views side by side, each coming apart as it
+ * scrolls into sight: the layers its pipeline makes of the jug, and what the
+ * models see in the figure's fruit still life.
  */
 export default function PaintwiseSection({ storyId, figureId, onStory, onFigure }: PaintwiseSectionProps) {
   const figureRef = useRef<HTMLImageElement | null>(null);

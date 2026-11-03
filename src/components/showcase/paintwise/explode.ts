@@ -1,12 +1,13 @@
-// Paintwise's two exploded views of its still life, each on its own CSS 3D
-// stage (pure; checked by showcase:check). The jug still life is a stack of
-// its pipeline's layers; each stage starts as the jug (rest) and comes apart
-// into its view. "layers" fans the six layers out in depth, seen from the
-// right, with a tag on each. "masks" pushes every object of the masks layer
-// out to its own depth, seen from the left. The spacing and the angles are
-// the old 3D room's (its canvas was 1.9 m wide).
+// Paintwise's two exploded views, each on its own CSS 3D stage (pure; checked
+// by showcase:check). A still life is a stack of its pipeline's layers; each
+// stage starts as its still life (rest) and comes apart into its view.
+// "layers" fans the jug's six layers out in depth, seen from the right, with a
+// tag on each. "masks" pushes every object of the fruit still life's masks
+// layer (the pipeline figure's example) out to its own depth, seen from the
+// left. The spacing and the angles are the old 3D room's (its canvas was
+// 1.9 m wide).
 //
-// Items are placed in canvas widths (the jug is 1 wide), y down, z toward the
+// Items are placed in canvas widths (a still life is 1 wide), y down, z toward the
 // viewer. Each view's stage has its own shape; for both its states it gets a
 // rig: the turn it's seen at, and the scale and offset that fit it in the
 // stage (in stage widths, from the stage's centre). The stage's CSS uses
@@ -43,7 +44,7 @@ export const LAYER_COPY: Record<string, { title: string; line: string }> = {
   sketch: { title: "Pencil sketch", line: "the drawing underneath, from the edges" },
 };
 
-export const MASKS_COPY = { title: "SAM 2.1 × Depth Anything V2", line: "every mask, pushed out to its depth" };
+export const MASKS_COPY = { title: "SAM 2.1 × Depth Anything V2", line: "each object's mask, pushed out to its depth" };
 
 export interface Pose {
   x: number;
@@ -87,8 +88,7 @@ export interface Tag {
 
 /** The room's metres, in canvas widths. */
 const M = 1 / 1.9;
-/** The canvas's height, in canvas widths. */
-export const CANVAS_H = media.canvas.height / media.canvas.width;
+
 /** Fanned out, each layer sits this much further right, up and back than the one before it. */
 const SPREAD = { x: 0.32 * M, y: -0.06 * M, z: -0.75 * M };
 /** At rest, the layers stack this close behind the canvas. */
@@ -98,42 +98,81 @@ const LIFT = 0.004 * M;
 
 const pose = (x: number, y: number, z: number, opacity: number): Pose => ({ x, y, z, opacity });
 
-const MASKS_K = media.layers.findIndex((l) => l.id === "masks");
+interface StillLife {
+  canvas: { width: number; height: number };
+  layers: { id: string; src: string }[];
+  objects: { id: string; src: string; box: number[]; depth: number; color: string }[];
+}
 
-const LAYERS: ExplodeItem[] = media.layers.map((layer, k) => ({
-  id: `layer:${layer.id}`,
-  kind: "layer",
-  src: layer.src,
-  width: 1,
-  height: CANVAS_H,
-  poses: {
-    rest: pose(0, 0, -STACK * k, k === 0 ? 1 : 0),
-    layers: pose(SPREAD.x * k, SPREAD.y * k, SPREAD.z * k, 1),
-    // Pushed back and dimmed, so the masks in front read; the masks layer itself gives way to its objects.
-    masks: pose(SPREAD.x * k - 0.6 * M, SPREAD.y * k, SPREAD.z * k - 1.2 * M, layer.id === "masks" ? 0 : 0.25),
-  },
-}));
+/**
+ * The scene's own masks (the wall, the table): a mask the whole canvas wide,
+ * and the other pieces of its colour at the canvas's edges. Pushed out to their
+ * depths they'd be big sheets full of holes that no longer line up.
+ */
+function sceneMasks(still: StillLife): Set<string> {
+  const touches = ([x, y, w, h]: number[]) => x < 0.01 || y < 0.01 || x + w > 0.99 || y + h > 0.99;
+  const colors = new Set(still.objects.filter((o) => o.box[2] > 0.95).map((o) => o.color));
+  return new Set(still.objects.filter((o) => colors.has(o.color) && touches(o.box)).map((o) => o.id));
+}
 
-const OBJECTS: ExplodeItem[] = media.objects.map((object) => {
-  const [bx, by, bw, bh] = object.box;
-  const x = bx + bw / 2 - 0.5;
-  const y = (by + bh / 2 - 0.5) * CANVAS_H;
-  return {
-    id: `object:${object.id}`,
-    kind: "object",
-    src: object.src,
-    width: bw,
-    height: bh * CANVAS_H,
+/**
+ * Layer k of the faint stack behind the masks: pushed back, and slid along the
+ * masks view's line of sight so that, seen at its turn, it sits right behind them.
+ */
+function ghost(k: number, opacity: number): Pose {
+  const z = -0.9 * M + 0.3 * SPREAD.z * k;
+  const [ax, ay] = STAGE.view.masks.turn;
+  const t = (deg: number) => Math.tan((deg * Math.PI) / 180);
+  return pose(-z * t(ay) + 0.25 * SPREAD.x * k, z * t(ax) + SPREAD.y * k, z, opacity);
+}
+
+/** A still life as a stack: its six layers, then its masks' objects (without the scene's, if asked), posed for every state. */
+function stack(still: StillLife, name: string, { scene = true } = {}) {
+  const dropped = scene ? new Set<string>() : sceneMasks(still);
+  const canvasH = still.canvas.height / still.canvas.width;
+  const masksK = still.layers.findIndex((l) => l.id === "masks");
+  const layers: ExplodeItem[] = still.layers.map((layer, k) => ({
+    id: `${name}:${layer.id}`,
+    kind: "layer",
+    src: layer.src,
+    width: 1,
+    height: canvasH,
     poses: {
-      rest: pose(x, y, -STACK * MASKS_K + LIFT, 0),
-      layers: pose(x + SPREAD.x * MASKS_K, y + SPREAD.y * MASKS_K, SPREAD.z * MASKS_K + LIFT, 0),
-      masks: pose(x * 1.15, y, ((object.depth - 0.5) * 2.4 + 0.3) * M, 1),
+      rest: pose(0, 0, -STACK * k, k === 0 ? 1 : 0),
+      layers: pose(SPREAD.x * k, SPREAD.y * k, SPREAD.z * k, 1),
+      // A faint stack behind the masks, so the photo shows through as a ghost; the masks layer itself gives way to its objects.
+      masks: ghost(k, layer.id === "masks" ? 0 : 0.2),
     },
-  };
-});
+  }));
+  const objects: ExplodeItem[] = still.objects.filter((o) => !dropped.has(o.id)).map((object) => {
+    const [bx, by, bw, bh] = object.box;
+    const x = bx + bw / 2 - 0.5;
+    const y = (by + bh / 2 - 0.5) * canvasH;
+    return {
+      id: `${name}:${object.id}`,
+      kind: "object",
+      src: object.src,
+      width: bw,
+      height: bh * canvasH,
+      poses: {
+        rest: pose(x, y, -STACK * masksK + LIFT, 0),
+        layers: pose(x + SPREAD.x * masksK, y + SPREAD.y * masksK, SPREAD.z * masksK + LIFT, 0),
+        masks: pose(x * 1.15, y, ((object.depth - 0.5) * 2.4 + 0.3) * M, 1),
+      },
+    };
+  });
+  return { canvasH, layers, objects };
+}
 
-/** Back to front within each state doesn't matter (the stage depth-sorts); layers first, then the objects. */
-export const ITEMS: ExplodeItem[] = [...LAYERS, ...OBJECTS];
+/** The jug fans out its layers; the fruit (the pipeline figure's still life) shows what the models see. */
+export const JUG = stack(media, "jug");
+export const FRUIT = stack(media.fruit, "fruit", { scene: false });
+
+/** What each view's stage holds. The stage depth-sorts, so order doesn't matter; layers first, then the objects. */
+export const VIEW_ITEMS: Record<View, ExplodeItem[]> = {
+  layers: JUG.layers,
+  masks: [...FRUIT.layers, ...FRUIT.objects],
+};
 
 // ---- Projection: the same maths as the browser's CSS 3D -------------------------
 
@@ -182,11 +221,19 @@ const visible = (item: ExplodeItem, state: ExplodeState) => item.poses[state].op
 /** How much of its view's stage a state fills. */
 export const fillOf = (view: View, state: ExplodeState) => (state === "rest" ? STAGE.restFill : STAGE.view[view].fill);
 
+/**
+ * What a state is fitted to: everything that shows, except in the masks view,
+ * where the masks fill the stage and the faint layers behind them may run a
+ * little past its sides (the stage clips them).
+ */
+export const fitItems = (view: View, state: ExplodeState): ExplodeItem[] =>
+  view === "masks" && state === "masks" ? FRUIT.objects : VIEW_ITEMS[view].filter((item) => visible(item, state));
+
 /** Turns the state's composition and fits it in its view's stage, centred, filling fillOf of it. */
 function fitRig(view: View, state: ExplodeState): Rig {
   const { aspect } = STAGE.view[view];
   const fill = fillOf(view, state);
-  const points = ITEMS.filter((item) => visible(item, state)).flatMap((item) => corners(item, state));
+  const points = fitItems(view, state).flatMap((item) => corners(item, state));
   const lo: Vec3 = [Infinity, Infinity, Infinity];
   const hi: Vec3 = [-Infinity, -Infinity, -Infinity];
   for (const p of points) {
@@ -225,22 +272,22 @@ export const RIGS: Record<View, Record<"rest" | "view", Rig>> = {
  * and one for the masks.
  */
 const LAYER_SPAN = (() => {
-  const ys = LAYERS.flatMap((l) => corners(l, "layers")).map((p) => project(p, RIGS.layers.view)[1]);
+  const ys = JUG.layers.flatMap((l) => corners(l, "layers")).map((p) => project(p, RIGS.layers.view)[1]);
   return [Math.min(...ys), Math.max(...ys)];
 })();
 
 export const TAGS: Record<View, Tag[]> = {
-  layers: LAYERS.map((layer, k): Tag => {
+  layers: JUG.layers.map((layer, k): Tag => {
     const { x, y, z } = layer.poses.layers;
     const above = k % 2 === 0;
     const [px] = project([x, y + (above ? -1 : 1) * (layer.height / 2), z], RIGS.layers.view);
-    const id = layer.id.slice("layer:".length);
+    const id = layer.id.slice("jug:".length);
     return { id: `tag:${id}`, ...LAYER_COPY[id], x: px, y: above ? LAYER_SPAN[0] : LAYER_SPAN[1], align: above ? "above" : "below" };
   }),
   // Over the middle of the masks, just above the highest of them on screen.
   masks: [
     (() => {
-      const xy = OBJECTS.flatMap((o) => corners(o, "masks")).map((p) => project(p, RIGS.masks.view));
+      const xy = FRUIT.objects.flatMap((o) => corners(o, "masks")).map((p) => project(p, RIGS.masks.view));
       const xs = xy.map((p) => p[0]);
       return { id: "tag:objects", ...MASKS_COPY, x: (Math.min(...xs) + Math.max(...xs)) / 2, y: Math.min(...xy.map((p) => p[1])), align: "above" as const };
     })(),
