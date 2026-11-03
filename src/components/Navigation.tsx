@@ -195,7 +195,7 @@ function Socials() {
         <Tooltip>
           <TooltipTrigger asChild>
         <a
-          href="mailto:aayushs2008@email.com"
+          href="mailto:aayushs2008@gmail.com"
           aria-label="Email"
           target="_blank"
           rel="noopener noreferrer"
