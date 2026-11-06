@@ -4,7 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { CURVE, ZIP, type SplitLayout } from "../../src/components/hero/splitConfig";
 import { CLOSED, goneAt, lineAt, openAt, swing, zipClipPaths, zipFor } from "../../src/components/hero/zipper";
-import { corners, EXPLODE_STATES, fillOf, fitItems, JUG, PIECES, RIGS, STAGE, TAGS, toStage, project, VIEW_ITEMS, VIEWS } from "../../src/components/showcase/paintwise/explode";
+import { corners, EXPLODE_STATES, fillOf, fitItems, JUG, PIECE_DEPTH, PIECES, RIGS, STAGE, TAGS, toStage, project, VIEW_ITEMS, VIEWS } from "../../src/components/showcase/paintwise/explode";
 import { GROUP_ORDER, WORKS } from "../../src/components/showcase/works";
 
 let passed = 0;
@@ -168,7 +168,7 @@ check("explode: fanned out, every jug layer shows; for the masks, only the piece
   assert(PIECES.objects.every((o) => o.poses.masks.opacity === 1), "a piece is hidden");
   const zs = PIECES.objects.map((o) => o.poses.masks.z);
   const back = PIECES.objects.find((o) => o.id === "pieces:back")!;
-  assert(back.poses.masks.z === Math.min(...zs) && near(Math.max(...zs) - Math.min(...zs), 0.7, 1e-6), `pieces span ${(Math.max(...zs) - Math.min(...zs)).toFixed(3)}`);
+  assert(back.poses.masks.z === Math.min(...zs) && near(Math.max(...zs) - Math.min(...zs), PIECE_DEPTH, 1e-6), `pieces span ${(Math.max(...zs) - Math.min(...zs)).toFixed(3)}`);
 });
 
 for (const view of VIEWS) {

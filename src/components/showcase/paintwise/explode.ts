@@ -29,7 +29,7 @@ export const STAGE = {
   /** Each view's stage: its shape (height / width), how much of it the view fills (the rest is room for tags), and the turn it's seen at (degrees: rotateX, rotateY). */
   view: {
     layers: { aspect: 0.6, fill: 0.92, turn: [-7, -49] },
-    masks: { aspect: 0.66, fill: 0.88, turn: [-8, 28] },
+    masks: { aspect: 0.66, fill: 0.88, turn: [-20, 40] },
   } as Record<View, { aspect: number; fill: number; turn: readonly [number, number] }>,
 };
 
@@ -126,7 +126,7 @@ interface Pieces {
 }
 
 /** How far SAM's pieces spread in depth, farthest to nearest (canvas widths). */
-const PIECE_DEPTH = 0.7;
+export const PIECE_DEPTH = 1.3;
 
 /**
  * A painting in SAM 2.1's pieces. At rest the painting covers them, whole;

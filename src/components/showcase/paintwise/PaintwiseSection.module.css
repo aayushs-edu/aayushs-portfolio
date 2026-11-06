@@ -173,6 +173,11 @@
   user-select: none;
 }
 
+/* SAM's pieces cast a soft shadow on what's behind them, so the layers read. */
+.item[data-kind="object"] img {
+  filter: drop-shadow(0 10px 14px rgb(0 0 0 / 0.55));
+}
+
 /* The layers are canvases: a flat colour until the image is in, and a soft shadow. */
 .item[data-kind="layer"] {
   background: #1d1d1d;
