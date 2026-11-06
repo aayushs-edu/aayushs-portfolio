@@ -96,8 +96,13 @@ Revised the same day at the user's request. The first layout (the jug beside the
   - Paintwise's eight other still lifes (taken off the section at the user's request)
 
 **Childhood Toys' media.**
-- `build-assets.py` (`build_toys`) runs SAM 2.1's automatic masks on `public/paintings/StillLifeToys.webp` at 1280 px. It uses `facebook/sam2.1-hiera-small` via transformers, which needs `torchvision`; 0.28 matches the installed torch 2.13.
-- Each pixel goes to the most specific mask over it. The 25 largest pieces (each at least 0.2% of the painting) are kept, and everything else becomes the back.
+- `build-assets.py` (`build_toys`) segments `public/paintings/StillLifeToys.webp` at 1280 px as Paintwise's own "unrestricted" segmenter does. That segmenter is `SAM21UnrestrictedSegmenter` in `sam2/MasterStroke.ipynb`, in the Lightning studio `lit://aayushs2008-org/vision-model/studios/masterstroke/`.
+- It runs SAM 2.1 large (`facebook/sam2.1-hiera-large` via transformers, which needs `torchvision`; 0.28 matches the installed torch 2.13) in two passes:
+  - whole objects: 48 points a side, IoU 0.88, stability 0.92;
+  - small objects: 64 points a side plus 32 in each of four crops, IoU 0.80, stability 0.85.
+- transformers' own crops are broken, so the script cuts the crops itself and drops masks cut off at an inner crop edge, as SAM does.
+- Cleanup: duplicates (IoU > 0.9) are dropped, and so are parts lying more than 70% inside a kept object (unless that mask is wall- or table-sized, over 30% of the painting).
+- Each pixel then goes to the most specific mask left. Up to 32 pieces of at least 0.2% are kept, and the rest is the back. A run takes about 3 minutes on the Mac's CPU.
 - Each piece gets the median Depth Anything V2 depth under it.
 - The output goes to `public/showcase/paintwise/toys/` and the `toys` entry of `paintwise.generated.json`.
 

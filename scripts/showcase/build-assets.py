@@ -15,9 +15,10 @@ Paintwise:
 - its depth map: Depth Anything V2, the model Paintwise uses (scripts/hero/depth.py);
 - its objects: the SAM masks image, split by its flat tab20 colours;
 - "what the models see": Childhood Toys (public/paintings/StillLifeToys.webp)
-  cut into pieces by SAM 2.1's automatic masks (facebook/sam2.1-hiera-small
-  via transformers), each piece the painting itself with a thin rim in its
-  mask colour and Depth Anything V2's depth; what no piece takes is the back;
+  cut into pieces as Paintwise's "unrestricted" segmenter does (MasterStroke.ipynb
+  on Lightning): SAM 2.1 large's automatic masks in two passes, duplicates and
+  parts of objects dropped; each piece is the painting itself with a thin rim
+  in its mask colour and Depth Anything V2's depth; what no piece takes is the back;
 - the other still lifes: cut from the pipeline grids public/images/paintwise-gallery-*.png;
 - the figure: public/showcase/paintwise/pipeline.webp (scripts/showcase/paintwise-figure.py).
 
@@ -78,7 +79,22 @@ MAX_OBJECTS = 28
 # "What the models see": a painting cut into pieces by SAM 2.1.
 TOYS = PUBLIC / "paintings/StillLifeToys.webp"
 TOYS_WIDTH = 1280
-SAM_MODEL = "facebook/sam2.1-hiera-small"
+SAM_MODEL = "facebook/sam2.1-hiera-large"
+# Paintwise's passes (SAM21UnrestrictedSegmenter in MasterStroke.ipynb): one for whole objects,
+# and a denser, more permissive one (64 points a side, and 32 in each of four crops) for the small
+# ones. transformers' own crops are broken, so the four crops are cut here (SAM's boxes for one
+# crop layer) and their masks pasted back.
+DETAILED = {"pred_iou_thresh": 0.80, "stability_score_thresh": 0.85}
+SAM_PASSES = [
+    ({"points_per_crop": 48, "pred_iou_thresh": 0.88, "stability_score_thresh": 0.92}, False),
+    ({"points_per_crop": 64, **DETAILED}, False),
+    ({"points_per_crop": 32, **DETAILED}, True),
+]
+# Its cleanup: a duplicate overlaps a kept mask past this IoU; a part lies mostly inside one (past this
+# share of itself), unless that one is wall- or table-sized (past this share of the painting).
+DUPLICATE_IOU = 0.9
+PART_INSIDE = 0.7
+SCENE_SHARE = 0.3
 # A piece must cover this share of the painting; at most this many pieces (the rest go to the back).
 PIECE_MIN_SHARE = 0.002
 MAX_PIECES = 32
@@ -247,8 +263,40 @@ def build_toys(estimator):
     image = fit(Image.open(TOYS), TOYS_WIDTH)
     w, h = image.size
     generate = pipeline("mask-generation", model=SAM_MODEL, device="cpu")
-    masks = sorted((np.asarray(m, dtype=bool) for m in generate(image, points_per_batch=64)["masks"]), key=lambda m: -m.sum())
-    # Largest first, so each pixel ends up with the most specific mask over it.
+    # SAM's crop layer 1: two crops a side, overlapping by 512/1500 of the short side.
+    overlap = int(512 / 1500 * min(w, h))
+    cw, ch = -(-(w + overlap) // 2), -(-(h + overlap) // 2)
+    crops = [(x, y, min(w, x + cw), min(h, y + ch)) for y in (0, ch - overlap) for x in (0, cw - overlap)]
+    found = []
+    for opts, cropped in SAM_PASSES:
+        for x0, y0, x1, y1 in crops if cropped else [(0, 0, w, h)]:
+            for m in generate(image.crop((x0, y0, x1, y1)), points_per_batch=64, crops_n_layers=0, **opts)["masks"]:
+                m = np.asarray(m, dtype=bool)
+                ys, xs = np.nonzero(m)
+                if not len(xs):
+                    continue
+                # As SAM does: a crop's mask that reaches one of its inner edges is cut off there; drop it.
+                if (x0 > 0 and xs.min() < 20) or (x1 < w and xs.max() > x1 - x0 - 20) or (y0 > 0 and ys.min() < 20) or (y1 < h and ys.max() > y1 - y0 - 20):
+                    continue
+                full = np.zeros((h, w), dtype=bool)
+                full[y0:y1, x0:x1] = m
+                found.append(full)
+    found = sorted((m for m in found if m.sum() >= PIECE_MIN_SHARE * w * h), key=lambda m: -m.sum())
+    # Largest first: drop duplicates of a kept mask, and parts of a kept object (compared at a quarter size).
+    masks, small = [], []
+    for m in found:
+        q = m[::4, ::4]
+        area = q.sum()
+        clash = False
+        for k in small:
+            inter = (q & k).sum()
+            if inter / (area + k.sum() - inter) > DUPLICATE_IOU or (inter / area > PART_INSIDE and k.sum() < SCENE_SHARE * q.size):
+                clash = True
+                break
+        if not clash:
+            masks.append(m)
+            small.append(q)
+    # Largest first, so each pixel ends up with the most specific mask left over it.
     label = np.full((h, w), -1, dtype=np.int32)
     for i, m in enumerate(masks):
         label[m] = i
