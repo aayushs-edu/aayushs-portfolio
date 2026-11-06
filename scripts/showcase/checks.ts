@@ -4,7 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { CURVE, ZIP, type SplitLayout } from "../../src/components/hero/splitConfig";
 import { CLOSED, goneAt, lineAt, openAt, swing, zipClipPaths, zipFor } from "../../src/components/hero/zipper";
-import { corners, EXPLODE_STATES, FRUIT, fillOf, fitItems, JUG, RIGS, STAGE, TAGS, toStage, project, VIEW_ITEMS, VIEWS } from "../../src/components/showcase/paintwise/explode";
+import { corners, EXPLODE_STATES, fillOf, fitItems, JUG, TOYS, RIGS, STAGE, TAGS, toStage, project, VIEW_ITEMS, VIEWS } from "../../src/components/showcase/paintwise/explode";
 import { GROUP_ORDER, WORKS } from "../../src/components/showcase/works";
 
 let passed = 0;
@@ -45,7 +45,7 @@ interface StillLifeShape {
 }
 
 interface PaintwiseMediaShape extends StillLifeShape {
-  fruit: StillLifeShape;
+  toys: { canvas: { width: number; height: number }; original: string; objects: { id: string; src: string; box: number[]; depth: number }[] };
   stillLifes: { src: string; aspect: number }[];
   figure: { src: string; aspect: number };
 }
@@ -133,28 +133,28 @@ for (const [w, h, seamX, u] of [
 // ---------------------------------------------------------------------------
 // Paintwise's exploded still life
 
-check("explode: the jug's six layers fan out; the fruit's six layers and its objects show what the models see", () => {
+const ALL_ITEMS = [...JUG.layers, TOYS.original, ...TOYS.objects];
+
+check("explode: the jug's six layers fan out; Childhood Toys' SAM pieces show what the models see", () => {
   const ids = (items: { id: string }[]) => items.map((i) => i.id).join();
   assert(ids(VIEW_ITEMS.layers) === "jug:original,jug:masks,jug:depth,jug:blockin,jug:edges,jug:sketch", `layers view ${ids(VIEW_ITEMS.layers)}`);
-  assert(ids(FRUIT.layers) === "fruit:original,fruit:masks,fruit:depth,fruit:blockin,fruit:edges,fruit:sketch", `fruit layers ${ids(FRUIT.layers)}`);
-  assert(VIEW_ITEMS.masks.length === 6 + FRUIT.objects.length && FRUIT.objects.length > 14, `masks view: ${FRUIT.objects.length} objects`);
-  // The wall and the table (full-width masks and their edge pieces) are left out; the fruit is all there.
-  assert(FRUIT.objects.every((o) => o.width < 0.95), "a scene mask is still in");
-  for (const item of [...JUG.layers, ...JUG.objects, ...FRUIT.layers, ...FRUIT.objects]) {
+  assert(VIEW_ITEMS.masks[0] === TOYS.original && VIEW_ITEMS.masks.length === 1 + TOYS.objects.length, "masks view");
+  assert(TOYS.objects.length >= 10 && TOYS.objects.some((o) => o.id === "toys:back"), `${TOYS.objects.length} pieces`);
+  for (const item of ALL_ITEMS) {
     for (const state of EXPLODE_STATES) {
       const p = item.poses[state];
       assert([p.x, p.y, p.z, p.opacity].every(Number.isFinite) && p.opacity >= 0 && p.opacity <= 1, `${item.id} ${state}`);
     }
   }
-  assert(JUG.canvasH > 0.5 && JUG.canvasH < 1.2 && FRUIT.canvasH > 0.5 && FRUIT.canvasH < 1.2, `canvas heights ${JUG.canvasH}, ${FRUIT.canvasH}`);
+  assert(JUG.canvasH > 0.5 && JUG.canvasH < 1.2 && TOYS.canvasH > 0.5 && TOYS.canvasH < 1.2, `canvas heights ${JUG.canvasH}, ${TOYS.canvasH}`);
 });
 
-check("explode: at rest each stage is its still life, square on, alone, about the same height in both (the stages are)", () => {
-  for (const view of VIEWS) {
-    assert(RIGS[view].rest.turn[0] === 0 && RIGS[view].rest.turn[1] === 0, `${view}: turned at rest`);
-    const shown = VIEW_ITEMS[view].filter((i) => i.poses.rest.opacity > 0.01).map((i) => i.id);
-    assert(shown.length === 1 && shown[0].endsWith(":original"), `${view} shows at rest: ${shown}`);
-  }
+check("explode: at rest each stage is its picture, square on and whole, about the same height in both (the stages are)", () => {
+  for (const view of VIEWS) assert(RIGS[view].rest.turn[0] === 0 && RIGS[view].rest.turn[1] === 0, `${view}: turned at rest`);
+  const jug = JUG.layers.filter((l) => l.poses.rest.opacity > 0.01).map((l) => l.id);
+  assert(jug.join() === "jug:original", `the jug shows ${jug} at rest`);
+  // The painting lies over its pieces, which sit flat in place under it.
+  assert(TOYS.original.poses.rest.opacity === 1 && TOYS.objects.every((o) => o.poses.rest.z < TOYS.original.poses.rest.z), "the painting isn't on top at rest");
   const height = (view: (typeof VIEWS)[number]) => {
     const ys = corners(VIEW_ITEMS[view][0], "rest").map((p) => project(p, RIGS[view].rest)[1]);
     return (Math.max(...ys) - Math.min(...ys)) / STAGE.view[view].aspect;
@@ -162,16 +162,13 @@ check("explode: at rest each stage is its still life, square on, alone, about th
   assert(Math.abs(height("layers") - height("masks")) < 0.06, `${height("layers").toFixed(3)} vs ${height("masks").toFixed(3)} of the stage's height`);
 });
 
-check("explode: fanned out, every layer shows and no object does; for the masks, only the objects show", () => {
-  for (const item of [...JUG.layers, ...JUG.objects, ...FRUIT.layers, ...FRUIT.objects]) {
-    const { layers, masks } = item.poses;
-    if (item.kind === "layer") {
-      assert(layers.opacity === 1, `${item.id} hidden in layers`);
-      assert(masks.opacity === 0, `${item.id} shows behind the masks (${masks.opacity})`);
-    } else {
-      assert(layers.opacity === 0 && masks.opacity === 1, `${item.id}`);
-    }
-  }
+check("explode: fanned out, every jug layer shows; for the masks, only the pieces show, spread through PIECE_DEPTH with the back farthest", () => {
+  for (const l of JUG.layers) assert(l.poses.layers.opacity === 1, `${l.id} hidden in layers`);
+  assert(TOYS.original.poses.masks.opacity === 0, "the painting still shows over its pieces");
+  assert(TOYS.objects.every((o) => o.poses.masks.opacity === 1), "a piece is hidden");
+  const zs = TOYS.objects.map((o) => o.poses.masks.z);
+  const back = TOYS.objects.find((o) => o.id === "toys:back")!;
+  assert(back.poses.masks.z === Math.min(...zs) && near(Math.max(...zs) - Math.min(...zs), 0.7, 1e-6), `pieces span ${(Math.max(...zs) - Math.min(...zs)).toFixed(3)}`);
 });
 
 for (const view of VIEWS) {
@@ -193,10 +190,8 @@ for (const view of VIEWS) {
   }
 }
 
-check("explode: the layers fan out toward the back, and the masks sit in front of their layers", () => {
+check("explode: the jug's layers fan out toward the back", () => {
   for (let k = 1; k < JUG.layers.length; k++) assert(JUG.layers[k].poses.layers.z < JUG.layers[k - 1].poses.layers.z, `${JUG.layers[k].id} not behind`);
-  const front = Math.max(...FRUIT.layers.map((l) => l.poses.masks.z));
-  assert(FRUIT.objects.every((o) => o.poses.masks.z > front), "an object is behind the layers");
 });
 
 check("explode: a tag per layer when fanned out, one for the masks, each pinned on its stage", () => {
@@ -251,19 +246,18 @@ check("works: every work is in a group on the page, and slugs are unique", () =>
     });
   });
 
-  check("paintwise media: the fruit still life's six layers and its objects, on disk, far to near, inside its canvas", () => {
+  check("paintwise media: Childhood Toys, its SAM 2.1 pieces and the back, on disk, far to near, inside the painting", () => {
     assert(media !== null, "no media");
-    const fruit = media.fruit;
-    assert(!!fruit, "no fruit (run npm run showcase:assets paintwise)");
-    assert(fruit.layers.map((l) => l.id).join(",") === "original,masks,depth,blockin,edges,sketch", "fruit layers");
-    for (const l of fruit.layers) assert(exists(l.src), `missing ${l.src}`);
-    assert(fruit.canvas.width > fruit.canvas.height, "fruit canvas");
-    assert(fruit.objects.length >= 12 && fruit.objects.length <= 28, `${fruit.objects.length} fruit objects`);
-    fruit.objects.forEach((o, i) => {
+    const toys = media.toys;
+    assert(!!toys, "no toys (run npm run showcase:assets paintwise)");
+    assert(exists(toys.original) && toys.canvas.width > 0 && toys.canvas.height > 0, "the painting");
+    assert(toys.objects.length >= 10 && toys.objects.length <= 33, `${toys.objects.length} pieces`);
+    assert(toys.objects[0].id === "back", "the back isn't farthest");
+    toys.objects.forEach((o, i) => {
       assert(exists(o.src), `missing ${o.src}`);
       const [x, y, w, h] = o.box;
-      assert(x >= 0 && y >= 0 && w > 0 && h > 0 && x + w <= 1.0001 && y + h <= 1.0001, `fruit ${o.id} box ${o.box}`);
-      assert(i === 0 || o.depth >= fruit.objects[i - 1].depth, `fruit ${o.id} out of depth order`);
+      assert(x >= 0 && y >= 0 && w > 0 && h > 0 && x + w <= 1.0001 && y + h <= 1.0001, `${o.id} box ${o.box}`);
+      assert(i === 0 || o.depth >= toys.objects[i - 1].depth, `${o.id} out of depth order`);
     });
   });
 

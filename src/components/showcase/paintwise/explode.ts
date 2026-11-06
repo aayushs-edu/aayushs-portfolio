@@ -1,13 +1,12 @@
 // Paintwise's two exploded views, each on its own CSS 3D stage (pure; checked
-// by showcase:check). A still life is a stack of its pipeline's layers; each
-// stage starts as its still life (rest) and comes apart into its view.
-// "layers" fans the jug's six layers out in depth, seen from the right, with a
-// tag on each. "masks" pushes every object of the fruit still life's masks
-// layer (the pipeline figure's example) out to its own depth, seen from the
-// left. The spacing and the angles are the old 3D room's (its canvas was
-// 1.9 m wide).
+// by showcase:check). Each stage starts as its picture (rest) and comes apart
+// into its view. "layers" fans the jug still life's six pipeline layers out in
+// depth, seen from the right, with a tag on each (the old 3D room's spacing
+// and angle; its canvas was 1.9 m wide). "masks" is what the models see in
+// Childhood Toys: the painting cut into SAM 2.1's pieces, each pushed out to
+// the depth Depth Anything V2 gives it.
 //
-// Items are placed in canvas widths (a still life is 1 wide), y down, z toward the
+// Items are placed in canvas widths (a picture is 1 wide), y down, z toward the
 // viewer. Each view's stage has its own shape; for both its states it gets a
 // rig: the turn it's seen at, and the scale and offset that fit it in the
 // stage (in stage widths, from the stage's centre). The stage's CSS uses
@@ -30,7 +29,7 @@ export const STAGE = {
   /** Each view's stage: its shape (height / width), how much of it the view fills (the rest is room for tags), and the turn it's seen at (degrees: rotateX, rotateY). */
   view: {
     layers: { aspect: 0.6, fill: 0.92, turn: [-7, -49] },
-    masks: { aspect: 0.66, fill: 0.88, turn: [-6, 43] },
+    masks: { aspect: 0.66, fill: 0.88, turn: [-8, 28] },
   } as Record<View, { aspect: number; fill: number; turn: readonly [number, number] }>,
 };
 
@@ -101,78 +100,70 @@ const pose = (x: number, y: number, z: number, opacity: number): Pose => ({ x, y
 interface StillLife {
   canvas: { width: number; height: number };
   layers: { id: string; src: string }[];
-  objects: { id: string; src: string; box: number[]; depth: number; color: string }[];
 }
 
-/**
- * The scene's own masks (the wall, the table): a mask the whole canvas wide,
- * and the other pieces of its colour at the canvas's edges. Pushed out to their
- * depths they'd be big sheets full of holes that no longer line up.
- */
-function sceneMasks(still: StillLife): Set<string> {
-  const touches = ([x, y, w, h]: number[]) => x < 0.01 || y < 0.01 || x + w > 0.99 || y + h > 0.99;
-  const colors = new Set(still.objects.filter((o) => o.box[2] > 0.95).map((o) => o.color));
-  return new Set(still.objects.filter((o) => colors.has(o.color) && touches(o.box)).map((o) => o.id));
-}
-
-/**
- * Where layer k falls back to as the masks come forward (fading out on the
- * way): pushed back, and slid along the masks view's line of sight so that,
- * seen at its turn, it recedes right behind them.
- */
-function fallBack(k: number): Pose {
-  const z = -0.9 * M + 0.3 * SPREAD.z * k;
-  const [ax, ay] = STAGE.view.masks.turn;
-  const t = (deg: number) => Math.tan((deg * Math.PI) / 180);
-  return pose(-z * t(ay) + 0.25 * SPREAD.x * k, z * t(ax) + SPREAD.y * k, z, 0);
-}
-
-/** A still life as a stack: its six layers, then its masks' objects (without the scene's, if asked), posed for every state. */
-function stack(still: StillLife, name: string, { scene = true } = {}) {
-  const dropped = scene ? new Set<string>() : sceneMasks(still);
+/** The jug as a stack of its six layers (only rest and layers are ever shown). */
+function stack(still: StillLife, name: string) {
   const canvasH = still.canvas.height / still.canvas.width;
-  const masksK = still.layers.findIndex((l) => l.id === "masks");
-  const layers: ExplodeItem[] = still.layers.map((layer, k) => ({
-    id: `${name}:${layer.id}`,
-    kind: "layer",
-    src: layer.src,
-    width: 1,
-    height: canvasH,
-    poses: {
-      rest: pose(0, 0, -STACK * k, k === 0 ? 1 : 0),
-      layers: pose(SPREAD.x * k, SPREAD.y * k, SPREAD.z * k, 1),
-      // The layers fall back and fade out; only the masks' objects stay.
-      masks: fallBack(k),
-    },
-  }));
-  const objects: ExplodeItem[] = still.objects.filter((o) => !dropped.has(o.id)).map((object) => {
-    const [bx, by, bw, bh] = object.box;
-    const x = bx + bw / 2 - 0.5;
-    const y = (by + bh / 2 - 0.5) * canvasH;
+  const layers: ExplodeItem[] = still.layers.map((layer, k) => {
+    const rest = pose(0, 0, -STACK * k, k === 0 ? 1 : 0);
     return {
-      id: `${name}:${object.id}`,
-      kind: "object",
-      src: object.src,
-      width: bw,
-      height: bh * canvasH,
-      poses: {
-        rest: pose(x, y, -STACK * masksK + LIFT, 0),
-        layers: pose(x + SPREAD.x * masksK, y + SPREAD.y * masksK, SPREAD.z * masksK + LIFT, 0),
-        masks: pose(x * 1.15, y, ((object.depth - 0.5) * 2.4 + 0.3) * M, 1),
-      },
+      id: `${name}:${layer.id}`,
+      kind: "layer",
+      src: layer.src,
+      width: 1,
+      height: canvasH,
+      poses: { rest, layers: pose(SPREAD.x * k, SPREAD.y * k, SPREAD.z * k, 1), masks: { ...rest, opacity: 0 } },
     };
   });
-  return { canvasH, layers, objects };
+  return { canvasH, layers };
 }
 
-/** The jug fans out its layers; the fruit (the pipeline figure's still life) shows what the models see. */
-export const JUG = stack(media, "jug");
-export const FRUIT = stack(media.fruit, "fruit", { scene: false });
+interface Pieces {
+  canvas: { width: number; height: number };
+  original: string;
+  objects: { id: string; src: string; box: number[]; depth: number }[];
+}
 
-/** What each view's stage holds. The stage depth-sorts, so order doesn't matter; layers first, then the objects. */
+/** How far SAM's pieces spread in depth, farthest to nearest (canvas widths). */
+const PIECE_DEPTH = 0.7;
+
+/**
+ * A painting in SAM 2.1's pieces. At rest the painting covers them, whole;
+ * coming apart it fades, and each piece (the painting itself, rimmed in its
+ * mask's colour) moves out to its depth, what no piece took farthest back.
+ */
+function pieces(painting: Pieces, name: string) {
+  const canvasH = painting.canvas.height / painting.canvas.width;
+  const original: ExplodeItem = {
+    id: `${name}:original`,
+    kind: "layer",
+    src: painting.original,
+    width: 1,
+    height: canvasH,
+    poses: { rest: pose(0, 0, LIFT, 1), layers: pose(0, 0, LIFT, 0), masks: pose(0, 0, LIFT, 0) },
+  };
+  const depths = painting.objects.map((o) => o.depth);
+  const [near, far] = [Math.max(...depths), Math.min(...depths)];
+  const objects: ExplodeItem[] = painting.objects.map((o) => {
+    const [bx, by, bw, bh] = o.box;
+    const x = bx + bw / 2 - 0.5;
+    const y = (by + bh / 2 - 0.5) * canvasH;
+    const flat = pose(x, y, 0, 1);
+    const z = ((o.depth - far) / (near - far) - 0.5) * PIECE_DEPTH;
+    return { id: `${name}:${o.id}`, kind: "object", src: o.src, width: bw, height: bh * canvasH, poses: { rest: flat, layers: flat, masks: pose(x, y, z, 1) } };
+  });
+  return { canvasH, original, objects };
+}
+
+/** The jug fans out its layers; Childhood Toys shows what the models see. */
+export const JUG = stack(media, "jug");
+export const TOYS = pieces(media.toys, "toys");
+
+/** What each view's stage holds (the stage depth-sorts, so order only sets the stagger). */
 export const VIEW_ITEMS: Record<View, ExplodeItem[]> = {
   layers: JUG.layers,
-  masks: [...FRUIT.layers, ...FRUIT.objects],
+  masks: [TOYS.original, ...TOYS.objects],
 };
 
 // ---- Projection: the same maths as the browser's CSS 3D -------------------------
@@ -283,7 +274,7 @@ export const TAGS: Record<View, Tag[]> = {
   // Over the middle of the masks, just above the highest of them on screen.
   masks: [
     (() => {
-      const xy = FRUIT.objects.flatMap((o) => corners(o, "masks")).map((p) => project(p, RIGS.masks.view));
+      const xy = TOYS.objects.flatMap((o) => corners(o, "masks")).map((p) => project(p, RIGS.masks.view));
       const xs = xy.map((p) => p[0]);
       return { id: "tag:objects", ...MASKS_COPY, x: (Math.min(...xs) + Math.max(...xs)) / 2, y: Math.min(...xy.map((p) => p[1])), align: "above" as const };
     })(),

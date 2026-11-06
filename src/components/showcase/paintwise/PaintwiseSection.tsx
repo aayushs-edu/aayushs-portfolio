@@ -25,7 +25,7 @@ const VIEW_TEXT: Record<View, { title: string; label: string }> = {
   },
   masks: {
     title: "What the models see",
-    label: "A still life of grapefruit, lemon, kiwi and blueberries: every object SAM 2.1 segments in it, pushed out to the depth Depth Anything V2 gives it.",
+    label: "Childhood Toys, a still-life painting: every piece SAM 2.1 cuts it into, pushed out to the depth Depth Anything V2 gives it.",
   },
 };
 
@@ -114,7 +114,7 @@ interface PaintwiseSectionProps {
  * Paintwise, first under the hero: the pitch beside the pipeline figure, then
  * the old room's two exploded views side by side, each coming apart as it
  * scrolls into sight: the layers its pipeline makes of the jug, and what the
- * models see in the figure's fruit still life.
+ * models see in Childhood Toys.
  */
 export default function PaintwiseSection({ storyId, figureId, onStory, onFigure }: PaintwiseSectionProps) {
   const figureRef = useRef<HTMLImageElement | null>(null);

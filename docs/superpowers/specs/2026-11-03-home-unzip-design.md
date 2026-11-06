@@ -59,13 +59,12 @@ Revised the same day at the user's request. The first layout (the jug beside the
 **The exploded views** (`showcase/paintwise/explode.ts`, pure):
 - **Each view has its own stage** (`STAGE.view`):
   - *layers*: aspect 0.6, filling 0.92. The six layers fan out right and back, seen from the right (rotateX −7°, rotateY −49°). A tag per layer, in two rows above and below the whole fan, each over its layer's middle.
-  - *masks*: aspect 0.66, filling 0.88. It uses the fruit still life (grapefruit, lemon, kiwi, blueberries), the pipeline figure's example, at the user's request: a better example than the jug.
-    - Its masks push out to their depths, seen from the left (−6°, 43°).
-    - SAM's two scene masks, the wall and the table, are left out. They are the full-width masks and their pieces at the canvas's edges; pushed out, they would be sheets full of holes. That leaves 20 of the 23.
-    - Its layers fall back along the line of sight and fade out, leaving only the masks. A faint stack of them left behind was tried and removed at the user's request.
-    - The view is fitted to the masks.
+  - *masks*: aspect 0.66, filling 0.88, seen at (−8°, 28°). It shows what the models see in **Childhood Toys**, the user's own still-life painting.
+    - The fruit still life (the figure's example) was tried first. Built from its 167 px thumbnail, its masks were pixelated and didn't come together, so the user switched to the painting.
+    - SAM 2.1 cuts the painting into pieces. Each piece is the painting itself, with a thin rim in its mask colour.
+    - Coming apart, the painting fades, and each piece moves out to its Depth Anything V2 depth (spread over 0.7 canvas widths). What no piece took is the back, farthest away.
     - One tag: "SAM 2.1 × Depth Anything V2 · each object's mask, pushed out to its depth".
-- **Coming apart:** each stage starts as its still life (the jug, or the fruit), square on and filling 0.8 of its stage. Once 45% of it is in view, it comes apart into its view. This happens once, staggered layer by layer; the tags come in after the layers land.
+- **Coming apart:** each stage starts as its picture (the jug, or the painting whole over its pieces), square on and filling 0.8 of its stage. Once 45% of it is in view, it comes apart into its view. This happens once, staggered layer by layer; the tags come in after the layers land.
 - **Geometry:** spacing and angles are the old room's, with metres converted to canvas widths.
 - **The stages:**
   - Each is a CSS 3D scene with `perspective` and `container-type: inline-size`; one canvas width is `100cqw` before the rig's scale.
@@ -96,13 +95,12 @@ Revised the same day at the user's request. The first layout (the jug beside the
   - the film loops (each film's poster shows in the grid)
   - Paintwise's eight other still lifes (taken off the section at the user's request)
 
-**The fruit still life's media.**
-- It exists only as 167×110 panels in `public/images/paintwise-gallery-1.png`. The user chose to build from that rather than supply a larger original.
-- `build-assets.py` (`build_fruit`) enlarges it 4×:
-  - the photo-like layers with Swin2SR (`caidas/swin2SR-classical-sr-x4-64`, via transformers);
-  - the flat ones (masks, block-in) snapped back to their own colours.
-- Its 23 objects are split from its masks, with smoothed edges, and each gets Depth Anything V2's depth from the enlarged photo.
-- The output goes to `public/showcase/paintwise/fruit/` and the `fruit` entry of `paintwise.generated.json`. The photo is noticeably softer than the jug.
+**Childhood Toys' media.**
+- `build-assets.py` (`build_toys`) runs SAM 2.1's automatic masks on `public/paintings/StillLifeToys.webp` at 1280 px. It uses `facebook/sam2.1-hiera-small` via transformers, which needs `torchvision`; 0.28 matches the installed torch 2.13.
+- Each pixel goes to the most specific mask over it. The 25 largest pieces (each at least 0.2% of the painting) are kept, and everything else becomes the back.
+- Each piece gets the median Depth Anything V2 depth under it.
+- The output goes to `public/showcase/paintwise/toys/` and the `toys` entry of `paintwise.generated.json`.
+
 - **Retiring the old pages** (`/paintings`, `/animation`, `/games`, `/hackathons`, `/paintwise`).
 
 ## 6. Verification
