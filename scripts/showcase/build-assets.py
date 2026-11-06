@@ -18,7 +18,10 @@ Paintwise:
   cut into pieces as Paintwise's "unrestricted" segmenter does (MasterStroke.ipynb
   on Lightning): SAM 2.1 large's automatic masks in two passes, duplicates and
   parts of objects dropped; each piece is the painting itself with a thin rim
-  in its mask colour and Depth Anything V2's depth; what no piece takes is the back;
+  in its mask colour and Depth Anything V2's depth. The surfaces are filled in
+  where things stood (row by row, needs opencv-python-headless): the farthest,
+  with what no piece took, is the back, a whole rectangle; the others (the
+  table) are slabs, with strips of their edges for the sides;
 - the other still lifes: cut from the pipeline grids public/images/paintwise-gallery-*.png;
 - the figure: public/showcase/paintwise/pipeline.webp (scripts/showcase/paintwise-figure.py).
 
@@ -101,6 +104,48 @@ PIECE_MIN_SHARE = 0.002
 MAX_PIECES = 32
 # A piece this big is a surface (a wall, the table): it goes as far back as its far part, behind what stands on it.
 SURFACE_SHARE = 0.08
+
+
+def fill_rows(rgb, known, window=7):
+    """Fills what isn't `known` row by row: a blend between the known colours either side of each gap,
+    with brush texture mirrored in from the known pixels beside it. Suits walls and tables, whose
+    changes run across."""
+    import cv2
+
+    img = rgb.astype(np.float32)
+    k = known.astype(np.float32)
+    ends = cv2.blur(img * k[..., None], (1, window)) / np.maximum(cv2.blur(k, (1, window))[..., None], 1e-6)
+    texture = (img - cv2.GaussianBlur(img, (0, 0), 2)) * k[..., None]
+    out = img.copy()
+    h, w = known.shape
+    for y in range(h):
+        row, x = known[y], 0
+        while x < w:
+            if row[x]:
+                x += 1
+                continue
+            x0 = x
+            while x < w and not row[x]:
+                x += 1
+            n = x - x0
+            left = ends[y, x0 - 1] if x0 > 0 else None
+            right = ends[y, x] if x < w else None
+            if left is None and right is None:
+                continue
+            left = right if left is None else left
+            right = left if right is None else right
+            t = ((np.arange(n) + 1) / (n + 1))[:, None]
+            donor = texture[y, max(0, x0 - n) : x0][::-1] if x0 >= n else texture[y, x : x + n]
+            donor = np.resize(donor, (n, 3)) if len(donor) else np.zeros((n, 3), np.float32)
+            out[y, x0:x] = left * (1 - t) + right * t + donor
+    return np.clip(out, 0, 255).astype(np.uint8)
+
+
+def solid(mask, shrink):
+    """A mask's sure pixels: shrunk past its soft edge (and the rims drawn round its neighbours)."""
+    import cv2
+
+    return cv2.erode(mask.astype(np.uint8), np.ones((2 * shrink + 1, 2 * shrink + 1), np.uint8)) > 0
 # Other still lifes run through the pipeline: (grid, panel index). Rows are
 # original, SAM masks, block-in / PiDiNet edges, depth, sketch (gallery-2, -3),
 # or original, masks, block-in, edges, sketch per row (gallery-5, -6).
@@ -323,17 +368,48 @@ def build_pieces(estimator):
             rgba[rim] = (*color, 255)
         return Image.fromarray(rgba.astype(np.uint8), "RGBA"), [x0 / w, y0 / h, (x1 - x0) / w, (y1 - y0) / h]
 
+    surface = {i: (label == i).sum() >= SURFACE_SHARE * w * h for i in keep}
+    depth_of = {i: float(np.percentile(near[label == i], 10) if surface[i] else np.median(near[label == i])) for i in keep}
+    # The farthest surface (the wall) takes what no piece took, and becomes the back.
+    surfaces = sorted((i for i in keep if surface[i]), key=lambda i: depth_of[i])
+    wall = surfaces[0] if surfaces else None
     pieces = []
     for k, i in enumerate(keep):
+        if i == wall:
+            continue
         mask = label == i
         color = TAB20[k % len(TAB20)]
+        if surface[i]:
+            # A table: a rectangle from its back edge (level, since things hide it) down, filled where things stood.
+            ys, xs = np.nonzero(mask)
+            tops = [np.nonzero(mask[:, x])[0].min() for x in range(xs.min(), xs.max() + 1) if mask[:, x].any()]
+            y0, y1, x0, x1 = int(np.percentile(tops, 25)), ys.max() + 1, xs.min(), xs.max() + 1
+            inside = np.zeros_like(mask)
+            inside[y0:y1, x0:x1] = True
+            slab = fill_rows(rgb, solid(mask, 3) | ~inside)[y0:y1, x0:x1]
+            pieces.append(
+                {
+                    "image": Image.fromarray(slab, "RGB"),
+                    "box": [x0 / w, y0 / h, (x1 - x0) / w, (y1 - y0) / h],
+                    "depth": depth_of[i],
+                    "color": "#%02x%02x%02x" % color,
+                    # Its edges, for the slab's sides: the left columns (top to bottom) and the top rows (left to right).
+                    "side": Image.fromarray(slab[:, :4].mean(axis=1, keepdims=True).astype(np.uint8), "RGB"),
+                    "top": Image.fromarray(slab[:4].mean(axis=0, keepdims=True).astype(np.uint8), "RGB"),
+                }
+            )
+            continue
         piece, box = cut(mask, color)
-        under = near[mask]
-        depth = np.percentile(under, 10) if mask.sum() >= SURFACE_SHARE * w * h else np.median(under)
-        pieces.append({"image": piece, "box": box, "depth": float(depth), "color": "#%02x%02x%02x" % color})
-    back = ~np.isin(label, keep)
-    piece, box = cut(back)
-    pieces.append({"image": piece, "box": box, "depth": float(min(p["depth"] for p in pieces) - 0.05), "color": "#000000", "back": True})
+        pieces.append({"image": piece, "box": box, "depth": depth_of[i], "color": "#%02x%02x%02x" % color})
+    back = ~np.isin(label, [i for i in keep if i != wall])
+    far = min(p["depth"] for p in pieces) - 0.05
+    if wall is not None:
+        # A whole rectangle: the wall, filled in behind everything.
+        whole = fill_rows(rgb, solid(back, 4))
+        pieces.append({"image": Image.fromarray(whole, "RGB"), "box": [0, 0, 1, 1], "depth": far, "color": "#000000", "back": True})
+    else:
+        piece, box = cut(back)
+        pieces.append({"image": piece, "box": box, "depth": far, "color": "#000000", "back": True})
     pieces.sort(key=lambda p: p["depth"])
     objects = []
     for k, p in enumerate(pieces):
@@ -345,6 +421,7 @@ def build_pieces(estimator):
                 "box": [round(v, 5) for v in p["box"]],
                 "depth": round(p["depth"], 4),
                 "color": p["color"],
+                **({"slab": {"side": write_webp(p["side"], "pieces", f"{oid}-side", lossless=True), "top": write_webp(p["top"], "pieces", f"{oid}-top", lossless=True)}} if "side" in p else {}),
             }
         )
     return {"from": PIECES_FROM, "canvas": {"width": w, "height": h}, "original": write_webp(image, "pieces", "original", quality=88), "objects": objects}

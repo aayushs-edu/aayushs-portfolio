@@ -56,6 +56,8 @@ export interface ExplodeItem {
   id: string;
   kind: "layer" | "object";
   src: string;
+  /** A slab (the table): how deep it runs back (canvas widths), and strips of its edges for the sides. */
+  slab?: { thickness: number; side: string; top: string };
   /** Canvas widths */
   width: number;
   height: number;
@@ -122,8 +124,11 @@ function stack(still: StillLife, name: string) {
 interface Pieces {
   canvas: { width: number; height: number };
   original: string;
-  objects: { id: string; src: string; box: number[]; depth: number }[];
+  objects: { id: string; src: string; box: number[]; depth: number; slab?: { side: string; top: string } }[];
 }
+
+/** A slab runs back this share of the way to the back. */
+const SLAB_DEPTH = 0.7;
 
 /** How far SAM's pieces spread in depth, farthest to nearest (canvas widths). */
 export const PIECE_DEPTH = 1.3;
@@ -151,7 +156,8 @@ function pieces(painting: Pieces, name: string) {
     const y = (by + bh / 2 - 0.5) * canvasH;
     const flat = pose(x, y, 0, 1);
     const z = ((o.depth - far) / (near - far) - 0.5) * PIECE_DEPTH;
-    return { id: `${name}:${o.id}`, kind: "object", src: o.src, width: bw, height: bh * canvasH, poses: { rest: flat, layers: flat, masks: pose(x, y, z, 1) } };
+    const slab = o.slab && { ...o.slab, thickness: SLAB_DEPTH * (z + PIECE_DEPTH / 2) };
+    return { id: `${name}:${o.id}`, kind: "object", src: o.src, width: bw, height: bh * canvasH, ...(slab ? { slab } : {}), poses: { rest: flat, layers: flat, masks: pose(x, y, z, 1) } };
   });
   return { canvasH, original, objects };
 }

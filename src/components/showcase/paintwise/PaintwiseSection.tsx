@@ -70,6 +70,7 @@ function ExplodedView({ view }: { view: View }) {
                 key={item.id}
                 className={css.item}
                 data-kind={item.kind}
+                data-slab={item.slab ? "" : undefined}
                 style={
                   {
                     left: cqw(-item.width / 2),
@@ -79,11 +80,13 @@ function ExplodedView({ view }: { view: View }) {
                     transform: `translate3d(${cqw(p.x)}, ${cqw(p.y)}, ${cqw(p.z)})`,
                     opacity: p.opacity,
                     "--i": item.kind === "layer" ? i : 4 + (i - 6) * 0.35,
+                    ...(item.slab ? { "--t": cqw(item.slab.thickness), "--side": `url(${item.slab.side})`, "--top": `url(${item.slab.top})` } : {}),
                   } as CSSProperties
                 }
               >
                 {/* eslint-disable-next-line @next/next/no-img-element -- hashed, pre-sized layers from public/showcase */}
                 <img src={item.src} alt="" loading="lazy" decoding="async" draggable={false} />
+                {item.slab && ["top", "bottom", "left", "right"].map((face) => <span key={face} className={css.face} data-face={face} />)}
               </span>
             );
           })}

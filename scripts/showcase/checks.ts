@@ -190,6 +190,16 @@ for (const view of VIEWS) {
   }
 }
 
+check("explode: the back is a whole rectangle; a slab runs back toward it without reaching it", () => {
+  const back = PIECES.objects.find((o) => o.id === "pieces:back")!;
+  assert(near(back.width, 1, 1e-3) && near(back.height, PIECES.canvasH, 1e-3), `back ${back.width} × ${back.height}`);
+  const slabs = PIECES.objects.filter((o) => o.slab);
+  for (const s of slabs) {
+    assert(s.slab!.thickness > 0 && s.poses.masks.z - s.slab!.thickness > back.poses.masks.z, `${s.id} runs through the back`);
+    assert(!!s.slab!.side && !!s.slab!.top, `${s.id} has no edge strips`);
+  }
+});
+
 check("explode: the jug's layers fan out toward the back", () => {
   for (let k = 1; k < JUG.layers.length; k++) assert(JUG.layers[k].poses.layers.z < JUG.layers[k - 1].poses.layers.z, `${JUG.layers[k].id} not behind`);
 });

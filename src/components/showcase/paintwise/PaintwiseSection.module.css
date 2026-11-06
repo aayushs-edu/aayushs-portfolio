@@ -173,6 +173,59 @@
   user-select: none;
 }
 
+/* A slab (the table) runs back from its face: its sides are strips of its own edges, stretched. */
+.item[data-slab] {
+  transform-style: preserve-3d;
+}
+
+.face {
+  position: absolute;
+  display: block;
+  background-size: 100% 100%;
+}
+
+.face[data-face="top"],
+.face[data-face="bottom"] {
+  left: 0;
+  width: 100%;
+  height: var(--t);
+  background-image: var(--top);
+}
+
+.face[data-face="top"] {
+  top: 0;
+  transform-origin: top;
+  transform: rotateX(-90deg);
+}
+
+.face[data-face="bottom"] {
+  bottom: 0;
+  transform-origin: bottom;
+  transform: rotateX(90deg);
+  filter: brightness(0.45);
+}
+
+.face[data-face="left"],
+.face[data-face="right"] {
+  top: 0;
+  width: var(--t);
+  height: 100%;
+  background-image: var(--side);
+  filter: brightness(0.7);
+}
+
+.face[data-face="left"] {
+  left: 0;
+  transform-origin: left;
+  transform: rotateY(90deg);
+}
+
+.face[data-face="right"] {
+  right: 0;
+  transform-origin: right;
+  transform: rotateY(-90deg);
+}
+
 /* SAM's pieces cast a soft shadow on what's behind them, so the layers read. */
 .item[data-kind="object"] img {
   filter: drop-shadow(0 10px 14px rgb(0 0 0 / 0.55));
