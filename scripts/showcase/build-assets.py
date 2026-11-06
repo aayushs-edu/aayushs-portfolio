@@ -14,7 +14,7 @@ Paintwise:
   history into scripts/showcase/sources/paintwise/ (380 px);
 - its depth map: Depth Anything V2, the model Paintwise uses (scripts/hero/depth.py);
 - its objects: the SAM masks image, split by its flat tab20 colours;
-- "what the models see": Childhood Toys (public/paintings/StillLifeToys.webp)
+- "what the models see": a picture (PIECES_FROM: the jug, or Childhood Toys)
   cut into pieces as Paintwise's "unrestricted" segmenter does (MasterStroke.ipynb
   on Lightning): SAM 2.1 large's automatic masks in two passes, duplicates and
   parts of objects dropped; each piece is the painting itself with a thin rim
@@ -77,8 +77,9 @@ TAB20 = [
 MIN_OBJECT_PX = 80
 MAX_OBJECTS = 28
 # "What the models see": a painting cut into pieces by SAM 2.1.
-TOYS = PUBLIC / "paintings/StillLifeToys.webp"
-TOYS_WIDTH = 1280
+# The picture to cut: "jug" (the still life of the layers view, enlarged 2×) or "toys" (Childhood Toys).
+PIECES_FROM = "jug"
+PIECES_SOURCES = {"jug": (SOURCES / "jug-original.png", 2), "toys": (PUBLIC / "paintings/StillLifeToys.webp", 1280)}
 SAM_MODEL = "facebook/sam2.1-hiera-large"
 # Paintwise's passes (SAM21UnrestrictedSegmenter in MasterStroke.ipynb): one for whole objects,
 # and a denser, more permissive one (64 points a side, and 32 in each of four crops) for the small
@@ -98,6 +99,8 @@ SCENE_SHARE = 0.3
 # A piece must cover this share of the painting; at most this many pieces (the rest go to the back).
 PIECE_MIN_SHARE = 0.002
 MAX_PIECES = 32
+# A piece this big is a surface (a wall, the table): it goes as far back as its far part, behind what stands on it.
+SURFACE_SHARE = 0.08
 # Other still lifes run through the pipeline: (grid, panel index). Rows are
 # original, SAM masks, block-in / PiDiNet edges, depth, sketch (gallery-2, -3),
 # or original, masks, block-in, edges, sketch per row (gallery-5, -6).
@@ -256,11 +259,14 @@ def build_objects(size, masks, depth):
     return out
 
 
-def build_toys(estimator):
-    """Childhood Toys as SAM 2.1 sees it: its pieces (the painting, rimmed in mask colour) with their depths, and the back."""
+def build_pieces(estimator):
+    """The picture as SAM 2.1 sees it: its pieces (the picture itself, rimmed in mask colour) with their depths, and the back."""
     from transformers import pipeline
 
-    image = fit(Image.open(TOYS), TOYS_WIDTH)
+    source, size = PIECES_SOURCES[PIECES_FROM]
+    image = Image.open(source).convert("RGB")
+    # A small picture is enlarged by a factor; a large one fits a long side.
+    image = image.resize((image.width * size, image.height * size), Image.LANCZOS) if size < 10 else fit(image, size)
     w, h = image.size
     generate = pipeline("mask-generation", model=SAM_MODEL, device="cpu")
     # SAM's crop layer 1: two crops a side, overlapping by 512/1500 of the short side.
@@ -322,7 +328,9 @@ def build_toys(estimator):
         mask = label == i
         color = TAB20[k % len(TAB20)]
         piece, box = cut(mask, color)
-        pieces.append({"image": piece, "box": box, "depth": float(np.median(near[mask])), "color": "#%02x%02x%02x" % color})
+        under = near[mask]
+        depth = np.percentile(under, 10) if mask.sum() >= SURFACE_SHARE * w * h else np.median(under)
+        pieces.append({"image": piece, "box": box, "depth": float(depth), "color": "#%02x%02x%02x" % color})
     back = ~np.isin(label, keep)
     piece, box = cut(back)
     pieces.append({"image": piece, "box": box, "depth": float(min(p["depth"] for p in pieces) - 0.05), "color": "#000000", "back": True})
@@ -333,13 +341,13 @@ def build_toys(estimator):
         objects.append(
             {
                 "id": oid,
-                "src": write_webp(p["image"], "toys", oid, quality=88),
+                "src": write_webp(p["image"], "pieces", oid, quality=88),
                 "box": [round(v, 5) for v in p["box"]],
                 "depth": round(p["depth"], 4),
                 "color": p["color"],
             }
         )
-    return {"canvas": {"width": w, "height": h}, "original": write_webp(image, "toys", "original", quality=88), "objects": objects}
+    return {"from": PIECES_FROM, "canvas": {"width": w, "height": h}, "original": write_webp(image, "pieces", "original", quality=88), "objects": objects}
 
 
 def build_still_lifes():
@@ -365,7 +373,7 @@ def build_figure():
 
 
 def paintwise_step(estimator):
-    for stale in ("layers", "objects", "stills", "fruit", "toys"):
+    for stale in ("layers", "objects", "stills", "fruit", "toys", "pieces"):
         shutil.rmtree(OUT / stale, ignore_errors=True)
     for stale in [*OUT.glob("steps.*.webp"), *OUT.glob("figure.*.webp")]:
         stale.unlink()
@@ -375,14 +383,14 @@ def paintwise_step(estimator):
         "canvas": {"width": size[0], "height": size[1]},
         "layers": layers,
         "objects": build_objects(size, masks, depth),
-        "toys": build_toys(estimator),
+        "pieces": build_pieces(estimator),
         "stillLifes": build_still_lifes(),
         "figure": build_figure(),
     }
     write_json(GENERATED, media)
     print(
         f"build-assets: paintwise: {len(layers)} layers, {len(media['objects'])} objects, "
-        f"Childhood Toys in {len(media['toys']['objects'])} pieces, "
+        f"the {PIECES_FROM} in {len(media['pieces']['objects'])} pieces, "
         f"{len(media['stillLifes'])} still lifes -> {GENERATED.relative_to(ROOT)}"
     )
 

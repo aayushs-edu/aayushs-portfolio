@@ -367,348 +367,241 @@
       "color": "#c49c94"
     }
   ],
-  "toys": {
+  "pieces": {
+    "from": "jug",
     "canvas": {
-      "width": 1280,
-      "height": 1027
+      "width": 760,
+      "height": 624
     },
-    "original": "/showcase/paintwise/toys/original.eb6ce44b.webp",
+    "original": "/showcase/paintwise/pieces/original.b9da7b48.webp",
     "objects": [
       {
         "id": "back",
-        "src": "/showcase/paintwise/toys/back.9838e946.webp",
+        "src": "/showcase/paintwise/pieces/back.f1a33964.webp",
         "box": [
           0.0,
-          0.0,
+          0.09615,
           1.0,
-          1.0
+          0.90385
         ],
         "depth": -0.0382,
         "color": "#000000"
       },
       {
         "id": "p01",
-        "src": "/showcase/paintwise/toys/p01.bcc9700a.webp",
+        "src": "/showcase/paintwise/pieces/p01.4ceca3fc.webp",
         "box": [
-          0.31953,
-          0.14216,
-          0.06719,
-          0.05842
+          0.68289,
+          0.00962,
+          0.16316,
+          0.24679
         ],
         "depth": 0.0118,
-        "color": "#ffbb78"
+        "color": "#d62728"
       },
       {
         "id": "p02",
-        "src": "/showcase/paintwise/toys/p02.84f48d4a.webp",
+        "src": "/showcase/paintwise/pieces/p02.f1d16750.webp",
         "box": [
-          0.15859,
           0.0,
-          0.42031,
-          0.20058
+          0.0,
+          1.0,
+          0.9984
         ],
-        "depth": 0.0235,
-        "color": "#98df8a"
+        "depth": 0.0196,
+        "color": "#1f77b4"
       },
       {
         "id": "p03",
-        "src": "/showcase/paintwise/toys/p03.82fd6ec8.webp",
+        "src": "/showcase/paintwise/pieces/p03.c4f059a6.webp",
         "box": [
-          0.13125,
-          0.0,
-          0.30781,
-          0.23272
+          0.70789,
+          0.09776,
+          0.11711,
+          0.16506
         ],
-        "depth": 0.0235,
-        "color": "#8c564b"
+        "depth": 0.0706,
+        "color": "#c5b0d5"
       },
       {
         "id": "p04",
-        "src": "/showcase/paintwise/toys/p04.4333da0c.webp",
+        "src": "/showcase/paintwise/pieces/p04.64e80ba9.webp",
         "box": [
-          0.0,
-          0.0,
-          0.44219,
-          0.49367
+          0.05921,
+          0.54647,
+          0.94079,
+          0.36218
         ],
-        "depth": 0.0275,
+        "depth": 0.2863,
         "color": "#aec7e8"
       },
       {
         "id": "p05",
-        "src": "/showcase/paintwise/toys/p05.52f80d35.webp",
-        "box": [
-          0.22344,
-          0.04966,
-          0.07109,
-          0.10808
-        ],
-        "depth": 0.0275,
-        "color": "#ff7f0e"
-      },
-      {
-        "id": "p06",
-        "src": "/showcase/paintwise/toys/p06.6080a852.webp",
-        "box": [
-          0.17422,
-          0.0,
-          0.11172,
-          0.19377
-        ],
-        "depth": 0.0353,
-        "color": "#e377c2"
-      },
-      {
-        "id": "p07",
-        "src": "/showcase/paintwise/toys/p07.a2c6466b.webp",
-        "box": [
-          0.61094,
-          0.0,
-          0.15625,
-          0.03895
-        ],
-        "depth": 0.0549,
-        "color": "#9edae5"
-      },
-      {
-        "id": "p08",
-        "src": "/showcase/paintwise/toys/p08.3dc34d4a.webp",
+        "src": "/showcase/paintwise/pieces/p05.7dd2f624.webp",
         "box": [
           0.0,
-          0.48393,
-          0.18125,
-          0.07498
+          0.80929,
+          0.15789,
+          0.19071
         ],
-        "depth": 0.0784,
-        "color": "#17becf"
-      },
-      {
-        "id": "p09",
-        "src": "/showcase/paintwise/toys/p09.83bc2d7e.webp",
-        "box": [
-          0.0375,
-          0.30477,
-          0.06484,
-          0.24732
-        ],
-        "depth": 0.2157,
-        "color": "#7f7f7f"
-      },
-      {
-        "id": "p10",
-        "src": "/showcase/paintwise/toys/p10.ebbdcb56.webp",
-        "box": [
-          0.12422,
-          0.34664,
-          0.37969,
-          0.47907
-        ],
-        "depth": 0.2431,
-        "color": "#2ca02c"
-      },
-      {
-        "id": "p11",
-        "src": "/showcase/paintwise/toys/p11.2f8736e6.webp",
-        "box": [
-          0.01875,
-          0.51315,
-          0.10547,
-          0.08958
-        ],
-        "depth": 0.2588,
-        "color": "#d62728"
-      },
-      {
-        "id": "p12",
-        "src": "/showcase/paintwise/toys/p12.89dbe621.webp",
-        "box": [
-          0.42578,
-          0.03116,
-          0.43594,
-          0.5852
-        ],
-        "depth": 0.2784,
-        "color": "#1f77b4"
-      },
-      {
-        "id": "p13",
-        "src": "/showcase/paintwise/toys/p13.47cacbf2.webp",
-        "box": [
-          0.0,
-          0.56865,
-          0.075,
-          0.07303
-        ],
-        "depth": 0.3725,
-        "color": "#aec7e8"
-      },
-      {
-        "id": "p14",
-        "src": "/showcase/paintwise/toys/p14.e00849f4.webp",
-        "box": [
-          0.47109,
-          0.57254,
-          0.18281,
-          0.22493
-        ],
-        "depth": 0.4471,
-        "color": "#ff9896"
-      },
-      {
-        "id": "p15",
-        "src": "/showcase/paintwise/toys/p15.e0f3dbf6.webp",
-        "box": [
-          0.74531,
-          0.67381,
-          0.09688,
-          0.18208
-        ],
-        "depth": 0.451,
-        "color": "#bcbd22"
-      },
-      {
-        "id": "p16",
-        "src": "/showcase/paintwise/toys/p16.b1790969.webp",
-        "box": [
-          0.80234,
-          0.62123,
-          0.14531,
-          0.10613
-        ],
-        "depth": 0.4745,
-        "color": "#f7b6d2"
-      },
-      {
-        "id": "p17",
-        "src": "/showcase/paintwise/toys/p17.e496a380.webp",
-        "box": [
-          0.0,
-          0.63389,
-          0.05469,
-          0.07011
-        ],
-        "depth": 0.5137,
-        "color": "#2ca02c"
-      },
-      {
-        "id": "p18",
-        "src": "/showcase/paintwise/toys/p18.48f853d4.webp",
-        "box": [
-          0.61719,
-          0.67283,
-          0.17812,
-          0.23759
-        ],
-        "depth": 0.5686,
-        "color": "#c5b0d5"
-      },
-      {
-        "id": "p19",
-        "src": "/showcase/paintwise/toys/p19.e11243f2.webp",
-        "box": [
-          0.84844,
-          0.80039,
-          0.10312,
-          0.19961
-        ],
-        "depth": 0.5804,
-        "color": "#c49c94"
-      },
-      {
-        "id": "p20",
-        "src": "/showcase/paintwise/toys/p20.652b796e.webp",
-        "box": [
-          0.0,
-          0.53262,
-          0.34062,
-          0.30769
-        ],
-        "depth": 0.6,
-        "color": "#ffbb78"
-      },
-      {
-        "id": "p21",
-        "src": "/showcase/paintwise/toys/p21.83a42db5.webp",
-        "box": [
-          0.06016,
-          0.81889,
-          0.08984,
-          0.09056
-        ],
-        "depth": 0.6392,
-        "color": "#dbdb8d"
-      },
-      {
-        "id": "p22",
-        "src": "/showcase/paintwise/toys/p22.5682b6f3.webp",
-        "box": [
-          0.03281,
-          0.76339,
-          0.08438,
-          0.07887
-        ],
-        "depth": 0.6549,
-        "color": "#1f77b4"
-      },
-      {
-        "id": "p23",
-        "src": "/showcase/paintwise/toys/p23.bfa56875.webp",
-        "box": [
-          0.0,
-          0.83836,
-          0.09688,
-          0.11198
-        ],
-        "depth": 0.6706,
-        "color": "#c7c7c7"
-      },
-      {
-        "id": "p24",
-        "src": "/showcase/paintwise/toys/p24.709d7e8a.webp",
-        "box": [
-          0.58438,
-          0.78968,
-          0.18672,
-          0.15969
-        ],
-        "depth": 0.6824,
-        "color": "#9467bd"
-      },
-      {
-        "id": "p25",
-        "src": "/showcase/paintwise/toys/p25.01538f38.webp",
-        "box": [
-          0.0,
-          0.79649,
-          0.05234,
-          0.0779
-        ],
-        "depth": 0.6863,
+        "depth": 0.2902,
         "color": "#98df8a"
       },
       {
-        "id": "p26",
-        "src": "/showcase/paintwise/toys/p26.3916b7cf.webp",
+        "id": "p06",
+        "src": "/showcase/paintwise/pieces/p06.78b0f9a4.webp",
         "box": [
-          0.725,
-          0.78578,
-          0.1625,
-          0.21422
+          0.54605,
+          0.40224,
+          0.25789,
+          0.22436
         ],
-        "depth": 0.7843,
-        "color": "#d62728"
+        "depth": 0.4196,
+        "color": "#2ca02c"
       },
       {
-        "id": "p27",
-        "src": "/showcase/paintwise/toys/p27.fabe7642.webp",
+        "id": "p07",
+        "src": "/showcase/paintwise/pieces/p07.1b854059.webp",
         "box": [
-          0.12031,
-          0.69231,
-          0.37734,
-          0.30769
+          0.1,
+          0.58974,
+          0.15,
+          0.19231
         ],
-        "depth": 0.8941,
+        "depth": 0.4627,
+        "color": "#c49c94"
+      },
+      {
+        "id": "p08",
+        "src": "/showcase/paintwise/pieces/p08.24a5742f.webp",
+        "box": [
+          0.68684,
+          0.6234,
+          0.08421,
+          0.09615
+        ],
+        "depth": 0.5882,
+        "color": "#e377c2"
+      },
+      {
+        "id": "p09",
+        "src": "/showcase/paintwise/pieces/p09.3e7da022.webp",
+        "box": [
+          0.55789,
+          0.41987,
+          0.12895,
+          0.29647
+        ],
+        "depth": 0.6039,
+        "color": "#8c564b"
+      },
+      {
+        "id": "p10",
+        "src": "/showcase/paintwise/pieces/p10.2baf525c.webp",
+        "box": [
+          0.23026,
+          0.23077,
+          0.28947,
+          0.44071
+        ],
+        "depth": 0.6078,
         "color": "#ff7f0e"
+      },
+      {
+        "id": "p11",
+        "src": "/showcase/paintwise/pieces/p11.9fb2302b.webp",
+        "box": [
+          0.42105,
+          0.55769,
+          0.13816,
+          0.17628
+        ],
+        "depth": 0.6235,
+        "color": "#9467bd"
+      },
+      {
+        "id": "p12",
+        "src": "/showcase/paintwise/pieces/p12.9d5b4030.webp",
+        "box": [
+          0.3,
+          0.67628,
+          0.11711,
+          0.08173
+        ],
+        "depth": 0.6588,
+        "color": "#bcbd22"
+      },
+      {
+        "id": "p13",
+        "src": "/showcase/paintwise/pieces/p13.182d286e.webp",
+        "box": [
+          0.75,
+          0.70833,
+          0.05132,
+          0.07372
+        ],
+        "depth": 0.6745,
+        "color": "#dbdb8d"
+      },
+      {
+        "id": "p14",
+        "src": "/showcase/paintwise/pieces/p14.630a4875.webp",
+        "box": [
+          0.54605,
+          0.70192,
+          0.14342,
+          0.06891
+        ],
+        "depth": 0.6863,
+        "color": "#f7b6d2"
+      },
+      {
+        "id": "p15",
+        "src": "/showcase/paintwise/pieces/p15.054c9013.webp",
+        "box": [
+          0.41711,
+          0.6859,
+          0.06316,
+          0.08814
+        ],
+        "depth": 0.7098,
+        "color": "#c7c7c7"
+      },
+      {
+        "id": "p16",
+        "src": "/showcase/paintwise/pieces/p16.5d9bf60a.webp",
+        "box": [
+          0.34605,
+          0.69391,
+          0.07237,
+          0.09455
+        ],
+        "depth": 0.7373,
+        "color": "#7f7f7f"
+      },
+      {
+        "id": "p17",
+        "src": "/showcase/paintwise/pieces/p17.30dcb46a.webp",
+        "box": [
+          0.80132,
+          0.53045,
+          0.16974,
+          0.26603
+        ],
+        "depth": 0.8078,
+        "color": "#ffbb78"
+      },
+      {
+        "id": "p18",
+        "src": "/showcase/paintwise/pieces/p18.788c6ba1.webp",
+        "box": [
+          0.27368,
+          0.74199,
+          0.49079,
+          0.25801
+        ],
+        "depth": 0.9765,
+        "color": "#ff9896"
       }
     ]
   },

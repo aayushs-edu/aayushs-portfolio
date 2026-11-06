@@ -4,7 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { CURVE, ZIP, type SplitLayout } from "../../src/components/hero/splitConfig";
 import { CLOSED, goneAt, lineAt, openAt, swing, zipClipPaths, zipFor } from "../../src/components/hero/zipper";
-import { corners, EXPLODE_STATES, fillOf, fitItems, JUG, TOYS, RIGS, STAGE, TAGS, toStage, project, VIEW_ITEMS, VIEWS } from "../../src/components/showcase/paintwise/explode";
+import { corners, EXPLODE_STATES, fillOf, fitItems, JUG, PIECES, RIGS, STAGE, TAGS, toStage, project, VIEW_ITEMS, VIEWS } from "../../src/components/showcase/paintwise/explode";
 import { GROUP_ORDER, WORKS } from "../../src/components/showcase/works";
 
 let passed = 0;
@@ -45,7 +45,7 @@ interface StillLifeShape {
 }
 
 interface PaintwiseMediaShape extends StillLifeShape {
-  toys: { canvas: { width: number; height: number }; original: string; objects: { id: string; src: string; box: number[]; depth: number }[] };
+  pieces: { canvas: { width: number; height: number }; original: string; objects: { id: string; src: string; box: number[]; depth: number }[] };
   stillLifes: { src: string; aspect: number }[];
   figure: { src: string; aspect: number };
 }
@@ -133,20 +133,20 @@ for (const [w, h, seamX, u] of [
 // ---------------------------------------------------------------------------
 // Paintwise's exploded still life
 
-const ALL_ITEMS = [...JUG.layers, TOYS.original, ...TOYS.objects];
+const ALL_ITEMS = [...JUG.layers, PIECES.original, ...PIECES.objects];
 
-check("explode: the jug's six layers fan out; Childhood Toys' SAM pieces show what the models see", () => {
+check("explode: the jug's six layers fan out; the SAM pieces show what the models see", () => {
   const ids = (items: { id: string }[]) => items.map((i) => i.id).join();
   assert(ids(VIEW_ITEMS.layers) === "jug:original,jug:masks,jug:depth,jug:blockin,jug:edges,jug:sketch", `layers view ${ids(VIEW_ITEMS.layers)}`);
-  assert(VIEW_ITEMS.masks[0] === TOYS.original && VIEW_ITEMS.masks.length === 1 + TOYS.objects.length, "masks view");
-  assert(TOYS.objects.length >= 10 && TOYS.objects.some((o) => o.id === "toys:back"), `${TOYS.objects.length} pieces`);
+  assert(VIEW_ITEMS.masks[0] === PIECES.original && VIEW_ITEMS.masks.length === 1 + PIECES.objects.length, "masks view");
+  assert(PIECES.objects.length >= 10 && PIECES.objects.some((o) => o.id === "pieces:back"), `${PIECES.objects.length} pieces`);
   for (const item of ALL_ITEMS) {
     for (const state of EXPLODE_STATES) {
       const p = item.poses[state];
       assert([p.x, p.y, p.z, p.opacity].every(Number.isFinite) && p.opacity >= 0 && p.opacity <= 1, `${item.id} ${state}`);
     }
   }
-  assert(JUG.canvasH > 0.5 && JUG.canvasH < 1.2 && TOYS.canvasH > 0.5 && TOYS.canvasH < 1.2, `canvas heights ${JUG.canvasH}, ${TOYS.canvasH}`);
+  assert(JUG.canvasH > 0.5 && JUG.canvasH < 1.2 && PIECES.canvasH > 0.5 && PIECES.canvasH < 1.2, `canvas heights ${JUG.canvasH}, ${PIECES.canvasH}`);
 });
 
 check("explode: at rest each stage is its picture, square on and whole, about the same height in both (the stages are)", () => {
@@ -154,7 +154,7 @@ check("explode: at rest each stage is its picture, square on and whole, about th
   const jug = JUG.layers.filter((l) => l.poses.rest.opacity > 0.01).map((l) => l.id);
   assert(jug.join() === "jug:original", `the jug shows ${jug} at rest`);
   // The painting lies over its pieces, which sit flat in place under it.
-  assert(TOYS.original.poses.rest.opacity === 1 && TOYS.objects.every((o) => o.poses.rest.z < TOYS.original.poses.rest.z), "the painting isn't on top at rest");
+  assert(PIECES.original.poses.rest.opacity === 1 && PIECES.objects.every((o) => o.poses.rest.z < PIECES.original.poses.rest.z), "the painting isn't on top at rest");
   const height = (view: (typeof VIEWS)[number]) => {
     const ys = corners(VIEW_ITEMS[view][0], "rest").map((p) => project(p, RIGS[view].rest)[1]);
     return (Math.max(...ys) - Math.min(...ys)) / STAGE.view[view].aspect;
@@ -164,10 +164,10 @@ check("explode: at rest each stage is its picture, square on and whole, about th
 
 check("explode: fanned out, every jug layer shows; for the masks, only the pieces show, spread through PIECE_DEPTH with the back farthest", () => {
   for (const l of JUG.layers) assert(l.poses.layers.opacity === 1, `${l.id} hidden in layers`);
-  assert(TOYS.original.poses.masks.opacity === 0, "the painting still shows over its pieces");
-  assert(TOYS.objects.every((o) => o.poses.masks.opacity === 1), "a piece is hidden");
-  const zs = TOYS.objects.map((o) => o.poses.masks.z);
-  const back = TOYS.objects.find((o) => o.id === "toys:back")!;
+  assert(PIECES.original.poses.masks.opacity === 0, "the painting still shows over its pieces");
+  assert(PIECES.objects.every((o) => o.poses.masks.opacity === 1), "a piece is hidden");
+  const zs = PIECES.objects.map((o) => o.poses.masks.z);
+  const back = PIECES.objects.find((o) => o.id === "pieces:back")!;
   assert(back.poses.masks.z === Math.min(...zs) && near(Math.max(...zs) - Math.min(...zs), 0.7, 1e-6), `pieces span ${(Math.max(...zs) - Math.min(...zs)).toFixed(3)}`);
 });
 
@@ -246,10 +246,10 @@ check("works: every work is in a group on the page, and slugs are unique", () =>
     });
   });
 
-  check("paintwise media: Childhood Toys, its SAM 2.1 pieces and the back, on disk, far to near, inside the painting", () => {
+  check("paintwise media: the picture's SAM 2.1 pieces and the back, on disk, far to near, inside the painting", () => {
     assert(media !== null, "no media");
-    const toys = media.toys;
-    assert(!!toys, "no toys (run npm run showcase:assets paintwise)");
+    const toys = media.pieces;
+    assert(!!toys, "no pieces (run npm run showcase:assets paintwise)");
     assert(exists(toys.original) && toys.canvas.width > 0 && toys.canvas.height > 0, "the painting");
     assert(toys.objects.length >= 10 && toys.objects.length <= 33, `${toys.objects.length} pieces`);
     assert(toys.objects[0].id === "back", "the back isn't farthest");

@@ -3,7 +3,7 @@
 // into its view. "layers" fans the jug still life's six pipeline layers out in
 // depth, seen from the right, with a tag on each (the old 3D room's spacing
 // and angle; its canvas was 1.9 m wide). "masks" is what the models see in
-// Childhood Toys: the painting cut into SAM 2.1's pieces, each pushed out to
+// a picture cut into SAM 2.1's pieces (the jug, or Childhood Toys: media.pieces.from), each pushed out to
 // the depth Depth Anything V2 gives it.
 //
 // Items are placed in canvas widths (a picture is 1 wide), y down, z toward the
@@ -156,14 +156,14 @@ function pieces(painting: Pieces, name: string) {
   return { canvasH, original, objects };
 }
 
-/** The jug fans out its layers; Childhood Toys shows what the models see. */
+/** The jug fans out its layers; the pieces show what the models see. */
 export const JUG = stack(media, "jug");
-export const TOYS = pieces(media.toys, "toys");
+export const PIECES = pieces(media.pieces, "pieces");
 
 /** What each view's stage holds (the stage depth-sorts, so order only sets the stagger). */
 export const VIEW_ITEMS: Record<View, ExplodeItem[]> = {
   layers: JUG.layers,
-  masks: [TOYS.original, ...TOYS.objects],
+  masks: [PIECES.original, ...PIECES.objects],
 };
 
 // ---- Projection: the same maths as the browser's CSS 3D -------------------------
@@ -274,7 +274,7 @@ export const TAGS: Record<View, Tag[]> = {
   // Over the middle of the masks, just above the highest of them on screen.
   masks: [
     (() => {
-      const xy = TOYS.objects.flatMap((o) => corners(o, "masks")).map((p) => project(p, RIGS.masks.view));
+      const xy = PIECES.objects.flatMap((o) => corners(o, "masks")).map((p) => project(p, RIGS.masks.view));
       const xs = xy.map((p) => p[0]);
       return { id: "tag:objects", ...MASKS_COPY, x: (Math.min(...xs) + Math.max(...xs)) / 2, y: Math.min(...xy.map((p) => p[1])), align: "above" as const };
     })(),
