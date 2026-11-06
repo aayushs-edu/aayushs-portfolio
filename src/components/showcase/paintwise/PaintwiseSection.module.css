@@ -145,10 +145,6 @@
   perspective-origin: 50% 50%;
 }
 
-/* The masks fill their stage; the dimmed layers behind them are cut off at its sides. */
-.stage[data-view="masks"] {
-  overflow-x: clip;
-}
 
 .rig {
   position: absolute;

@@ -162,12 +162,12 @@ check("explode: at rest each stage is its still life, square on, alone, about th
   assert(Math.abs(height("layers") - height("masks")) < 0.06, `${height("layers").toFixed(3)} vs ${height("masks").toFixed(3)} of the stage's height`);
 });
 
-check("explode: fanned out, every layer shows and no object does; for the masks, the objects show and the masks layer doesn't", () => {
+check("explode: fanned out, every layer shows and no object does; for the masks, only the objects show", () => {
   for (const item of [...JUG.layers, ...JUG.objects, ...FRUIT.layers, ...FRUIT.objects]) {
     const { layers, masks } = item.poses;
     if (item.kind === "layer") {
       assert(layers.opacity === 1, `${item.id} hidden in layers`);
-      assert((masks.opacity === 0) === item.id.endsWith(":masks"), `${item.id} masks opacity ${masks.opacity}`);
+      assert(masks.opacity === 0, `${item.id} shows behind the masks (${masks.opacity})`);
     } else {
       assert(layers.opacity === 0 && masks.opacity === 1, `${item.id}`);
     }

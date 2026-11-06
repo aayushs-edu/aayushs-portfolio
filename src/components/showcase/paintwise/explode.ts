@@ -116,14 +116,15 @@ function sceneMasks(still: StillLife): Set<string> {
 }
 
 /**
- * Layer k of the faint stack behind the masks: pushed back, and slid along the
- * masks view's line of sight so that, seen at its turn, it sits right behind them.
+ * Where layer k falls back to as the masks come forward (fading out on the
+ * way): pushed back, and slid along the masks view's line of sight so that,
+ * seen at its turn, it recedes right behind them.
  */
-function ghost(k: number, opacity: number): Pose {
+function fallBack(k: number): Pose {
   const z = -0.9 * M + 0.3 * SPREAD.z * k;
   const [ax, ay] = STAGE.view.masks.turn;
   const t = (deg: number) => Math.tan((deg * Math.PI) / 180);
-  return pose(-z * t(ay) + 0.25 * SPREAD.x * k, z * t(ax) + SPREAD.y * k, z, opacity);
+  return pose(-z * t(ay) + 0.25 * SPREAD.x * k, z * t(ax) + SPREAD.y * k, z, 0);
 }
 
 /** A still life as a stack: its six layers, then its masks' objects (without the scene's, if asked), posed for every state. */
@@ -140,8 +141,8 @@ function stack(still: StillLife, name: string, { scene = true } = {}) {
     poses: {
       rest: pose(0, 0, -STACK * k, k === 0 ? 1 : 0),
       layers: pose(SPREAD.x * k, SPREAD.y * k, SPREAD.z * k, 1),
-      // A faint stack behind the masks, so the photo shows through as a ghost; the masks layer itself gives way to its objects.
-      masks: ghost(k, layer.id === "masks" ? 0 : 0.2),
+      // The layers fall back and fade out; only the masks' objects stay.
+      masks: fallBack(k),
     },
   }));
   const objects: ExplodeItem[] = still.objects.filter((o) => !dropped.has(o.id)).map((object) => {
@@ -221,13 +222,8 @@ const visible = (item: ExplodeItem, state: ExplodeState) => item.poses[state].op
 /** How much of its view's stage a state fills. */
 export const fillOf = (view: View, state: ExplodeState) => (state === "rest" ? STAGE.restFill : STAGE.view[view].fill);
 
-/**
- * What a state is fitted to: everything that shows, except in the masks view,
- * where the masks fill the stage and the faint layers behind them may run a
- * little past its sides (the stage clips them).
- */
-export const fitItems = (view: View, state: ExplodeState): ExplodeItem[] =>
-  view === "masks" && state === "masks" ? FRUIT.objects : VIEW_ITEMS[view].filter((item) => visible(item, state));
+/** What a state is fitted to: everything that shows in it. */
+export const fitItems = (view: View, state: ExplodeState): ExplodeItem[] => VIEW_ITEMS[view].filter((item) => visible(item, state));
 
 /** Turns the state's composition and fits it in its view's stage, centred, filling fillOf of it. */
 function fitRig(view: View, state: ExplodeState): Rig {

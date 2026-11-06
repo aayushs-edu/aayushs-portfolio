@@ -62,8 +62,8 @@ Revised the same day at the user's request. The first layout (the jug beside the
   - *masks*: aspect 0.66, filling 0.88. It uses the fruit still life (grapefruit, lemon, kiwi, blueberries), the pipeline figure's example, at the user's request: a better example than the jug.
     - Its masks push out to their depths, seen from the left (−6°, 43°).
     - SAM's two scene masks, the wall and the table, are left out. They are the full-width masks and their pieces at the canvas's edges; pushed out, they would be sheets full of holes. That leaves 20 of the 23.
-    - Its other layers sit behind the masks as a faint stack (0.2), slid along the line of sight so they stay right behind them. The masks layer itself gives way to the cut-outs.
-    - The view is fitted to the masks alone, and the stage clips its sides.
+    - Its layers fall back along the line of sight and fade out, leaving only the masks. A faint stack of them left behind was tried and removed at the user's request.
+    - The view is fitted to the masks.
     - One tag: "SAM 2.1 × Depth Anything V2 · each object's mask, pushed out to its depth".
 - **Coming apart:** each stage starts as its still life (the jug, or the fruit), square on and filling 0.8 of its stage. Once 45% of it is in view, it comes apart into its view. This happens once, staggered layer by layer; the tags come in after the layers land.
 - **Geometry:** spacing and angles are the old room's, with metres converted to canvas widths.
