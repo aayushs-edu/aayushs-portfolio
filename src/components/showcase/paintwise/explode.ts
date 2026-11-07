@@ -29,7 +29,7 @@ export const STAGE = {
   /** Each view's stage: its shape (height / width), how much of it the view fills (the rest is room for tags), and the turn it's seen at (degrees: rotateX, rotateY). */
   view: {
     layers: { aspect: 0.6, fill: 0.92, turn: [-7, -49] },
-    masks: { aspect: 0.66, fill: 0.88, turn: [-20, 40] },
+    masks: { aspect: 0.66, fill: 0.88, turn: [-12, 30] },
   } as Record<View, { aspect: number; fill: number; turn: readonly [number, number] }>,
 };
 
