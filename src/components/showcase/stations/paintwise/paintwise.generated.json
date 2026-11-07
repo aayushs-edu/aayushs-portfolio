@@ -377,31 +377,19 @@
     "objects": [
       {
         "id": "back",
-        "src": "/showcase/paintwise/pieces/back.be5bb98d.webp",
+        "src": "/showcase/paintwise/pieces/back.bec72569.webp",
         "box": [
           0,
           0,
           1,
           1
         ],
-        "depth": -0.0382,
+        "depth": 0.0206,
         "color": "#000000"
       },
       {
         "id": "p01",
-        "src": "/showcase/paintwise/pieces/p01.4ceca3fc.webp",
-        "box": [
-          0.68289,
-          0.00962,
-          0.16316,
-          0.24679
-        ],
-        "depth": 0.0118,
-        "color": "#d62728"
-      },
-      {
-        "id": "p02",
-        "src": "/showcase/paintwise/pieces/p02.c4f059a6.webp",
+        "src": "/showcase/paintwise/pieces/p01.c4f059a6.webp",
         "box": [
           0.70789,
           0.09776,
@@ -412,8 +400,8 @@
         "color": "#c5b0d5"
       },
       {
-        "id": "p03",
-        "src": "/showcase/paintwise/pieces/p03.81edba5b.webp",
+        "id": "p02",
+        "src": "/showcase/paintwise/pieces/p02.81edba5b.webp",
         "box": [
           0.06316,
           0.55609,
@@ -423,25 +411,13 @@
         "depth": 0.2863,
         "color": "#aec7e8",
         "slab": {
-          "side": "/showcase/paintwise/pieces/p03-side.0cacc537.webp",
-          "top": "/showcase/paintwise/pieces/p03-top.88b5672b.webp"
+          "side": "/showcase/paintwise/pieces/p02-side.0cacc537.webp",
+          "top": "/showcase/paintwise/pieces/p02-top.88b5672b.webp"
         }
       },
       {
-        "id": "p04",
-        "src": "/showcase/paintwise/pieces/p04.7dd2f624.webp",
-        "box": [
-          0.0,
-          0.80929,
-          0.15789,
-          0.19071
-        ],
-        "depth": 0.2902,
-        "color": "#98df8a"
-      },
-      {
-        "id": "p05",
-        "src": "/showcase/paintwise/pieces/p05.78b0f9a4.webp",
+        "id": "p03",
+        "src": "/showcase/paintwise/pieces/p03.78b0f9a4.webp",
         "box": [
           0.54605,
           0.40224,
@@ -452,8 +428,8 @@
         "color": "#2ca02c"
       },
       {
-        "id": "p06",
-        "src": "/showcase/paintwise/pieces/p06.1b854059.webp",
+        "id": "p04",
+        "src": "/showcase/paintwise/pieces/p04.1b854059.webp",
         "box": [
           0.1,
           0.58974,
@@ -464,8 +440,8 @@
         "color": "#c49c94"
       },
       {
-        "id": "p07",
-        "src": "/showcase/paintwise/pieces/p07.24a5742f.webp",
+        "id": "p05",
+        "src": "/showcase/paintwise/pieces/p05.24a5742f.webp",
         "box": [
           0.68684,
           0.6234,
@@ -476,8 +452,8 @@
         "color": "#e377c2"
       },
       {
-        "id": "p08",
-        "src": "/showcase/paintwise/pieces/p08.3e7da022.webp",
+        "id": "p06",
+        "src": "/showcase/paintwise/pieces/p06.3e7da022.webp",
         "box": [
           0.55789,
           0.41987,
@@ -488,8 +464,8 @@
         "color": "#8c564b"
       },
       {
-        "id": "p09",
-        "src": "/showcase/paintwise/pieces/p09.2baf525c.webp",
+        "id": "p07",
+        "src": "/showcase/paintwise/pieces/p07.2baf525c.webp",
         "box": [
           0.23026,
           0.23077,
@@ -500,8 +476,8 @@
         "color": "#ff7f0e"
       },
       {
-        "id": "p10",
-        "src": "/showcase/paintwise/pieces/p10.9fb2302b.webp",
+        "id": "p08",
+        "src": "/showcase/paintwise/pieces/p08.9fb2302b.webp",
         "box": [
           0.42105,
           0.55769,
@@ -512,8 +488,8 @@
         "color": "#9467bd"
       },
       {
-        "id": "p11",
-        "src": "/showcase/paintwise/pieces/p11.9d5b4030.webp",
+        "id": "p09",
+        "src": "/showcase/paintwise/pieces/p09.9d5b4030.webp",
         "box": [
           0.3,
           0.67628,
@@ -524,8 +500,8 @@
         "color": "#bcbd22"
       },
       {
-        "id": "p12",
-        "src": "/showcase/paintwise/pieces/p12.182d286e.webp",
+        "id": "p10",
+        "src": "/showcase/paintwise/pieces/p10.182d286e.webp",
         "box": [
           0.75,
           0.70833,
@@ -536,8 +512,8 @@
         "color": "#dbdb8d"
       },
       {
-        "id": "p13",
-        "src": "/showcase/paintwise/pieces/p13.630a4875.webp",
+        "id": "p11",
+        "src": "/showcase/paintwise/pieces/p11.630a4875.webp",
         "box": [
           0.54605,
           0.70192,
@@ -548,8 +524,8 @@
         "color": "#f7b6d2"
       },
       {
-        "id": "p14",
-        "src": "/showcase/paintwise/pieces/p14.054c9013.webp",
+        "id": "p12",
+        "src": "/showcase/paintwise/pieces/p12.054c9013.webp",
         "box": [
           0.41711,
           0.6859,
@@ -560,8 +536,8 @@
         "color": "#c7c7c7"
       },
       {
-        "id": "p15",
-        "src": "/showcase/paintwise/pieces/p15.5d9bf60a.webp",
+        "id": "p13",
+        "src": "/showcase/paintwise/pieces/p13.5d9bf60a.webp",
         "box": [
           0.34605,
           0.69391,
@@ -572,8 +548,8 @@
         "color": "#7f7f7f"
       },
       {
-        "id": "p16",
-        "src": "/showcase/paintwise/pieces/p16.30dcb46a.webp",
+        "id": "p14",
+        "src": "/showcase/paintwise/pieces/p14.30dcb46a.webp",
         "box": [
           0.80132,
           0.53045,
@@ -584,8 +560,8 @@
         "color": "#ffbb78"
       },
       {
-        "id": "p17",
-        "src": "/showcase/paintwise/pieces/p17.788c6ba1.webp",
+        "id": "p15",
+        "src": "/showcase/paintwise/pieces/p15.788c6ba1.webp",
         "box": [
           0.27368,
           0.74199,

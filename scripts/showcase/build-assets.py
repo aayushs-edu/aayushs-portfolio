@@ -84,6 +84,10 @@ MAX_OBJECTS = 28
 PIECES_FROM = "jug"
 PIECES_SOURCES = {"jug": (SOURCES / "jug-original.png", 2), "toys": (PUBLIC / "paintings/StillLifeToys.webp", 1280)}
 SAM_MODEL = "facebook/sam2.1-hiera-large"
+# Bits of wall SAM cuts out that read as clutter, each named by a point in it (fractions of the
+# picture): the piece there goes back to the wall. The jug: the niche round the small pot, the
+# corner under the table.
+PIECES_WALL = {"jug": [(0.765, 0.04), (0.02, 0.98)]}
 # Paintwise's passes (SAM21UnrestrictedSegmenter in MasterStroke.ipynb): one for whole objects,
 # and a denser, more permissive one (64 points a side, and 32 in each of four crops) for the small
 # ones. transformers' own crops are broken, so the four crops are cut here (SAM's boxes for one
@@ -373,9 +377,16 @@ def build_pieces(estimator):
     # The farthest surface (the wall) takes what no piece took, and becomes the back.
     surfaces = sorted((i for i in keep if surface[i]), key=lambda i: depth_of[i])
     wall = surfaces[0] if surfaces else None
+    walled = set()
+    for fx, fy in PIECES_WALL.get(PIECES_FROM, []):
+        i = label[min(h - 1, int(fy * h)), min(w - 1, int(fx * w))]
+        if i in keep and i != wall:
+            walled.add(i)
+        else:
+            print(f"  pieces: nothing to send back to the wall at {fx}, {fy}")
     pieces = []
     for k, i in enumerate(keep):
-        if i == wall:
+        if i == wall or i in walled:
             continue
         mask = label == i
         color = TAB20[k % len(TAB20)]
@@ -401,7 +412,7 @@ def build_pieces(estimator):
             continue
         piece, box = cut(mask, color)
         pieces.append({"image": piece, "box": box, "depth": depth_of[i], "color": "#%02x%02x%02x" % color})
-    back = ~np.isin(label, [i for i in keep if i != wall])
+    back = ~np.isin(label, [i for i in keep if i != wall and i not in walled])
     far = min(p["depth"] for p in pieces) - 0.05
     if wall is not None:
         # A whole rectangle: the wall, filled in behind everything.
