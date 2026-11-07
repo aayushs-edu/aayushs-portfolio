@@ -51,17 +51,17 @@
   line-height: 1;
   letter-spacing: -0.01em;
   color: transparent;
-  background-color: #7046ee;
+  background-color: #f6f3ff;
   background-image:
-    radial-gradient(closest-side, #e2d8ff, #e2d8ff00),
-    radial-gradient(closest-side, #34b4f6, #34b4f600),
-    radial-gradient(closest-side, #2cc8d2, #2cc8d200),
-    radial-gradient(closest-side, #4b62f2, #4b62f200);
+    radial-gradient(closest-side, #8a5cf5cc, #8a5cf500),
+    radial-gradient(closest-side, #34b4f6bb, #34b4f600),
+    radial-gradient(closest-side, #2cc8d2aa, #2cc8d200),
+    radial-gradient(closest-side, #4b62f2bb, #4b62f200);
   background-size:
-    32% 110%,
-    62% 190%,
-    48% 170%,
-    58% 190%;
+    40% 160%,
+    44% 160%,
+    36% 150%,
+    40% 160%;
   background-repeat: no-repeat;
   background-position:
     20% 10%,
