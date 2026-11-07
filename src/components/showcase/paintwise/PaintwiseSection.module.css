@@ -54,14 +54,14 @@
   background-color: #f6f3ff;
   background-image:
     radial-gradient(closest-side, #8a5cf5cc, #8a5cf500),
-    radial-gradient(closest-side, #34b4f6bb, #34b4f600),
+    radial-gradient(closest-side, #2aa8f5, #2aa8f500),
     radial-gradient(closest-side, #2cc8d2aa, #2cc8d200),
-    radial-gradient(closest-side, #4b62f2bb, #4b62f200);
+    radial-gradient(closest-side, #3f58f0, #3f58f000);
   background-size:
     40% 160%,
-    44% 160%,
+    50% 170%,
     36% 150%,
-    40% 160%;
+    46% 170%;
   background-repeat: no-repeat;
   background-position:
     20% 10%,
