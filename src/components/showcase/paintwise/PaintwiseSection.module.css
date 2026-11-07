@@ -25,14 +25,76 @@
   }
 }
 
+/* The logo beside the title, sized off the title's font. */
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.18em;
+  font-size: clamp(40px, 7vw, 72px);
+}
+
+.logo {
+  flex: none;
+  width: auto;
+  height: 1.25em;
+  filter: drop-shadow(0 0 0.35em rgb(120 72 240 / 0.35));
+}
+
+/* The title in the logo's colours: soft blobs of paint drifting through the
+   letters (after 21st.dev's Gradient Text Fill, as plain backgrounds clipped
+   to the text, so it needs nothing behind it). */
 .title {
   margin: 0;
   font-family: var(--font-poppins), sans-serif;
   font-weight: 800;
-  font-size: clamp(40px, 7vw, 72px);
+  font-size: 1em;
   line-height: 1;
   letter-spacing: -0.01em;
-  color: #ece4d4;
+  color: transparent;
+  background-color: #7046ee;
+  background-image:
+    radial-gradient(closest-side, #e2d8ff, #e2d8ff00),
+    radial-gradient(closest-side, #34b4f6, #34b4f600),
+    radial-gradient(closest-side, #2cc8d2, #2cc8d200),
+    radial-gradient(closest-side, #4b62f2, #4b62f200);
+  background-size:
+    32% 110%,
+    62% 190%,
+    48% 170%,
+    58% 190%;
+  background-repeat: no-repeat;
+  background-position:
+    20% 10%,
+    100% 0%,
+    0% 100%,
+    60% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: paint-drift 16s ease-in-out infinite alternate;
+}
+
+@keyframes paint-drift {
+  33% {
+    background-position:
+      70% 90%,
+      40% 100%,
+      90% 20%,
+      0% 0%;
+  }
+  66% {
+    background-position:
+      100% 20%,
+      0% 30%,
+      40% 0%,
+      100% 80%;
+  }
+  100% {
+    background-position:
+      40% 70%,
+      80% 100%,
+      10% 30%,
+      30% 0%;
+  }
 }
 
 .pitch {
@@ -302,5 +364,9 @@
   .tag,
   .figureButton img {
     transition: none;
+  }
+
+  .title {
+    animation: none;
   }
 }

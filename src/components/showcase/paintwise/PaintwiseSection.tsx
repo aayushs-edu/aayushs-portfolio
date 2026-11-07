@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import media from "../stations/paintwise/paintwise.generated.json";
 import { LAYER_COPY, RIGS, STAGE, TAGS, VIEW_ITEMS, type Rig, type View } from "./explode";
@@ -128,9 +129,12 @@ export default function PaintwiseSection({ storyId, figureId, onStory, onFigure 
     <section className={css.section} aria-labelledby="paintwise-title">
       <div className={css.top}>
         <div className={css.lead}>
-          <h2 id="paintwise-title" className={css.title}>
-            Paintwise
-          </h2>
+          <div className={css.brand}>
+            <Image src="/images/paintwise-logo.png" alt="" width={110} height={88} className={css.logo} />
+            <h2 id="paintwise-title" className={css.title}>
+              Paintwise
+            </h2>
+          </div>
           <p className={css.pitch}>Teaches you to paint a picture the way an artist would, one step at a time.</p>
           <p className={css.links}>
             <button id={storyId} type="button" className={css.link} onClick={onStory}>
