@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import SparklesHero from "../hero/SparklesHero";
 import { useHeroTier } from "../hero/useHeroTier";
 import DetailPanel from "./DetailPanel";
+import GamesSection from "./games/GamesSection";
 import AnimationSection from "./animation/AnimationSection";
 import HackathonsSection from "./hackathons/HackathonsSection";
 import HandOff, { type HandOffItem } from "./HandOff";
@@ -17,8 +18,8 @@ import { GROUP_ORDER, GROUP_TITLES, WORKS, type GroupId, type Work } from "./wor
 
 const BY_SLUG = new Map(WORKS.map((work) => [work.slug, work]));
 
-/** Paintwise, Hackathons, Paintings and Animation have sections of their own; every other group is a grid under them, in page order. */
-const OWN_SECTION = new Set<GroupId>(["paintwise", "hackathons", "paintings", "animation"]);
+/** Every group has a section of its own now; any group without one would be a grid under them, in page order. */
+const OWN_SECTION = new Set<GroupId>(["paintwise", "hackathons", "paintings", "animation", "games"]);
 const GROUPS: WorkListGroup[] = GROUP_ORDER.filter((id) => !OWN_SECTION.has(id))
   .map((id) => ({ title: GROUP_TITLES[id], works: WORKS.filter((w) => w.group === id) }))
   .filter((g) => g.works.length > 0);
@@ -136,8 +137,9 @@ export default function Showcase() {
         <PaintwiseSection storyId={workButtonId("paintwise")} figureId={FIGURE_ID} onStory={() => openWork("paintwise")} onFigure={openFigure} />
         <HackathonsSection onOpen={openWork} />
         <PaintingsSection />
+        <GamesSection onOpen={openWork} />
         <AnimationSection />
-        <WorkList groups={GROUPS} onOpen={openWork} />
+        {GROUPS.length > 0 && <WorkList groups={GROUPS} onOpen={openWork} />}
       </div>
       <DetailPanel work={openWorkObj} onClose={closeWork} />
       <HandOff item={handOff} onClose={closeFigure} />

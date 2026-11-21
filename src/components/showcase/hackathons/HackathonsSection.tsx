@@ -232,6 +232,7 @@ export default function HackathonsSection({ onOpen }: { onOpen: (slug: string) =
   return (
     <section
       ref={sectionRef}
+      id="hackathons"
       className={css.section}
       style={{ "--accent": p.accent } as CSSProperties}
       data-focused={focused}

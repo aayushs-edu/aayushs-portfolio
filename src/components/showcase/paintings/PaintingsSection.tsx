@@ -309,7 +309,7 @@ export default function PaintingsSection() {
   };
 
   return (
-    <section className={css.section} aria-labelledby="paintings-title">
+    <section id="paintings" className={css.section} aria-labelledby="paintings-title">
       <div className={css.intro}>
         <PaintSwirls className={css.swirls} />
         <header className={css.head}>

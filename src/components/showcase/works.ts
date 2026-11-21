@@ -21,7 +21,7 @@ export const GROUP_TITLES: Record<GroupId, string> = {
 };
 
 /** The page's order: Paintwise first, then the art half, then the code half. */
-export const GROUP_ORDER: GroupId[] = ["paintwise", "hackathons", "paintings", "animation", "games"];
+export const GROUP_ORDER: GroupId[] = ["paintwise", "hackathons", "paintings", "games", "animation"];
 
 export type WorkKind = "painting" | "project" | "game" | "animation" | "model" | "hackathon";
 export type WorkSide = "art" | "code" | "both";
@@ -361,4 +361,22 @@ const VRSHOP: Work = {
   media: { image: "/showcase/hackathons/vrshop-poster.webp", aspect: 16 / 9, avgColor: "#3a3a3a" },
 };
 
-export const WORKS: Work[] = [...GALLERY.art.map(toWork), ...EARLY, ORIGIN, ...FILMS, ...MODELS, ...GALLERY.code.map(toWork), VRSHOP];
+/** A game that isn't in the hero gallery (from its itch.io page; images in public/images). */
+const SKYBALL: Work = {
+  slug: "skyball",
+  kind: "game",
+  side: "code",
+  group: "games",
+  title: "Skyball",
+  year: "2026",
+  line: "Unity · C# · WebGL",
+  story: [
+    "Keep the ball up the longest in this arcade, physics-based keep-up game in the sky. Juggle the ball with precise mouse movements, defend it from enemies, and score goals.",
+    "Tricks earn combos and multipliers, but scoring shoots the ball up and away, so don't let it escape your control. Earn your spot on the global leaderboard.",
+    "Made for ScoreJam #37; still in development.",
+  ],
+  links: [itch("skyball")],
+  media: { image: "/images/skyball-cover.webp", aspect: 495 / 291, avgColor: "#1ad0f2" },
+};
+
+export const WORKS: Work[] = [...GALLERY.art.map(toWork), ...EARLY, ORIGIN, ...FILMS, ...MODELS, ...GALLERY.code.map(toWork), VRSHOP, SKYBALL];

@@ -1,0 +1,25 @@
+/* The drifting inputs behind the Games section: very dim, faded in and out at
+   the section's ends so it blends into the sections around it. */
+
+.drift {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 280px, #000 calc(100% - 280px), transparent);
+  mask-image: linear-gradient(to bottom, transparent, #000 280px, #000 calc(100% - 280px), transparent);
+}
+
+/* Held to the screen while the section passes, so the canvas stays screen-sized. */
+.view {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}

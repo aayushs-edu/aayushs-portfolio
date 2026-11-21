@@ -1,0 +1,82 @@
+.info {
+  color: rgb(236 228 212 / 0.72);
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-poppins), sans-serif;
+  font-weight: 800;
+  font-size: clamp(24px, 2.4vw, 32px);
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+  color: #ece4d4;
+}
+
+.tagline {
+  margin: 8px 0 0;
+  font-size: 16px;
+  line-height: 1.4;
+  color: rgb(236 228 212 / 0.85);
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 14px;
+  margin: 14px 0 0;
+  font-size: 13px;
+  color: rgb(236 228 212 / 0.55);
+}
+
+.award {
+  padding: 2px 9px;
+  border: 1px solid rgb(236 228 212 / 0.3);
+  border-radius: 999px;
+  color: #ece4d4;
+}
+
+.story {
+  margin: 14px 0 0;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.input {
+  margin: 10px 0 0;
+  font-size: 13px;
+  color: rgb(236 228 212 / 0.55);
+}
+
+.links {
+  display: flex;
+  gap: 18px;
+  margin: 18px 0 0;
+  font-size: 14px;
+}
+
+.links a,
+.links button {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: rgb(236 228 212 / 0.8);
+  font: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.links a:hover,
+.links button:hover {
+  color: #ece4d4;
+}
+
+.links a:focus-visible,
+.links button:focus-visible {
+  outline: 2px solid #ece4d4;
+  outline-offset: 3px;
+}

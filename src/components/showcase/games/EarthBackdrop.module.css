@@ -1,0 +1,19 @@
+/* The Earth horizon behind the Games section, faded in and out at the
+   section's ends so it blends into the sections around it. */
+
+.backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 320px, #000 calc(100% - 320px), transparent);
+  mask-image: linear-gradient(to bottom, transparent, #000 320px, #000 calc(100% - 320px), transparent);
+}
+
+/* Held to the screen while the section passes, so the canvas stays screen-sized. */
+.view {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: hidden;
+}
