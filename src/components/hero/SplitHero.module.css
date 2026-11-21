@@ -1,123 +1,137 @@
-/* The split hero. Tokens (--wall, --ink …) come from Hero.module.css's .hero. */
+/* The hero: the name on a plain wall, the seam drawn through its letters. */
 
+.hero {
+  --wall: #0d0d0d;
+  --ink: #ffffff;
+  position: relative;
+  color: var(--ink);
+}
+
+/* --u: CSS px per design px. */
 .stage {
-  /* Each side of the seam's fluid line; the seam's frame loop keeps these current. */
-  --seam-left: inset(0 50% 0 0);
-  --seam-right: inset(0 0 0 50%);
-  /* Unzipping (zip mode): how far the page has scrolled, and how far the hero is to gone, 0..1. */
-  --scroll: 0px;
-  --unzip: 0;
   position: relative;
   height: 100svh;
   min-height: 420px;
   overflow: hidden;
   container-type: size;
-  /* No background of its own: the wall halves carry it, so the gap between them is open. */
-}
-
-/* Fixed over the page: it covers the whole screen, the address bar's share too. */
-.stage[data-zip="true"] {
-  height: 100lvh;
-}
-
-/* --u: CSS px per design px, the same scale as the gallery hero's title. */
-.layer {
+  background: var(--wall);
   --gutter: 48px;
   --u: min(calc((100cqw - 2 * var(--gutter)) / 1414), calc((100cqh - 84px) / 1271));
-  position: absolute;
-  inset: 0;
+  /* The title box (design 1414 × 560) plus room under it for the description (design px), centred a touch above the middle. */
+  --below: 170;
+  --title-top: calc((100cqh - (560 + var(--below)) * var(--u)) * 0.46);
 }
 
 @media (max-width: 639px) {
-  .layer {
+  .stage {
     --gutter: 16px;
     --u: calc((100cqw - 2 * var(--gutter)) / 1100);
   }
 }
 
-/* The title box (design 1414 × 560), centred a touch above the middle. */
 .title {
   position: absolute;
   left: 50%;
-  top: calc((100cqh - 560 * var(--u)) * 0.46);
+  top: var(--title-top);
   width: calc(1414 * var(--u));
   height: calc(560 * var(--u));
   margin-left: calc(-707 * var(--u));
+}
+
+/* Under the name, clear of the line's overhang. */
+.description {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(var(--title-top) + 610 * var(--u));
+  width: min(100cqw - 2 * var(--gutter), 1000 * var(--u));
+  /* Centred by margins: the fade-in animates transform. */
+  margin: 0 auto;
+  font-size: max(15px, 30 * var(--u));
+  line-height: 1.55;
+  text-align: center;
+  text-wrap: balance;
+  color: rgb(255 255 255 / 0.55);
+  animation: titleIn 700ms 150ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .description {
+    animation-name: titleFade;
+  }
+}
+
+.titleIn {
+  position: absolute;
+  inset: 0;
+  animation: titleIn 700ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+@keyframes titleIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .titleIn {
+    animation-name: titleFade;
+  }
+}
+
+@keyframes titleFade {
+  from {
+    opacity: 0;
+  }
+}
+
+.titleSvg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.nameText,
+.tagText {
+  font-family: var(--font-poppins), sans-serif;
+  font-weight: 800;
+  text-anchor: middle;
+}
+
+.nameText {
+  font-size: 256px;
+}
+
+.tagText {
+  font-size: 128px;
 }
 
 .tagline {
   fill: var(--ink);
 }
 
-/* ----------------------------------------------------------------------- */
-/* Wall                                                                     */
-
-.wall {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
+/* The letters' outline, over the seam. */
+.outline {
+  fill: none;
+  stroke-opacity: 0.8;
+  stroke-linejoin: round;
 }
 
-/* Clipped to one side of the line (the clip-paths follow the edges as it unzips). */
-.artSide,
-.codeSide {
-  position: absolute;
-  inset: 0;
-}
-
-.artSide {
-  clip-path: var(--seam-left);
-}
-
-.codeSide {
-  clip-path: var(--seam-right);
-}
-
-.wallFill {
-  background-color: var(--wall);
-}
-
-/* "Art x Code" moves up with the page, and lifts and fades over the first third of the unzipping. */
-.taglineLift {
-  opacity: clamp(0, calc(1 - var(--unzip) * 3), 1);
-  transform: translate3d(0, calc(-1 * var(--scroll) - var(--unzip) * 180px), 0);
-}
-
-/* The DOM name is the fallback: once the canvas draws the name, it hides (and it doesn't unzip). */
-.stage[data-gl-name="true"] .domName,
-.stage[data-opening="true"] .domName {
-  visibility: hidden;
-}
-
-/* Its own layer, so the clip moving every frame doesn't repaint what's inside. */
-.cached {
-  will-change: transform;
-}
-
-.weave {
-  position: absolute;
-  inset: 0;
-  opacity: 0.5;
-  background-position: 0 calc(-1 * var(--scroll));
-}
-
-.dots {
-  background-color: var(--wall);
-  background-image: radial-gradient(circle at center, rgb(255 255 255 / 0.085) 0.7px, transparent 1.2px);
-}
-
-/* ----------------------------------------------------------------------- */
-/* Seam                                                                     */
-
+/* The seam: it fades in once the name's masks are ready. */
 .seam {
   position: absolute;
-  left: 0;
-  top: 0;
+  inset: 0;
   width: 100%;
   height: 100%;
   pointer-events: none;
+  opacity: 0;
+  transition: opacity 700ms ease-out;
 }
 
-.seam[data-on="false"] {
-  visibility: hidden;
+.seam[data-on="true"] {
+  opacity: 1;
 }

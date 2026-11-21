@@ -2,9 +2,10 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import { CURVE, ZIP, type SplitLayout } from "../../src/components/hero/splitConfig";
-import { CLOSED, goneAt, lineAt, openAt, swing, zipClipPaths, zipFor } from "../../src/components/hero/zipper";
+import { createPopBuffers, createStreamBuffers, lineAt, lineSpan, MAX_POPS, spans, toSeam, writePops, writeStreams } from "../../src/components/hero/seamField";
+import { BITS, SEAM, TILT, type SplitLayout } from "../../src/components/hero/splitConfig";
 import { corners, EXPLODE_STATES, fillOf, fitItems, JUG, PIECE_DEPTH, PIECES, RIGS, STAGE, TAGS, toStage, project, VIEW_ITEMS, VIEWS } from "../../src/components/showcase/paintwise/explode";
+import { fadeAt, layoutWall, panBounds, PORTFOLIO_COLUMNS } from "../../src/components/showcase/paintings/wall";
 import { GROUP_ORDER, WORKS } from "../../src/components/showcase/works";
 
 let passed = 0;
@@ -51,82 +52,78 @@ interface PaintwiseMediaShape extends StillLifeShape {
 }
 
 // ---------------------------------------------------------------------------
-// The hero unzipping from below
-
-/** A line that swings as far as it can either way, down its length. */
-function swingingCurve(layout: SplitLayout): Float32Array {
-  const curve = new Float32Array(CURVE.samples);
-  for (let i = 0; i < curve.length; i++) curve[i] = CURVE.amp * layout.u * Math.sin(i * 0.11);
-  return curve;
-}
+// The hero: the seam inside the name, on a tilted line
 
 for (const [w, h, seamX, u] of [
   [1440, 900, 720, 0.62],
   [390, 844, 195, 0.32],
-  [1024, 768, 400, 0.6],
-]) {
-  const layout: SplitLayout = { w, h, u, seamX, gridY: 100, cellW: 8 * u, cellH: 16 * u };
-  const label = `zip ${w}×${h}`;
-  const reach = Math.max(seamX, w - seamX) + swing(layout);
-  const gone = goneAt(layout);
+] as [number, number, number, number][]) {
+  const layout: SplitLayout = { w, h, u, seamX, gridY: 120, cellW: 8.4 * u, cellH: 16.1 * u };
+  const label = `seam ${w}×${h}`;
+  const [top, bottom] = [layout.gridY + (SEAM.span[0] + 40) * u, layout.gridY + (SEAM.span[1] + 40) * u];
+  const { paint, bits } = spans(layout);
 
-  check(`${label}: closed at the top of the page`, () => {
-    const zip = zipFor(0, layout);
-    for (let y = 0; y <= h; y += 4) assert(openAt(zip, y) === 0, `open ${openAt(zip, y)} at ${y}`);
-    assert(zipFor(-50, layout).scroll === 0, "negative scroll (overscroll) isn't clamped");
+  check(`${label}: the line is straight, crosses the centre halfway down the name, and leans like "/"`, () => {
+    const centreY = layout.gridY + (TILT.centreY - -40) * u;
+    const slope = Math.tan((TILT.angle * Math.PI) / 180);
+    assert(near(lineAt(centreY, layout), 0, 1e-6), `off the centre by ${lineAt(centreY, layout)}`);
+    assert(top < centreY && centreY < bottom, "the crossing isn't inside the name");
+    for (const dy of [-200, -50, 30, 180]) {
+      assert(near(lineAt(centreY + dy, layout), -dy * slope, 1e-6), `not straight at ${dy}`);
+    }
+    assert(lineAt(top, layout) > 0 && lineAt(bottom, layout) < 0, "the top doesn't lean right");
   });
 
-  check(`${label}: it opens from below, wider further down and the further the page scrolls`, () => {
-    for (let s = 0; s <= gone; s += gone / 20) {
-      const zip = zipFor(s, layout);
-      let prev = 0;
-      for (let y = s; y <= s + h; y += 8) {
-        const o = openAt(zip, y);
-        assert(o >= prev, `narrows going down at scroll ${s.toFixed(0)}, row ${y.toFixed(0)}`);
-        prev = o;
-        assert(openAt(zipFor(s + 10, layout), y) >= o, `closes as the page scrolls at row ${y.toFixed(0)}`);
+  check(`${label}: the seam's frame is turned with the line: x across it (paint side negative), y along it`, () => {
+    for (const y of [top, (top + bottom) / 2, bottom]) {
+      const [qx] = toSeam(lineAt(y, layout), y, layout);
+      assert(near(qx, 0, 1e-6), `the line is at x ${qx} in the frame`);
+      assert(toSeam(lineAt(y, layout) - 10, y, layout)[0] < 0 && toSeam(lineAt(y, layout) + 10, y, layout)[0] > 0, "the sides are the wrong way round");
+    }
+    // Square out of the line, paint heads left and up (y down), bits right and down.
+    const [, y0] = toSeam(0, 300, layout);
+    const [, y1] = toSeam(-100, 300, layout);
+    assert(y1 > y0, "a step left isn't a step down the frame (so square out of it isn't left and up)");
+    assert(paint[0] < paint[1] && bits[0] < bits[1], "empty spans");
+    assert(paint[1] > bits[1] && paint[0] > bits[0], "the paint's lanes should sit further down the frame than the bits'");
+  });
+
+  check(`${label}: the line runs past the name's ink at both ends, by the overhang`, () => {
+    const [start, end] = lineSpan(layout);
+    const [, inkTop] = toSeam(lineAt(top, layout), top, layout);
+    const [, inkBottom] = toSeam(lineAt(bottom, layout), bottom, layout);
+    const overhang = SEAM.line.overhang * u;
+    assert(near(inkTop - start, overhang, 1e-3) && near(end - inkBottom, overhang, 1e-3), `${start}–${end} against the ink's ${inkTop}–${inkBottom}`);
+  });
+
+  check(`${label}: ribbons come out of the line, only where the name is`, () => {
+    const streams = createStreamBuffers();
+    const slack = SEAM.bob * SEAM.radius[1] * u + 1e-3;
+    const furthest = SEAM.reach[1] * (1 + SEAM.float) * u + 1e-3;
+    for (let t = 0; t < 40; t += 0.37) {
+      const n = writeStreams(streams, t, SEAM.ribbons.full, layout);
+      for (let i = 0; i < n; i++) {
+        const [x, y, tail, front] = streams.a.subarray(i * 4, i * 4 + 4);
+        assert(y >= paint[0] - slack && y <= paint[1] + slack, `ribbon ${i} at ${y.toFixed(1)}, outside ${paint[0].toFixed(1)}–${paint[1].toFixed(1)} (t ${t.toFixed(2)})`);
+        assert(x === 0, `ribbon ${i} isn't rooted on the line`);
+        assert(tail <= front + 1e-3 && front <= furthest, `ribbon ${i}: tail ${tail}, front ${front}`);
+        assert(streams.b[i * 4] >= 0 && streams.b[i * 4 + 1] >= 0, `ribbon ${i} has a negative radius`);
       }
     }
-    // The point where the halves meet climbs the screen.
-    const onScreen = (s: number) => zipFor(s, layout).apex - s;
-    assert(onScreen(0) > h && onScreen(gone / 2) < h && onScreen(gone / 2) < onScreen(gone / 4), "the apex doesn't climb");
   });
 
-  check(`${label}: gone at goneAt (every row's halves off screen), not long before`, () => {
-    const at = (s: number) => {
-      const zip = zipFor(s, layout);
-      let least = Infinity;
-      for (let y = 0; y <= h; y += 4) least = Math.min(least, openAt(zip, y + s));
-      return least;
-    };
-    assert(at(gone) >= reach - 0.01, `at goneAt the least opening is ${at(gone).toFixed(1)}, need ${reach.toFixed(1)}`);
-    assert(at(gone * 0.92) < reach, "goneAt is later than it needs to be");
-    assert(gone > 0.6 * h && gone < 2 * h, `gone after ${(gone / h).toFixed(2)} screens`);
-  });
-
-  check(`${label}: below the hero the line runs on smoothly and stays near the centre`, () => {
-    const curve = swingingCurve(layout);
-    assert(near(lineAt(curve, h, layout), curve[curve.length - 1], 1e-3) && near(lineAt(curve, h + 0.5, layout), lineAt(curve, h, layout), 0.5), "a jump at the hero's bottom edge");
-    const bound = CURVE.amp * u + ZIP.maxSlope * ZIP.runOn * u + 1e-6;
-    for (let y = h; y < h + 3 * gone; y += 10) assert(Math.abs(lineAt(curve, y, layout)) <= bound, `line at ${lineAt(curve, y, layout).toFixed(1)} at ${y}`);
-  });
-
-  check(`${label}: the wall's clip-paths trace the line closed, and the opened edges apart`, () => {
-    const curve = swingingCurve(layout);
-    const xs = (polygon: string) => [...polygon.matchAll(/(-?[\d.]+)px (-?[\d.]+)px/g)].map((m) => [Number(m[1]), Number(m[2])]);
-    const closed = zipClipPaths(curve, layout, CLOSED);
-    const [l0, r0] = [xs(closed.left), xs(closed.right)];
-    assert(l0.length === CURVE.clipPoints + 4 && r0.length === l0.length, `${l0.length} points`);
-    for (let k = 1; k < l0.length - 1; k++) assert(l0[k][0] === r0[k][0] && l0[k][1] === r0[k][1], `the halves part at ${l0[k][1]} while closed`);
-    const open = zipClipPaths(curve, layout, zipFor(gone / 2, layout));
-    const [l1, r1] = [xs(open.left), xs(open.right)];
-    let parted = false;
-    for (let k = 1; k < l1.length - 1; k++) {
-      assert(l1[k][0] <= r1[k][0], `the halves cross at ${l1[k][1]}`);
-      assert(l1[k][0] >= -2 && r1[k][0] <= w + 2, `off the stage at ${l1[k][1]}`);
-      parted ||= r1[k][0] - l1[k][0] > 100;
+  check(`${label}: bits pop only on rows that cross the name, and never too many`, () => {
+    const pops = createPopBuffers();
+    const rows = bits.map((y) => Math.floor(y / layout.cellH));
+    for (let t = 0; t < 40; t += 0.29) {
+      writePops(pops, t, BITS.emitters.full, layout);
+      assert(pops.count > 0 && pops.count <= MAX_POPS, `${pops.count} pops at ${t.toFixed(2)}`);
+      for (let k = 0; k < pops.count; k++) {
+        const [row, age] = pops.p.subarray(k * 4, k * 4 + 2);
+        assert(row >= rows[0] && row <= rows[1], `row ${row}, outside ${rows[0]}–${rows[1]}`);
+        assert(age >= 0 && age <= BITS.life[1], `age ${age}`);
+      }
     }
-    assert(parted, "half way to gone, nothing has parted");
   });
 }
 
@@ -216,6 +213,23 @@ check("explode: a tag per layer when fanned out, one for the masks, each pinned 
 
 // ---------------------------------------------------------------------------
 // The works
+
+check("paintings wall: every painting hangs once, the portfolio in its columns, nothing overlapping", () => {
+  const paintings = WORKS.filter((w) => w.group === "paintings");
+  const placed = layoutWall(paintings.map((w) => ({ slug: w.slug, aspect: w.media.aspect, wall: w.wall })));
+  assert(placed.length === paintings.length && new Set(placed.map((p) => p.slug)).size === placed.length, "each painting placed once");
+  for (const slug of PORTFOLIO_COLUMNS.flat()) assert(placed.some((p) => p.slug === slug && p.wall === "portfolio"), `${slug} is on the portfolio wall`);
+  for (let i = 0; i < placed.length; i++)
+    for (let j = i + 1; j < placed.length; j++) {
+      const a = placed[i];
+      const b = placed[j];
+      const apart = Math.abs(a.x - b.x) >= (a.w + b.w) / 2 || Math.abs(a.y - b.y) >= (a.h + b.h) / 2;
+      assert(apart, `${a.slug} overlaps ${b.slug}`);
+    }
+  const bounds = panBounds(placed);
+  for (const p of placed) assert(Math.abs(p.x) <= bounds.x && Math.abs(p.y) <= bounds.y, `${p.slug} can be centred`);
+  assert(fadeAt(0, 0, 500, 400).opacity === 1 && fadeAt(2000, 0, 500, 400).opacity === 0, "whole in the middle, gone far off");
+});
 
 check("works: every work is in a group on the page, and slugs are unique", () => {
   assert(new Set(WORKS.map((w) => w.slug)).size === WORKS.length, "duplicate slugs");

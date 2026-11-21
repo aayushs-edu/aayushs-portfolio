@@ -1,0 +1,40 @@
+/* Behind Paintwise, the full width of the page: soft regions filled in the
+   order Paintwise would paint them, each with its step number (PaintOrder.tsx). */
+
+.backdrop {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  z-index: -1;
+  width: 100vw;
+  transform: translateX(-50%);
+  overflow: hidden;
+  pointer-events: none;
+  /* No edges: it fades out at the top and bottom, and toward the sides. */
+  mask-image: linear-gradient(to bottom, transparent, #000 12%, #000 82%, transparent), linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 12%, #000 82%, transparent), linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
+  mask-composite: intersect;
+  -webkit-mask-composite: source-in;
+}
+
+.canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* A region's step number, at its centre (placed by PaintOrder.tsx). */
+.label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: rgb(214 200 255 / 0.42);
+  opacity: 0;
+  will-change: transform, opacity;
+}

@@ -14,6 +14,8 @@ interface WorkListProps {
 }
 
 export const workButtonId = (slug: string) => `work-open-${slug}`;
+/** Unique across lists: the page can show more than one. */
+const groupId = (title: string) => `group-${title.toLowerCase().replace(/\W+/g, "-")}`;
 
 /**
  * Every work of a group as a grid: a heading per group, and per work its
@@ -24,9 +26,9 @@ export const workButtonId = (slug: string) => `work-open-${slug}`;
 export default function WorkList({ groups, onOpen }: WorkListProps) {
   return (
     <section className={css.page} aria-label="Work">
-      {groups.map((group, g) => (
-        <section key={group.title} className={css.group} aria-labelledby={`group-${g}`}>
-          <h2 id={`group-${g}`} className={css.groupTitle}>
+      {groups.map((group) => (
+        <section key={group.title} className={css.group} aria-labelledby={groupId(group.title)}>
+          <h2 id={groupId(group.title)} className={css.groupTitle}>
             {group.title}
           </h2>
           <ol className={css.grid}>

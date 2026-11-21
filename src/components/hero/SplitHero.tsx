@@ -1,61 +1,31 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
-import styles from "./Hero.module.css";
-import split from "./SplitHero.module.css";
+import { useCallback, useLayoutEffect, useRef, useState } from "react";
+import css from "./SplitHero.module.css";
 import SeamCanvas from "./SeamCanvas";
-import { NameTouch } from "./nameTouch";
-import { BinaryName, PaintedName, Tagline } from "./SplitTitle";
-import SplitWall from "./SplitWall";
-import { DESIGN, SYNTAX_PALETTE, type Tier } from "./heroConfig";
+import { Description, PlainName, Tagline } from "./SplitTitle";
+import { DESIGN, type Tier } from "./heroConfig";
 import { GRID, SEAM_X, type SplitLayout } from "./splitConfig";
-
-const SECTION_STYLE = {
-  "--syn-kw": SYNTAX_PALETTE.kw,
-  "--syn-str": SYNTAX_PALETTE.str,
-  "--syn-num": SYNTAX_PALETTE.num,
-  "--syn-fn": SYNTAX_PALETTE.fn,
-  "--syn-punct": SYNTAX_PALETTE.punct,
-  "--syn-com": SYNTAX_PALETTE.com,
-} as CSSProperties;
 
 function sameLayout(a: SplitLayout, b: SplitLayout) {
   return a.w === b.w && a.h === b.h && a.u === b.u && a.seamX === b.seamX && a.gridY === b.gridY;
 }
 
 /**
- * The split hero: Art on the left, Code on the right, at once. A fluid line
- * runs down the middle; the wall and the name split on it, paint floats out of
- * its left side and bits out of its right. The name answers the cursor: moving
- * through the painted letters pushes them around like fluid, the binary digits
- * under it flicker; grab it to pull the line through it.
- *
- * With `zip`, it is fixed over the top of the page and unzips from below as
- * the page scrolls (zipper.ts): the halves curl away, the tagline lifts off,
- * and the name stops responding to touch. `paused` stops its frame loop once
- * it is gone. The page picks the tier (static: no zip, one still frame).
+ * The hero: "Aayush Sharma", outlined, on a plain wall, split by a straight
+ * line tilted like "/". Through the letters left of the line, paint floats out
+ * of it; through those right of it, bits pop out of it, both square to the
+ * line. Outside the letters nothing moves. "Art x Code" sits over the name,
+ * and a short description in grey under it. It's the page's first section and
+ * scrolls away with it. The page picks the tier (static: one still frame).
  */
-export default function SplitHero({
-  tier,
-  zip = false,
-  paused = false,
-  onGoneAt,
-  onFail,
-}: {
-  tier: Tier;
-  zip?: boolean;
-  paused?: boolean;
-  onGoneAt?: (scroll: number) => void;
-  onFail?: () => void;
-}) {
+export default function SplitHero({ tier, onFail }: { tier: Tier; onFail?: () => void }) {
   const [layout, setLayout] = useState<SplitLayout | null>(null);
+  const [failed, setFailed] = useState(false);
   const stageRef = useRef<HTMLDivElement | null>(null);
   const titleRef = useRef<HTMLDivElement | null>(null);
-  const [touch] = useState(() => new NameTouch());
-  // Once the canvas draws the name itself, the DOM name (the fallback) hides.
-  const [glName, setGlName] = useState(false);
 
-  // The title box sets the scale; the wall and the seam line up with its grid.
+  // The title box sets the scale; the seam lines up with its grid.
   useLayoutEffect(() => {
     const stage = stageRef.current;
     const title = titleRef.current;
@@ -81,89 +51,20 @@ export default function SplitHero({
     return () => observer.disconnect();
   }, []);
 
-  // Pointer input for touching the name (until the hero starts to unzip).
-  useEffect(() => {
-    const stage = stageRef.current;
-    if (!stage) return;
-    const opening = () => {
-      if (!zip || window.scrollY <= 0) return false;
-      touch.leave();
-      stage.style.cursor = "";
-      return true;
-    };
-    const local = (event: PointerEvent) => {
-      const rect = stage.getBoundingClientRect();
-      return [event.clientX - rect.left, event.clientY - rect.top] as const;
-    };
-    const cursor = (x: number, y: number) => {
-      stage.style.cursor = touch.holding ? "grabbing" : touch.overName(x, y) ? "grab" : "";
-    };
-    const onMove = (event: PointerEvent) => {
-      if (opening()) return;
-      const [x, y] = local(event);
-      touch.move(x, y, event.pointerType === "touch");
-      cursor(x, y);
-    };
-    const onDown = (event: PointerEvent) => {
-      if (opening()) return;
-      const [x, y] = local(event);
-      touch.down(x, y, event.pointerType === "touch");
-      cursor(x, y);
-    };
-    const onUp = (event: PointerEvent) => {
-      touch.up();
-      const [x, y] = local(event);
-      cursor(x, y);
-    };
-    const onLeave = () => {
-      touch.leave();
-      stage.style.cursor = "";
-    };
-    stage.addEventListener("pointermove", onMove);
-    stage.addEventListener("pointerdown", onDown);
-    window.addEventListener("pointerup", onUp);
-    stage.addEventListener("pointerleave", onLeave);
-    stage.addEventListener("pointercancel", onLeave);
-    return () => {
-      stage.removeEventListener("pointermove", onMove);
-      stage.removeEventListener("pointerdown", onDown);
-      window.removeEventListener("pointerup", onUp);
-      stage.removeEventListener("pointerleave", onLeave);
-      stage.removeEventListener("pointercancel", onLeave);
-    };
-  }, [touch, zip]);
+  const fail = useCallback(() => {
+    setFailed(true);
+    onFail?.();
+  }, [onFail]);
 
   return (
-    <section className={styles.hero} style={SECTION_STYLE} aria-label="Aayush Sharma: art and code" data-tier={tier}>
-      <div ref={stageRef} className={split.stage} data-gl-name={glName} data-zip={zip}>
-        <div className={split.layer}>
-          <SplitWall layout={layout} />
-          <SeamCanvas
-            tier={tier}
-            layout={layout}
-            clipRef={stageRef}
-            touch={touch}
-            onNameReady={() => setGlName(true)}
-            zip={zip}
-            onGoneAt={onGoneAt}
-            onFail={onFail}
-            paused={paused}
-          />
-          {/* The name twice, each clipped to its side of the line; the tagline over both. */}
-          <div className={`${split.artSide} ${split.domName}`}>
-            <div ref={titleRef} className={split.title}>
-              <PaintedName />
-            </div>
-          </div>
-          <div className={`${split.codeSide} ${split.domName}`}>
-            <div className={split.title}>
-              <BinaryName />
-            </div>
-          </div>
-          <div className={`${split.title} ${split.taglineLift}`}>
-            <Tagline />
-          </div>
+    <section className={css.hero} aria-label="Aayush Sharma: art and code" data-tier={tier}>
+      <div ref={stageRef} className={css.stage}>
+        <SeamCanvas tier={tier} layout={layout} onFail={fail} />
+        <div ref={titleRef} className={css.title}>
+          <PlainName fill={failed} />
+          <Tagline />
         </div>
+        <Description />
       </div>
     </section>
   );

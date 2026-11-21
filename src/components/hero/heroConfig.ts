@@ -205,6 +205,10 @@ export const BRUSH = {
   introMs: 1400,
 } as const;
 
+/** Who this is: the line under the name. */
+export const DESCRIPTION =
+  "I'm a Computer Science student at Georgia Tech who loves building things at the intersection of AI and creativity. I enjoy turning ambitious ideas into real, usable AI-powered products. I'm always looking for opportunities to learn something new and build technology that makes a meaningful impact.";
+
 /** The painted / binary name. */
 export const NAME = {
   /** Art mode: warm off-white paint, streaked with tints and a few soft palette accents. */

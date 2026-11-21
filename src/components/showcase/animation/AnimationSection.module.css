@@ -1,0 +1,423 @@
+/* Animation: a heading, then the theatre: a dark band with the programme,
+   the screen (lit from behind by a glow sampled from the picture) and, for
+   Wild West, a rail of props beside it. */
+
+.section {
+  padding: 112px 0 48px;
+  color: #fff;
+}
+
+.head {
+  max-width: 1200px;
+  margin: 0 auto 28px;
+  padding: 0 24px;
+  transition: opacity 0.8s ease;
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-poppins), sans-serif;
+  font-weight: 800;
+  font-size: clamp(40px, 7vw, 72px);
+  line-height: 1;
+  letter-spacing: -0.01em;
+  color: #ece4d4;
+}
+
+.pitch {
+  max-width: 44ch;
+  margin: 18px 0 0;
+  font-size: 17px;
+  line-height: 1.55;
+  color: rgb(255 255 255 / 0.72);
+}
+
+/* The house lights go down while the full film plays. */
+.section[data-full="true"] .head,
+.section[data-full="true"] .caption,
+.section[data-full="true"] .programme {
+  opacity: 0.35;
+}
+
+.theatre {
+  position: relative;
+  padding: 28px 24px 56px;
+  background:
+    radial-gradient(120% 70% at 50% 0%, rgb(0 0 0 / 0.55), transparent 70%),
+    linear-gradient(to bottom, #0d0d0d, #050505 14%, #050505 86%, #0d0d0d);
+  /* Clipped sideways only, so the glow fades out above and below rather than ending in a line. */
+  overflow-x: clip;
+}
+
+/* ---- the programme ------------------------------------------------------------------ */
+
+.programme {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: center;
+  gap: 6px 28px;
+  max-width: 1440px;
+  margin: 0 auto 24px;
+  transition: opacity 0.8s ease;
+}
+
+.marquee {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgb(236 228 212 / 0.45);
+}
+
+.programmeItem {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 6px 2px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: rgb(255 255 255 / 0.5);
+  cursor: pointer;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.programmeItem:hover {
+  color: rgb(255 255 255 / 0.85);
+}
+
+.programmeItem[aria-pressed="true"] {
+  color: #ece4d4;
+  border-bottom-color: #ece4d4;
+}
+
+.programmeItem:focus-visible,
+.pick:focus-visible,
+.loopButton:focus-visible,
+.exit:focus-visible {
+  outline: 2px solid #ece4d4;
+  outline-offset: 3px;
+}
+
+.programmeTitle {
+  font-family: var(--font-poppins), sans-serif;
+  font-weight: 800;
+  font-size: clamp(18px, 2.2vw, 24px);
+}
+
+.programmeYear {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 12px;
+  opacity: 0.6;
+}
+
+/* ---- the house: the screen, and the rail beside it ---------------------------------- */
+
+.house {
+  --rail: 0px;
+  --gap: 0px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--rail);
+  column-gap: var(--gap);
+  max-width: 1440px;
+  margin: 0 auto;
+  transition:
+    grid-template-columns 0.6s cubic-bezier(0.2, 0.7, 0.2, 1),
+    column-gap 0.6s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.house[data-props="true"] {
+  --rail: clamp(300px, 30%, 440px);
+  --gap: 28px;
+}
+
+.screenCol {
+  min-width: 0;
+}
+
+/* The screen fills its column, but never taller than the view leaves room for. */
+.screenWrap {
+  position: relative;
+  width: min(100%, calc(70svh * 16 / 9));
+  margin: 0 auto;
+}
+
+.glow {
+  position: absolute;
+  inset: -12% -10%;
+  width: 120%;
+  height: 124%;
+  filter: blur(64px) saturate(1.5);
+  opacity: 0.5;
+  pointer-events: none;
+  transition: opacity 0.8s ease;
+}
+
+.section[data-full="true"] .glow {
+  opacity: 0.75;
+}
+
+.screen {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: 4px;
+  background: #000;
+  box-shadow:
+    0 0 0 1px rgb(255 255 255 / 0.06),
+    0 40px 90px -20px rgb(0 0 0 / 0.8);
+}
+
+.video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: #000;
+}
+
+.loopButton {
+  position: absolute;
+  inset: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.play {
+  position: absolute;
+  left: 20px;
+  bottom: 18px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 16px 9px 12px;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 0.55);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.loopButton:hover .play {
+  background: rgb(0 0 0 / 0.75);
+  transform: translateY(-1px);
+}
+
+.playIcon {
+  width: 0;
+  height: 0;
+  border-left: 11px solid currentColor;
+  border-top: 7px solid transparent;
+  border-bottom: 7px solid transparent;
+}
+
+.exit {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 50%;
+  background: rgb(0 0 0 / 0.55);
+  color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.exit:hover {
+  background: rgb(0 0 0 / 0.8);
+}
+
+.caption {
+  width: min(100%, calc(70svh * 16 / 9));
+  margin: 22px auto 0;
+  transition: opacity 0.8s ease;
+}
+
+.captionLine {
+  margin: 0 0 6px;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: rgb(236 228 212 / 0.55);
+}
+
+.captionStory {
+  max-width: 62ch;
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.55;
+  color: rgb(255 255 255 / 0.68);
+}
+
+/* ---- the rail: one stage for a model or a still, and the picks under it -------------- */
+
+.rail {
+  min-width: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.house[data-props="true"] .rail {
+  opacity: 1;
+  transition-delay: 0.2s;
+}
+
+/* Fixed to the open rail's width, so it doesn't reflow as the rail folds. */
+.railInner {
+  width: clamp(300px, 30vw, 440px);
+  max-width: 100%;
+}
+
+.railLabel,
+.pickLabel {
+  margin: 0 0 10px;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgb(236 228 212 / 0.45);
+}
+
+.pickLabel {
+  margin-top: 18px;
+}
+
+.stage {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  border-radius: 6px;
+  background: radial-gradient(80% 90% at 50% 35%, #26221d, #0b0a09 75%);
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 0.06);
+}
+
+.viewer {
+  display: block;
+  width: 100%;
+  height: 100%;
+  --poster-color: transparent;
+  background: transparent;
+}
+
+.stageImg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.stageCaption {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  margin-top: 10px;
+  font-size: 13px;
+  color: rgb(255 255 255 / 0.6);
+}
+
+.stageCaption strong {
+  font-weight: 600;
+  color: #ece4d4;
+}
+
+.stageCaption a {
+  color: rgb(255 255 255 / 0.7);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.stageCaption a:hover {
+  color: #fff;
+}
+
+.count {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 12px;
+}
+
+.picks {
+  display: grid;
+  gap: 8px;
+}
+
+.picks[data-kind="model"] {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.picks[data-kind="still"] {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.pick {
+  aspect-ratio: 16 / 9;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 4px;
+  background: #15130f;
+  cursor: pointer;
+  opacity: 0.55;
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 0.06);
+  transition: opacity 0.2s ease, box-shadow 0.2s ease;
+}
+
+.pick img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pick:hover {
+  opacity: 0.85;
+}
+
+.pick[aria-pressed="true"] {
+  opacity: 1;
+  box-shadow: 0 0 0 2px #ece4d4;
+}
+
+/* ---- narrow: the rail goes under the screen ------------------------------------------ */
+
+@media (max-width: 900px) {
+  .house,
+  .house[data-props="true"] {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 32px;
+  }
+
+  .house[data-props="false"] .rail {
+    display: none;
+  }
+
+  .railInner {
+    width: 100%;
+  }
+
+  .play {
+    left: 12px;
+    bottom: 12px;
+    font-size: 13px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .house,
+  .rail,
+  .glow,
+  .head,
+  .caption,
+  .programme {
+    transition: none;
+  }
+}

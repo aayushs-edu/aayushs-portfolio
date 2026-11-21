@@ -2,6 +2,8 @@
    the two exploded views side by side, wider than the rest of the page. */
 
 .section {
+  position: relative;
+  isolation: isolate;
   max-width: 1200px;
   margin: 0 auto;
   padding: 112px 24px 48px;
@@ -25,18 +27,21 @@
   }
 }
 
-/* The logo beside the title, sized off the title's font. */
+/* The logo over the title, at its left edge, sized off the title's font. */
 .brand {
   display: flex;
-  align-items: center;
-  gap: 0.18em;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.14em;
   font-size: clamp(40px, 7vw, 72px);
 }
 
 .logo {
   flex: none;
   width: auto;
-  height: 1.25em;
+  height: 0.8em;
+  /* The image has a clear margin on its left; this lines the brush up with the title's P. */
+  margin-left: -0.086em;
   filter: drop-shadow(0 0 0.35em rgb(120 72 240 / 0.35));
 }
 
@@ -288,6 +293,27 @@
   transform: rotateY(-90deg);
 }
 
+/* The floor under SAM's pieces: a faint grid, level, fading out at its edges, there once they're apart. */
+.floor {
+  position: absolute;
+  display: block;
+  --line: rgb(255 255 255 / 0.18);
+  background-image:
+    linear-gradient(to right, var(--line) 0.25cqw, transparent 0.25cqw),
+    linear-gradient(to bottom, var(--line) 0.25cqw, transparent 0.25cqw);
+  background-size: var(--cell) var(--cell);
+  background-position: center;
+  mask-image: radial-gradient(closest-side, #000 55%, transparent);
+  -webkit-mask-image: radial-gradient(closest-side, #000 55%, transparent);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 900ms ease 500ms;
+}
+
+.stage[data-apart="true"] .floor {
+  opacity: 1;
+}
+
 /* SAM's pieces cast a soft shadow on what's behind them, so the layers read. */
 .item[data-kind="object"] img {
   filter: drop-shadow(0 10px 14px rgb(0 0 0 / 0.55));
@@ -361,6 +387,7 @@
 @media (prefers-reduced-motion: reduce) {
   .rig,
   .item,
+  .floor,
   .tag,
   .figureButton img {
     transition: none;

@@ -1,48 +1,41 @@
 "use client";
 
-import { useEffect, useRef, useState, type RefObject } from "react";
+import { useEffect, useRef, useState } from "react";
 import split from "./SplitHero.module.css";
 import { NAME, type Tier } from "./heroConfig";
-import { NAME_UNITS, NameGL } from "./nameGL";
-import type { BinaryGrid } from "./nameRaster";
-import type { NameTouch } from "./nameTouch";
-import { curveAt, SeamState } from "./seamField";
+import { MASK_UNITS, NameMask } from "./nameMask";
+import { lineSpan, SeamState, spans, tilt } from "./seamField";
 import { SEAM_FRAGMENT, SEAM_VERTEX } from "./seamShader";
 import { BITS, GRID, SEAM, type SplitLayout } from "./splitConfig";
-import { CLOSED, goneAt, zipClipPaths, zipFor, type Zip } from "./zipper";
 
 function rgb(color: string): [number, number, number] {
   const n = parseInt(color.slice(1), 16);
   return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255];
 }
 
-/** The binary name's cell colour (matches .binaryBacking in Hero.module.css). */
-const NAME_BACKING = "#191817";
-
 const UNIFORMS = [
-  "uRes", "uDpr", "uSeam", "uUnit", "uCell", "uGridY", "uTime", "uCount", "uCurve", "uHeight",
+  "uRes", "uDpr", "uSeam", "uUnit", "uCell", "uFrame", "uTime", "uCount",
   "uA", "uB", "uC", "uPalette", "uBitPalette", "uBead", "uBeadSwell", "uBlend",
-  "uGlyphs", "uGlyphRes", "uGlyphSlot", "uPopCount", "uPop", "uBitShape", "uBurst", "uBitTime", "uScroll", "uZip",
-  "uNameOn", "uFlowOn", "uBox", "uGridInfo", "uNameInk", "uNameBacking", "uNamePaint", "uNameMask", "uNameFlicker", "uFlow",
+  "uGlyphs", "uGlyphRes", "uGlyphSlot", "uPopCount", "uPop", "uBitShape", "uBurst", "uBitTime", "uBitRows", "uLine",
+  "uNameOn", "uBox", "uLetters",
 ] as const;
 type UniformName = (typeof UNIFORMS)[number];
 
-/** Raw WebGL2: the seam's program, a two-glyph atlas, and the name (textures, fluid, loose digits). */
+/** Raw WebGL2: the seam's program, a two-glyph atlas, and the name's masks. */
 class SeamRenderer {
-  /** Called with the binary grid whenever the name is (re)built. */
-  onName: ((grid: BinaryGrid) => void) | null = null;
+  /** Called whenever the masks are (re)built. */
+  onName: (() => void) | null = null;
   private gl: WebGL2RenderingContext;
   private program: WebGLProgram;
   private vao: WebGLVertexArrayObject;
   private atlas: WebGLTexture;
-  private atlasSize = { w: 1, h: 1, slot: 1 };
   private loc = {} as Record<UniformName, WebGLUniformLocation | null>;
   private layout: SplitLayout | null = null;
   private dpr = 1;
   private mono = "monospace";
   private poppins: string | null = null;
-  private name: NameGL | null = null;
-  private last: [number, SeamState, NameTouch | undefined, Zip] | null = null;
+  private name: NameMask;
+  private last: [number, SeamState] | null = null;
 
   constructor(private canvas: HTMLCanvasElement) {
     const gl = canvas.getContext("webgl2", { alpha: true, premultipliedAlpha: true, antialias: false, depth: false, stencil: false });
@@ -75,19 +68,8 @@ class SeamRenderer {
     gl.uniform4f(this.loc.uBitShape, BITS.spread, BITS.rowChance, BITS.maxLength, BITS.flipRate);
     gl.uniform4f(this.loc.uBitTime, BITS.burstTime, BITS.life[0], BITS.life[1], BITS.cool);
     gl.uniform1i(this.loc.uGlyphs, 0);
-    gl.uniform1i(this.loc.uNamePaint, NAME_UNITS.paint);
-    gl.uniform1i(this.loc.uNameMask, NAME_UNITS.mask);
-    gl.uniform1i(this.loc.uNameFlicker, NAME_UNITS.flicker);
-    gl.uniform1i(this.loc.uFlow, NAME_UNITS.flow);
-    gl.uniform3f(this.loc.uNameInk, ...rgb(NAME.paint));
-    gl.uniform3f(this.loc.uNameBacking, ...rgb(NAME_BACKING));
-
-    try {
-      this.name = new NameGL(gl);
-    } catch (error) {
-      // The seam still runs; the DOM name stays.
-      if (process.env.NODE_ENV !== "production") console.warn(error);
-    }
+    gl.uniform1i(this.loc.uLetters, MASK_UNITS.letters);
+    this.name = new NameMask(gl);
   }
 
   setLayout(layout: SplitLayout, dpr: number) {
@@ -96,14 +78,18 @@ class SeamRenderer {
     this.canvas.width = Math.max(1, Math.round(layout.w * dpr));
     this.canvas.height = Math.max(1, Math.round(layout.h * dpr));
     const { gl, loc } = this;
+    const line = tilt(layout);
+    const rows = spans(layout).bits.map((y) => Math.floor(y / layout.cellH));
     gl.useProgram(this.program);
     gl.uniform2f(loc.uRes, this.canvas.width, this.canvas.height);
     gl.uniform1f(loc.uDpr, dpr);
     gl.uniform1f(loc.uSeam, layout.seamX);
     gl.uniform1f(loc.uUnit, layout.u);
     gl.uniform2f(loc.uCell, layout.cellW, layout.cellH);
-    gl.uniform1f(loc.uGridY, layout.gridY);
-    gl.uniform1f(loc.uHeight, layout.h);
+    gl.uniform3f(loc.uFrame, line.centreY, line.cos, line.sin);
+    gl.uniform2f(loc.uBitRows, rows[0], rows[1]);
+    const [lineStart, lineEnd] = lineSpan(layout);
+    gl.uniform4f(loc.uLine, lineStart, lineEnd, Math.max(0.6, SEAM.line.width * layout.u), SEAM.line.alpha);
     gl.uniform4f(loc.uBurst, BITS.burst[0] * layout.u, BITS.burst[1] * layout.u, BITS.drift[0] * layout.u, BITS.drift[1] * layout.u);
     gl.uniform1f(loc.uBead, SEAM.bead * layout.u);
     gl.uniform1f(loc.uBeadSwell, SEAM.beadSwell * layout.u);
@@ -118,14 +104,14 @@ class SeamRenderer {
     this.redraw();
   }
 
-  /** Poppins is in: build the name's textures. */
+  /** Poppins is in: build the name's masks. */
   setPoppins(family: string) {
     this.poppins = family;
     this.buildName();
     this.redraw();
   }
 
-  /** "0" and "1" in the binary name's face, one cell each, at device resolution. */
+  /** "0" and "1" in the grid's face, one cell each, at device resolution. */
   private buildAtlas() {
     const layout = this.layout;
     if (!layout) return;
@@ -152,7 +138,6 @@ class SeamRenderer {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    this.atlasSize = { w: c.width, h: c.height, slot };
     gl.useProgram(this.program);
     gl.uniform2f(this.loc.uGlyphRes, c.width, c.height);
     gl.uniform1f(this.loc.uGlyphSlot, slot);
@@ -160,49 +145,36 @@ class SeamRenderer {
 
   private buildName() {
     const { layout, poppins, name, gl, loc } = this;
-    if (!layout || !poppins || !name) return;
-    const grid = name.setName(poppins, layout, this.dpr);
-    if (!grid) return;
+    if (!layout || !poppins || !name.setName(poppins, layout, this.dpr)) return;
     const box = name.box(layout);
     gl.useProgram(this.program);
     gl.uniform4f(loc.uBox, box.x, box.y, box.w, box.h);
-    gl.uniform3f(loc.uGridInfo, grid.c0, grid.cols, grid.rows);
-    this.onName?.(grid);
+    this.onName?.();
   }
 
   private redraw() {
-    if (this.last) this.render(this.last[0], 0, this.last[1], this.last[2], this.last[3]);
+    if (this.last) this.render(...this.last);
   }
 
-  /**
-   * Draws one frame (seam time `t`, `dt` since the last) from the seam's state
-   * and the name's touch, scrolled and unzipped as `zip` says.
-   */
-  render(t: number, dt: number, state: SeamState, touch: NameTouch | undefined, zip: Zip) {
+  /** Draws one frame (seam time `t`) from the seam's state. */
+  render(t: number, state: SeamState) {
     const { gl, loc, layout, name } = this;
     if (!layout || gl.isContextLost()) return;
-    this.last = [t, state, touch, zip];
-    const nameOn = !!name?.ready;
-    if (nameOn) name!.update(dt, t, touch, layout);
-
+    this.last = [t, state];
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.viewport(0, 0, this.canvas.width, this.canvas.height);
     gl.useProgram(this.program);
     gl.uniform1f(loc.uTime, t);
     gl.uniform1i(loc.uCount, state.count);
-    gl.uniform4fv(loc.uCurve, state.curve);
     gl.uniform4fv(loc.uA, state.streams.a);
     gl.uniform4fv(loc.uB, state.streams.b);
     gl.uniform4fv(loc.uC, state.streams.c);
-    gl.uniform1f(loc.uScroll, zip.scroll);
-    gl.uniform3f(loc.uZip, zip.apex, zip.k1, zip.k2);
     gl.uniform1i(loc.uPopCount, state.pops.count);
     gl.uniform4fv(loc.uPop, state.pops.p);
-    gl.uniform1f(loc.uNameOn, nameOn ? 1 : 0);
-    gl.uniform1f(loc.uFlowOn, nameOn ? name!.flowAmount : 0);
+    gl.uniform1f(loc.uNameOn, name.ready ? 1 : 0);
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, this.atlas);
-    if (nameOn) name!.bindTextures();
+    name.bindTextures();
     gl.bindVertexArray(this.vao);
     gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT);
@@ -211,7 +183,7 @@ class SeamRenderer {
 
   destroy() {
     const { gl } = this;
-    this.name?.destroy();
+    this.name.destroy();
     gl.deleteTexture(this.atlas);
     gl.deleteVertexArray(this.vao);
     gl.deleteProgram(this.program);
@@ -221,50 +193,24 @@ class SeamRenderer {
 interface SeamCanvasProps {
   tier: Tier;
   layout: SplitLayout | null;
-  /** Gets --seam-left / --seam-right: clip-paths for each side of the line, every frame. */
-  clipRef: RefObject<HTMLElement | null>;
-  /** Touching the name: it bends the line, its paint flows, and its binary cells flicker. */
-  touch?: NameTouch;
-  /** Called once the canvas draws the name itself (the DOM name can hide). */
-  onNameReady?: () => void;
-  /**
-   * The hero is fixed over the page and unzips as it scrolls (read from the
-   * window every frame). The stage also gets --scroll (px), --unzip (0..1:
-   * how far to gone) and data-opening.
-   */
-  zip?: boolean;
-  /** Told the scroll (CSS px) from which the hero is entirely off screen, whenever the layout changes. */
-  onGoneAt?: (scroll: number) => void;
   /** WebGL2 failed or its context was lost. */
   onFail?: () => void;
-  /** Stop the frame loop (the hero is hidden). */
-  paused?: boolean;
 }
 
 /**
- * The living seam: a fluid line with paint floating out of its left side and
- * bits out of its right, and the name drawn over both halves, fluid to the
- * touch. It also drives the clip-paths that split the wall on the same line.
- * Loops forever; pauses off screen; a single still frame with reduced motion.
- * Without WebGL2 the line still moves and the DOM name stays; only the paint,
- * the bits and the touch effects are missing.
+ * The seam, seen through the name: paint floating out of the left of a tilted
+ * line and bits out of its right, drawn only inside the letters. Loops
+ * forever; pauses off screen; a single still frame with reduced motion. It
+ * fades in once the name's masks are ready. Without WebGL2 it calls `onFail`
+ * and draws nothing.
  */
-export default function SeamCanvas({ tier, layout, clipRef, touch: touchState, onNameReady, zip = false, onGoneAt, onFail, paused = false }: SeamCanvasProps) {
+export default function SeamCanvas({ tier, layout, onFail }: SeamCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const rendererRef = useRef<SeamRenderer | null>(null);
   const stateRef = useRef<SeamState | null>(null);
   const timeRef = useRef<number>(SEAM.stillTime);
   const [failed, setFailed] = useState(false);
-  const readyRef = useRef(onNameReady);
-  readyRef.current = onNameReady;
-  const zipRef = useRef(zip);
-  zipRef.current = zip;
-  const goneAtRef = useRef(onGoneAt);
-  goneAtRef.current = onGoneAt;
-  const pausedRef = useRef(paused);
-  pausedRef.current = paused;
-  /** Restarts the frame loop (set by the loop's effect). */
-  const resumeRef = useRef<(() => void) | null>(null);
+  const [ready, setReady] = useState(false);
 
   // The renderer lives as long as the canvas.
   useEffect(() => {
@@ -279,10 +225,7 @@ export default function SeamCanvas({ tier, layout, clipRef, touch: touchState, o
       return;
     }
     rendererRef.current = renderer;
-    renderer.onName = (grid) => {
-      touchState?.setGrid(grid);
-      readyRef.current?.();
-    };
+    renderer.onName = () => setReady(true);
     const onLost = (event: Event) => {
       event.preventDefault();
       setFailed(true);
@@ -304,39 +247,21 @@ export default function SeamCanvas({ tier, layout, clipRef, touch: touchState, o
       renderer.destroy();
       rendererRef.current = null;
     };
-  }, [touchState]);
+  }, []);
 
   // Size and frame loop.
   useEffect(() => {
     const canvas = canvasRef.current;
-    const target = clipRef.current;
-    if (!canvas || !target || !layout) return;
+    if (!canvas || !layout) return;
     const renderer = failed ? null : rendererRef.current;
-    // Reduced motion: no loop, so no touching either.
-    const touch = tier === "static" ? undefined : touchState;
-    touch?.setLayout(layout);
-    renderer?.setLayout(layout, Math.min(SEAM.dpr[tier], window.devicePixelRatio || 1));
+    if (!renderer) return;
+    renderer.setLayout(layout, Math.min(SEAM.dpr[tier], window.devicePixelRatio || 1));
     const state = (stateRef.current ??= new SeamState());
     const ribbons = SEAM.ribbons[tier];
     const emitters = BITS.emitters[tier];
-    const gone = goneAt(layout);
-    goneAtRef.current?.(gone);
-    let opening: boolean | null = null;
-    const draw = (dt = 0) => {
-      const t = timeRef.current;
-      const zip = zipRef.current ? zipFor(window.scrollY, layout) : CLOSED;
-      touch?.step(dt, t, (y) => curveAt(state.curve, y, layout.h));
-      state.update(t, ribbons, emitters, layout, touch);
-      renderer?.render(t, dt, state, touch, zip);
-      const clip = zipClipPaths(state.curve, layout, zip);
-      target.style.setProperty("--seam-left", clip.left);
-      target.style.setProperty("--seam-right", clip.right);
-      target.style.setProperty("--scroll", `${zip.scroll.toFixed(1)}px`);
-      target.style.setProperty("--unzip", Math.min(1, zip.scroll / gone).toFixed(4));
-      if (opening !== zip.scroll > 0) {
-        opening = zip.scroll > 0;
-        target.dataset.opening = String(opening);
-      }
+    const draw = () => {
+      state.update(timeRef.current, ribbons, emitters, layout);
+      renderer.render(timeRef.current, state);
     };
     draw();
     // Reduced motion (and the first client render): one still frame.
@@ -344,54 +269,33 @@ export default function SeamCanvas({ tier, layout, clipRef, touch: touchState, o
 
     let raf = 0;
     let last = 0;
-    let visible = true;
     const frame = (now: number) => {
-      if (pausedRef.current) {
-        raf = 0;
-        return;
-      }
       const dt = last ? (now - last) / 1000 : 0;
       last = now;
-      const step = Math.min(dt, SEAM.maxStep);
-      timeRef.current += step;
-      draw(step);
+      timeRef.current += Math.min(dt, SEAM.maxStep);
+      draw();
       raf = requestAnimationFrame(frame);
-    };
-    const start = () => {
-      if (raf || !visible || pausedRef.current) return;
-      last = 0;
-      raf = requestAnimationFrame(frame);
-    };
-    const stop = () => {
-      cancelAnimationFrame(raf);
-      raf = 0;
     };
     const observer = new IntersectionObserver(([entry]) => {
-      visible = entry.isIntersecting;
-      if (visible) start();
-      else stop();
+      cancelAnimationFrame(raf);
+      raf = 0;
+      if (entry.isIntersecting) {
+        last = 0;
+        raf = requestAnimationFrame(frame);
+      }
     });
     observer.observe(canvas);
-    resumeRef.current = start;
-    start();
     return () => {
-      resumeRef.current = null;
       observer.disconnect();
-      stop();
+      cancelAnimationFrame(raf);
     };
-  }, [layout, tier, failed, clipRef, touchState]);
+  }, [layout, tier, failed]);
 
-  // Without WebGL2 the page falls back to the static hero.
   const failRef = useRef(onFail);
   failRef.current = onFail;
   useEffect(() => {
     if (failed) failRef.current?.();
   }, [failed]);
 
-  // Unpausing restarts the loop where it left off.
-  useEffect(() => {
-    if (!paused) resumeRef.current?.();
-  }, [paused]);
-
-  return <canvas ref={canvasRef} className={split.seam} aria-hidden="true" data-on={!failed && !!layout} />;
+  return <canvas ref={canvasRef} className={split.seam} aria-hidden="true" data-on={!failed && ready} />;
 }

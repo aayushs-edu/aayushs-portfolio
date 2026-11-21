@@ -1,0 +1,60 @@
+/* A painting being painted again, coarse to fine (Repainting.tsx). */
+
+.backdrop {
+  position: absolute;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* Behind a section: the full width of the page, under the content. */
+.backdrop[data-variant="section"] {
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  z-index: -1;
+  width: 100vw;
+  transform: translateX(-50%);
+}
+
+/* Filling the hero. */
+.backdrop[data-variant="hero"] {
+  inset: 0;
+}
+
+/* Both canvases together: how strong the painting is, and where it fades. */
+.paint {
+  position: absolute;
+  inset: 0;
+}
+
+/* Faint, with no edges: it fades out at the top and bottom, and toward the sides. */
+.backdrop[data-variant="section"] .paint {
+  opacity: 0.2;
+  mask-image: linear-gradient(to bottom, transparent, #000 14%, #000 80%, transparent), linear-gradient(to right, transparent, #000 12%, #000 88%, transparent);
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 14%, #000 80%, transparent), linear-gradient(to right, transparent, #000 12%, #000 88%, transparent);
+  mask-composite: intersect;
+  -webkit-mask-composite: source-in;
+}
+
+/* In the hero: stronger, fading into the page's black at the bottom (as the hero's other backgrounds do). */
+.backdrop[data-variant="hero"] .paint {
+  opacity: 0.5;
+  mask-image: linear-gradient(to bottom, black 60%, transparent);
+  -webkit-mask-image: linear-gradient(to bottom, black 60%, transparent);
+}
+
+/* The painting (front) and the one before it (back); Repainting.tsx fades them. Hidden until the first painting begins. */
+.canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+}
+
+@media (max-width: 860px) {
+  .backdrop[data-variant="section"] .paint {
+    opacity: 0.16;
+  }
+}

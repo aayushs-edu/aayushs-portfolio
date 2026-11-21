@@ -1,42 +1,14 @@
-// GLSL for the seam. The line is a fluid curve (sampled on the CPU). Left of
-// it: paint ribbons push out and float away (one distance field, lit as wet
-// paint), and over them the painted name. Right of it: bits pop out of the
-// line (splashes of digit packets along the binary grid's rows that burst out,
-// brake, drift and fade), and over them the binary name. Both halves of the
-// name are drawn through the fluid flow of nameGL.ts. As the page scrolls, the
-// hero moves up (uScroll) and unzips from below (uZip, zipper.ts): under the
-// point where the halves still meet, each half moves off the line, more the
-// further down, and the gap between is left clear.
+// GLSL for the seam, seen only through the name. The line is straight and
+// tilted, and everything is laid out in the seam's frame, turned with it
+// (seamField.ts), so it all comes out square to the line. Left of it: paint
+// ribbons push out and float away (one distance field, lit as wet paint), shown
+// through the letterforms. Right of it: bits pop out (splashes of digit packets
+// along the frame's rows that burst out, brake, drift and fade), shown a whole
+// digit at a time while its middle is on a letter. Outside the letters nothing
+// is drawn.
 
-import { DESIGN } from "./heroConfig";
 import { MAX_POPS, MAX_STREAMS } from "./seamField";
-import { BITS, CURVE, ZIP } from "./splitConfig";
-
-/** The line: its samples, and where it is at height y (x from the centre, CSS px). */
-const CURVE_GLSL = /* glsl */ `
-#define CURVE_SAMPLES ${CURVE.samples}
-uniform vec4 uCurve[CURVE_SAMPLES / 4];
-uniform float uHeight;
-float curveSample(int i) {
-  vec4 v = uCurve[i >> 2];
-  int k = i & 3;
-  return k == 0 ? v.x : k == 1 ? v.y : k == 2 ? v.z : v.w;
-}
-
-// Where the line is at height y (x from the centre, CSS px). Below the hero it
-// runs on along its last direction and straightens out (lineAt in zipper.ts).
-float curveAt(float y) {
-  if (y > uHeight) {
-    float last = curveSample(CURVE_SAMPLES - 1);
-    float slope = clamp((last - curveSample(CURVE_SAMPLES - 2)) * float(CURVE_SAMPLES - 1) / uHeight, -${ZIP.maxSlope.toFixed(3)}, ${ZIP.maxSlope.toFixed(3)});
-    float runOn = ${ZIP.runOn.toFixed(1)} * uUnit;
-    return last + slope * runOn * tanh((y - uHeight) / runOn);
-  }
-  float f = max(y / uHeight, 0.0) * float(CURVE_SAMPLES - 1);
-  int i = min(int(floor(f)), CURVE_SAMPLES - 2);
-  return mix(curveSample(i), curveSample(i + 1), f - float(i));
-}
-`;
+import { BITS, SEAM } from "./splitConfig";
 
 export const SEAM_VERTEX = /* glsl */ `#version 300 es
 void main() {
@@ -55,44 +27,45 @@ precision highp float;
 
 uniform vec2 uRes;            // canvas size (device px)
 uniform float uDpr;
-uniform float uSeam;          // seam x in the canvas (CSS px)
+uniform float uSeam;          // where the centre is on the canvas (CSS px)
 uniform float uUnit;          // CSS px per design px
-uniform vec2 uCell;           // binary cell size (CSS px)
-uniform float uGridY;         // top of grid row 0 (CSS px)
+uniform vec2 uCell;           // bits' grid cell size (CSS px)
+uniform vec3 uFrame;          // the line: the height it crosses the centre (CSS px), cos and sin of its tilt
 uniform float uTime;
 uniform int uCount;
 uniform vec4 uA[MAX_STREAMS]; // the line's x at the ribbon's height, centre y, tail, front
 uniform vec4 uB[MAX_STREAMS]; // body radius, leading-edge radius, wave amplitude, wave number
 uniform vec4 uC[MAX_STREAMS]; // colour index, seed, flow, wave phase
-uniform vec3 uPalette[7];     // six pigments, then the seam's own paint
+uniform vec3 uPalette[7];     // six pigments, then the line's own paint
 uniform vec3 uBitPalette[BIT_COLORS]; // the bits: hacker green and greys
-uniform float uBead;          // seam bead half-width (CSS px)
+uniform float uBead;          // the line's bead half-width (CSS px)
 uniform float uBeadSwell;
 uniform float uBlend;         // smooth-union radius (CSS px)
 uniform sampler2D uGlyphs;    // "0" and "1", white on transparent
 uniform vec2 uGlyphRes;       // atlas size (device px)
 uniform float uGlyphSlot;     // atlas slot width (device px)
 uniform int uPopCount;
-uniform vec4 uPop[MAX_POPS];  // centre row, age (s), seed (negative: flies left), origin (x from the centre)
+uniform vec4 uPop[MAX_POPS];  // centre row, age (s), seed, unused
 uniform vec4 uBitShape;       // rows either side, row chance, max packet length, flip rate
 uniform vec4 uBurst;          // burst speed min/max, drift speed min/max (CSS px/s)
 uniform vec4 uBitTime;        // burst decay (s), life min/max (s), cooling time (s)
-uniform float uScroll;        // how far the page has scrolled: the hero has moved up this much (CSS px)
-uniform vec3 uZip;            // where the halves still meet (hero px), then the opening below it: k1, k2
+uniform vec2 uBitRows;        // the first and last row the bits pop on
+uniform vec4 uLine;           // the line itself: start and end along it, half-width (CSS px), opacity
 // The name
-uniform float uNameOn;        // 0 until the name's textures are ready (the DOM name shows meanwhile)
-uniform float uFlowOn;        // how much of the fluid's flow shows, 0..1 (fades out before it stops)
+uniform float uNameOn;        // 0 until the masks are ready (nothing is drawn meanwhile)
 uniform vec4 uBox;            // title box on the canvas (CSS px): x, y, w, h
-uniform vec3 uGridInfo;       // binary grid: first column, columns, rows
-uniform vec3 uNameInk;        // binary digits
-uniform vec3 uNameBacking;    // binary cells
-uniform sampler2D uNamePaint; // the painted name (premultiplied)
-uniform sampler2D uNameMask;  // binary cells: 0 none, 0.5 a "0", 1 a "1"
-uniform sampler2D uNameFlicker; // 1 flickering (the cursor is on it)
-uniform sampler2D uFlow;      // where each point's paint came from (uv over the title box)
-${CURVE_GLSL}
+uniform sampler2D uLetters;   // the letterforms over the title box
 
 out vec4 outColor;
+
+// A point on the hero (x from the centre, CSS px) in the seam's frame, and back (toSeam in seamField.ts).
+vec2 toSeam(vec2 p) {
+  float dy = p.y - uFrame.x;
+  return vec2(p.x * uFrame.y + dy * uFrame.z, -p.x * uFrame.z + dy * uFrame.y);
+}
+vec2 fromSeam(vec2 q) {
+  return vec2(q.x * uFrame.y - q.y * uFrame.z, uFrame.x + q.x * uFrame.z + q.y * uFrame.y);
+}
 
 float hash11(float n) { return fract(sin(n * 127.1) * 43758.5453); }
 float hash21(vec2 p) {
@@ -112,6 +85,18 @@ float noise2(vec2 p) {
   return mix(mix(hash21(i), hash21(i + vec2(1.0, 0.0)), u.x), mix(hash21(i + vec2(0.0, 1.0)), hash21(i + vec2(1.0, 1.0)), u.x), u.y);
 }
 
+// ---- The letters ---------------------------------------------------------------
+
+// Title-box uv of a point on the hero (x from the centre).
+vec2 boxUv(vec2 p) {
+  return (vec2(p.x + uSeam, p.y) - uBox.xy) / uBox.zw;
+}
+
+// How much of the letters covers p (a point on the hero, x from the centre).
+float letters(vec2 p) {
+  return texture(uLetters, boxUv(p)).a;
+}
+
 float smin(float a, float b, float k) {
   float h = max(k - abs(a - b), 0.0) / k;
   return min(a, b) - h * h * k * 0.25;
@@ -119,11 +104,9 @@ float smin(float a, float b, float k) {
 
 // ---- Paint -----------------------------------------------------------------
 
-// The thin wet bead that traces the line.
+// The thin wet bead that traces the line (x = 0 in the seam's frame).
 float bead(vec2 p) {
-  float c = curveAt(p.y);
-  float slope = (curveAt(p.y + 1.0) - curveAt(p.y - 1.0)) * 0.5;
-  return abs(p.x - c) / sqrt(1.0 + slope * slope) - (uBead + uBeadSwell * noise1(p.y / (60.0 * uUnit) - uTime * 0.12));
+  return abs(p.x) - (uBead + uBeadSwell * noise1(p.y / (60.0 * uUnit) - uTime * 0.12));
 }
 
 // Centre line of a ribbon at outward distance q: it leaves the seam level,
@@ -177,7 +160,7 @@ float field(vec2 p) {
     if (!near(i, p)) continue;
     d = smin(d, ribbon(i, p, frac).x, uBlend);
   }
-  return max(d, p.x - curveAt(p.y));
+  return max(d, p.x);
 }
 
 struct Sample {
@@ -212,7 +195,7 @@ Sample sampleField(vec2 p) {
   vec3 col = uPalette[6] * wb;
   float wsum = wb;
   float best = db;
-  Sample s = Sample(max(d, p.x - curveAt(p.y)), vec3(0.0), 0.0, 0.0, 0.0, 0.0);
+  Sample s = Sample(max(d, p.x), vec3(0.0), 0.0, 0.0, 0.0, 0.0);
   for (int i = 0; i < MAX_STREAMS; i++) {
     if (rs[i].x > 1e4) continue;
     float marble = (noise2(p / (12.0 * uUnit) + float(i) * 7.0) - 0.5) * 3.0 * uUnit;
@@ -279,16 +262,16 @@ vec4 paint(vec2 p) {
 // Each pop spits packets of digits along a few neighbouring rows. A packet
 // bursts out of the line, brakes, then drifts; it leaves white-hot and cools to
 // the pop's colour (green or grey); a digit flips now and again; it fades out
-// at the end of the pop's life.
-vec4 bits(vec2 p) {
-  float row = floor((p.y - uGridY) / uCell.y);
-  float top = uGridY + row * uCell.y;
+// at the end of the pop's life. A digit shows only while its middle is on a
+// letter. q is in the seam's frame.
+vec4 bits(vec2 q) {
+  float row = floor(q.y / uCell.y);
+  if (row < uBitRows.x - uBitShape.x || row > uBitRows.y + uBitShape.x) return vec4(0.0);
+  float top = row * uCell.y;
   float cw = uCell.x;
   for (int i = 0; i < MAX_POPS; i++) {
     if (i >= uPopCount) break;
     vec4 pop = uPop[i];
-    float dir = pop.z < 0.0 ? -1.0 : 1.0;
-    pop.z = abs(pop.z);
     float dr = row - pop.x;
     float spread = floor(hash11(pop.z * 3.7) * (uBitShape.x + 0.999));
     if (abs(dr) > spread) continue;
@@ -299,13 +282,13 @@ vec4 bits(vec2 p) {
     float drift = mix(uBurst.z, uBurst.w, hash21(vec2(dr, pop.z + 5.1)));
     float lead = burst * uBitTime.x * (1.0 - exp(-age / uBitTime.x)) + drift * age;
     float len = 1.0 + floor(pow(hash21(vec2(pop.z + 9.7, dr)), 1.8) * uBitShape.z);
-    float x = (p.x - pop.w) * dir;
-    if (x > lead || x < lead - len * cw) continue;
-    float k = floor((lead - x) / cw);
-    float left = dir > 0.0 ? pop.w + lead - (k + 1.0) * cw : pop.w - lead + k * cw;
+    if (q.x > lead || q.x < lead - len * cw) continue;
+    float k = floor((lead - q.x) / cw);
+    float left = lead - (k + 1.0) * cw;
+    if (letters(fromSeam(vec2(left + 0.5 * cw, top + 0.5 * uCell.y))) < 0.5) continue;
     float flip = floor(age * uBitShape.w + hash21(vec2(k, pop.z)) * 7.0);
     float bit = step(0.5, hash21(vec2(pop.z * 13.0 + k, dr + flip * 31.0)));
-    vec2 local = vec2(p.x - left, p.y - top) * uDpr;
+    vec2 local = vec2(q.x - left, q.y - top) * uDpr;
     float glyph = texture(uGlyphs, (vec2(bit * uGlyphSlot, 0.0) + local) / uGlyphRes).a;
     float life = mix(uBitTime.y, uBitTime.z, hash11(pop.z * 5.9));
     float a = glyph * (1.0 - smoothstep(0.55 * life, life, age));
@@ -317,91 +300,32 @@ vec4 bits(vec2 p) {
   return vec4(0.0);
 }
 
-// ---- The name ------------------------------------------------------------------
-
-const vec2 DESIGN_BOX = vec2(${DESIGN.titleBox.w}.0, ${DESIGN.titleBox.h}.0);
-
-// Title-box uv of a point (x from the centre).
-vec2 boxUv(vec2 p) {
-  return (vec2(p.x + uSeam, p.y) - uBox.xy) / uBox.zw;
-}
-
-// Where the paint at uv came from, after the fluid has had its way.
-vec2 flowFrom(vec2 uv) {
-  if (uFlowOn <= 0.0 || any(lessThan(uv, vec2(0.0))) || any(greaterThan(uv, vec2(1.0)))) return uv;
-  return mix(uv, texture(uFlow, uv).xy, uFlowOn);
-}
-
-// The painted name, carried by the flow, with brushed edges (as the SVG name's
-// filter: a soft two-octave waver plus a fine grain, in design px).
-vec4 paintedName(vec2 p) {
-  vec2 uv = boxUv(p);
-  if (uv.x < -0.05 || uv.x > 1.05 || uv.y < -0.1 || uv.y > 1.1) return vec4(0.0);
-  uv = flowFrom(uv);
-  vec2 d = uv * DESIGN_BOX;
-  vec2 waver = vec2(noise2(d * 0.016) + 0.5 * noise2(d * 0.032 + 9.1), noise2(d * 0.016 + 31.7) + 0.5 * noise2(d * 0.032 + 47.3)) / 1.5 - 0.5;
-  vec2 grain = vec2(noise2(d * 0.11 + 7.3), noise2(d * 0.11 + 53.1)) - 0.5;
-  return texture(uNamePaint, uv + (waver * 10.0 + grain * 4.0) / DESIGN_BOX);
-}
-
-// The binary name: each cell shows its digit, flickering under the cursor.
-vec4 binaryName(vec2 p) {
-  vec2 cell = vec2(floor(p.x / uCell.x), floor((p.y - uGridY) / uCell.y));
-  ivec2 src = ivec2(cell.x - uGridInfo.x, cell.y);
-  if (src.x < 0 || src.y < 0 || src.x >= int(uGridInfo.y) || src.y >= int(uGridInfo.z)) return vec4(0.0);
-  float v = texelFetch(uNameMask, src, 0).r;
-  if (v < 0.2) return vec4(0.0);
-  float bit = v > 0.75 ? 1.0 : 0.0;
-  if (texelFetch(uNameFlicker, src, 0).r > 0.5) {
-    // Each cell ticks on its own beat, so they don't all change together.
-    float tick = floor(uTime * 16.0 + hash21(vec2(src)));
-    bit = step(0.5, hash21(vec2(src) + tick * vec2(0.37, 0.73)));
-  }
-  vec2 local = (p - vec2(cell.x * uCell.x, uGridY + cell.y * uCell.y)) * uDpr;
-  float glyph = texture(uGlyphs, (vec2(bit * uGlyphSlot, 0.0) + local) / uGlyphRes).a;
-  return vec4(mix(uNameBacking, uNameInk, glyph), 1.0);
-}
-
-// ---- The zip -----------------------------------------------------------------
-
-// How far each half has moved off the line at hero height y (openAt in zipper.ts).
-float openAt(float y) {
-  float d = y - uZip.x;
-  return d > 0.0 ? d * (uZip.y + d * uZip.z) : 0.0;
-}
-
-// Once the halves part, the code half gets the other side of the line's bead as its raw edge.
-vec4 rawEdge(vec2 p, float open) {
-  float a = clamp(0.5 - bead(p) * uDpr, 0.0, 1.0) * clamp(open / (4.0 * uUnit), 0.0, 1.0);
-  return vec4(uPalette[6] * 0.92 * a, a);
+// The line itself, faint, over the wall as well as the letters; it fades out
+// over the overhang at each end. q is in the seam's frame.
+vec4 seamLine(vec2 q) {
+  float overhang = ${SEAM.line.overhang.toFixed(1)} * uUnit;
+  float ends = smoothstep(uLine.x, uLine.x + overhang, q.y) * (1.0 - smoothstep(uLine.y - overhang, uLine.y, q.y));
+  float a = clamp(0.5 - (abs(q.x) - uLine.z) * uDpr, 0.0, 1.0) * ends * uLine.w;
+  return vec4(uPalette[6] * a, a);
 }
 
 void main() {
   vec2 frag = vec2(gl_FragCoord.x, uRes.y - gl_FragCoord.y); // device px, y down
-  vec2 p = vec2(frag.x / uDpr - uSeam, frag.y / uDpr + uScroll);
-  float line = curveAt(p.y);
-  float open = openAt(p.y);
-  vec4 under;
-  vec4 name = vec4(0.0);
-  if (p.x < line - open) {
-    // The art half, moved left off the line.
-    p.x += open;
-    under = paint(p);
-    if (uNameOn > 0.5) name = paintedName(p);
-  } else if (p.x >= line + open) {
-    // The code half, moved right off the line.
-    p.x -= open;
-    under = bits(p);
-    if (open > 0.0) {
-      vec4 edge = rawEdge(p, open);
-      under = edge + under * (1.0 - edge.a);
+  vec2 p = vec2(frag.x / uDpr - uSeam, frag.y / uDpr);
+  outColor = vec4(0.0);
+  if (uNameOn < 0.5) return;
+  vec2 q = toSeam(p);
+  vec4 line = seamLine(q);
+  vec2 uv = boxUv(p);
+  vec4 under = vec4(0.0);
+  if (all(greaterThan(uv, vec2(-0.02))) && all(lessThan(uv, vec2(1.02)))) {
+    if (q.x < 0.0) {
+      float m = letters(p);
+      if (m > 0.0) under = paint(q) * m;
+    } else {
+      under = bits(q);
     }
-    if (uNameOn > 0.5) name = binaryName(p);
-  } else {
-    // The gap: what's behind the hero shows through.
-    outColor = vec4(0.0);
-    return;
   }
-  outColor = name + under * (1.0 - name.a);
+  outColor = under + line * (1.0 - under.a);
 }
 `;

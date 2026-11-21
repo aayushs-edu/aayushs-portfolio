@@ -1,0 +1,106 @@
+/* "my work" and its arrow, side by side, which slide down from the hero's
+   bottom to rest between two white lines (WorkDivider.tsx moves them). */
+
+.divider {
+  position: relative;
+  z-index: 1;
+  /* It shares the gap above Paintwise. */
+  margin-bottom: -48px;
+  padding: 48px 24px 56px;
+}
+
+/* The lines, with a gap in the middle as wide as the words. */
+.row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: min(100%, 1100px);
+  height: 30px;
+  margin: 0 auto;
+}
+
+.line {
+  flex: 0 1 calc(50% - 88px);
+  height: 1px;
+  transform: scaleX(0);
+}
+
+.left {
+  background: linear-gradient(to right, transparent, rgb(255 255 255 / 0.55));
+  transform-origin: 100% 50%;
+}
+
+.right {
+  background: linear-gradient(to left, transparent, rgb(255 255 255 / 0.55));
+  transform-origin: 0 50%;
+}
+
+/* Centred on the row, between the lines: the words, then the arrow. */
+.group {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 30px;
+  transform: translate(-50%, 0);
+  will-change: transform;
+}
+
+.label {
+  margin: 0;
+  font-family: var(--font-geist-sans), sans-serif;
+  font-weight: 200;
+  font-size: clamp(14px, 1.2vw, 16px);
+  line-height: 30px;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+  color: #fff;
+  text-shadow: 0 1px 14px rgb(0 0 0 / 0.5);
+}
+
+.arrow {
+  display: grid;
+  place-items: center;
+  padding: 2px 4px;
+  color: rgb(255 255 255 / 0.75);
+  transition: color 0.2s;
+}
+
+.arrow:hover {
+  color: #fff;
+}
+
+.arrow:focus-visible {
+  outline: 1px solid #fff;
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+.arrowIcon {
+  width: 12px;
+  height: 22px;
+  animation: nudge 2.4s ease-in-out infinite;
+}
+
+@keyframes nudge {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(3px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .line {
+    transform: none;
+  }
+
+  .arrowIcon {
+    animation: none;
+  }
+}

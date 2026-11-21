@@ -21,7 +21,7 @@ export const GROUP_TITLES: Record<GroupId, string> = {
 };
 
 /** The page's order: Paintwise first, then the art half, then the code half. */
-export const GROUP_ORDER: GroupId[] = ["paintwise", "paintings", "animation", "hackathons", "games"];
+export const GROUP_ORDER: GroupId[] = ["paintwise", "hackathons", "paintings", "animation", "games"];
 
 export type WorkKind = "painting" | "project" | "game" | "animation" | "model" | "hackathon";
 export type WorkSide = "art" | "code" | "both";
@@ -129,7 +129,10 @@ const PROJECTS: Record<string, Extra> = {
       "Paintwise is a model that generates the steps to draw a piece the way a real artist would, from primitive shapes to final forms, and gives feedback at each step on proportions, perspective and lighting.",
       "The build log follows the hard parts: segmentation that sees too much, deciding what to paint first, and making AI critique feel human.",
     ],
-    links: [{ label: "Read the build log", href: "/paintwise" }],
+    links: [
+      { label: "Read the build log", href: "/paintwise" },
+      { label: "GitHub", href: "https://github.com/aayushs-edu/paintwise" },
+    ],
   },
   exovision: {
     group: "hackathons",
@@ -337,4 +340,25 @@ const MODELS: Work[] = animationMedia.models.map((m) => {
   };
 });
 
-export const WORKS: Work[] = [...GALLERY.art.map(toWork), ...EARLY, ORIGIN, ...FILMS, ...MODELS, ...GALLERY.code.map(toWork)];
+/** A hackathon project that isn't in the hero gallery (from its README; media in public/showcase/hackathons). */
+const VRSHOP: Work = {
+  slug: "vrshop",
+  kind: "project",
+  side: "code",
+  group: "hackathons",
+  title: "VRShop",
+  year: "2026",
+  line: "Unity · C# · Meta Quest 2 · Node.js · TypeScript · OpenAI",
+  story: [
+    "VRShop is a mixed-reality furniture store for the Meta Quest 2. Browse real products, see them in your own room, replace the furniture you already have, and talk to an AI interior designer without taking off the headset.",
+    "Products snap against the walls the headset has scanned, warn when they block a door or overlap, and can stand in for a sofa you already own. Ask the designer for “a black leather sofa under fifteen hundred”, then “put it here”.",
+    "“Buy the room” groups the bag by store and checks out with an agent that signs each request (Visa's Trusted Agent Protocol) and stays inside a budget you set. Built at HackGT 13.",
+  ],
+  links: [
+    { label: "Watch the demo", href: "https://www.youtube.com/watch?v=DlslMQg8jPs" },
+    { label: "GitHub", href: "https://github.com/AbhirajTiwari12/vrshop" },
+  ],
+  media: { image: "/showcase/hackathons/vrshop-poster.webp", aspect: 16 / 9, avgColor: "#3a3a3a" },
+};
+
+export const WORKS: Work[] = [...GALLERY.art.map(toWork), ...EARLY, ORIGIN, ...FILMS, ...MODELS, ...GALLERY.code.map(toWork), VRSHOP];

@@ -1,48 +1,51 @@
-// Tunables for the split hero (Art left, Code right, a living seam between),
-// plus the one character grid that everything right of the seam sits on.
+// Tunables for the split hero (paint left of a tilted line and bits right of
+// it, seen only through the name), plus the character grid the bits sit on.
 
 import { CODE_CELLS, DESIGN, NAME, type Tier } from "./heroConfig";
 
-/** The seam is the centre of the title composition (design px). */
+/** The line crosses the centre of the title composition (design px). */
 export const SEAM_X = DESIGN.cx;
 
-/** The binary grid, in design px: the binary name's cells. Column 0 starts at the seam. */
+/** The bits' grid, in design px: one cell per digit. Its rows run square to the line (seamField.ts). */
 export const GRID = {
   cellW: NAME.binaryFont * CODE_CELLS.advance,
   cellH: NAME.binaryFont * NAME.binaryLineHeight,
 } as const;
 
-/** Everything the wall and seam need to line up with the title (CSS px, relative to the hero). */
+/** Everything the seam needs to line up with the title (CSS px, relative to the hero). */
 export interface SplitLayout {
   w: number;
   h: number;
   /** CSS px per design px */
   u: number;
   seamX: number;
-  /** Top of grid row 0 (the top of the title box) */
+  /** The top of the title box */
   gridY: number;
   cellW: number;
   cellH: number;
 }
 
-/** Saturated pigments for the seam (cadmium red, orange, yellow, emerald, ultramarine, magenta). */
+/** Saturated pigments for the paint (cadmium red, orange, yellow, emerald, ultramarine, magenta). */
 export const VIVID = ["#ff3b2f", "#ff8f1f", "#ffd21f", "#12c48b", "#2f6bff", "#ff2f8e"] as const;
 
 export const SEAM = {
-  /** Paint colours; the last entry is the seam's own bead (the name's paint). */
+  /** Paint colours; the last entry is the line's own bead (the name's paint). */
   palette: [...VIVID, NAME.paint],
   /** Paint ribbons on the left. */
-  ribbons: { full: 16, lite: 10, static: 16 } as Record<Tier, number>,
+  ribbons: { full: 32, lite: 20, static: 32 } as Record<Tier, number>,
+  /** The name's ink: top to bottom (design px, from the ink top), and how far it reaches either side of the centre (design px). */
+  span: [-6, 486] as [number, number],
+  halfWidth: 540,
   /** Cycle length range (s); each ribbon gets its own, so the loop never lines up. */
   period: [10, 16] as [number, number],
-  /** Fractions of a cycle: a bead swells out of the seam, then the ribbon pushes out; the rest it floats away. */
+  /** Fractions of a cycle: a bead swells out of the line, then the ribbon pushes out; the rest it floats away. */
   emergeEnd: 0.12,
   pushEnd: 0.6,
   /** Leading-edge radius range (design px); the body is a fraction of it. */
-  radius: [10, 18] as [number, number],
+  radius: [14, 24] as [number, number],
   body: [0.6, 0.85] as [number, number],
-  /** How far a ribbon pushes out before it lets go, as a fraction of the left half's width. */
-  reach: [0.3, 0.72] as [number, number],
+  /** How far a ribbon pushes out before it lets go (design px; the name is about 600 either side of the centre). */
+  reach: [280, 640] as [number, number],
   /** Extra distance it floats after letting go, as a fraction of its reach. */
   float: 0.45,
   /** Wave along the ribbon: amplitude as a fraction of the radius, wavelength in design px, speed in design px/s. */
@@ -51,9 +54,11 @@ export const SEAM = {
   waveSpeed: 46,
   /** Slow vertical bob of a whole ribbon (fraction of its radius). */
   bob: 0.35,
-  /** Half-width of the seam's bead (design px), plus a slow swell along its length. */
+  /** Half-width of the line's bead (design px), plus a slow swell along its length. */
   bead: 1.4,
   beadSwell: 1.2,
+  /** The line itself, drawn faintly over the wall too: half-width (design px), opacity, and how far it runs past the name's ink at each end (design px), fading out over that stretch. */
+  line: { width: 1.1, alpha: 0.5, overhang: 80 },
   /** Smooth-union radius where ribbons merge (design px). */
   blend: 8,
   dpr: { full: 1.5, lite: 1, static: 1.5 } as Record<Tier, number>,
@@ -63,119 +68,39 @@ export const SEAM = {
   maxStep: 0.05,
 } as const;
 
-/**
- * The line itself: a fluid boundary, not a ruler. Slow waves run along it, and
- * each paint ribbon pulls it toward the paint while it's attached. The wall,
- * the name, the paint and the bits all split on this one curve.
- */
-export const CURVE = {
-  /** Samples down the height of the hero (the shader reads these). */
-  samples: 256,
-  /** Points in the CSS clip-path polygons that split the wall and the name. */
-  clipPoints: 128,
-  /** Overall swing either side of the centre (design px). */
-  amp: 26,
-  /** Waves along the line: wavelength (design px), speed (rad/s; the sign sets the direction), weight. */
-  waves: [
-    [620, 0.42, 0.55],
-    [290, -0.75, 0.3],
-    [150, 1.15, 0.15],
-  ] as [number, number, number][],
-  /** How far an attached paint ribbon pulls the line toward it (× its radius), and over what height (× its radius). */
-  pull: 0.55,
-  pullSpread: 2.4,
-} as const;
-
-/**
- * Scrolling unzips the hero from below, like an upside-down zip (zipper.ts).
- * The point where the halves still meet starts just under the hero's bottom
- * edge and climbs the line as the page scrolls. Below it each half moves off
- * the line by k1·d + k2·d²/h (d below the point, h the hero's height), so the
- * halves curl away to the sides and the page comes up through the gap.
- */
-export const ZIP = {
-  /** Where the point starts, as a fraction of the hero's height. */
-  start: 1.02,
-  /** How far it climbs the line per pixel scrolled (on top of the hero moving up with the page). */
-  climb: 0.6,
-  /** The opening below the point. */
-  k1: 0.42,
-  k2: 0.9,
-  /** Below the hero the line runs on along its last direction, straightening out over about this many design px. */
-  runOn: 160,
-  /** …at no steeper than this (px across per px down). */
-  maxSlope: 0.5,
+/** The line: straight, tilted like "/" (its top leans right), crossing the centre halfway down the name. */
+export const TILT = {
+  /** Degrees off vertical. */
+  angle: 20,
+  /** Where it crosses the centre (design px, from the name's ink top). */
+  centreY: 240,
 } as const;
 
 /**
  * The right side: bits popping out of the line. Spots along the line pop every
  * few seconds; each pop spits a small splash of digit packets across a few
  * neighbouring rows. They burst out fast, brake, drift and fade, leaving the
- * line white-hot and cooling to the pop's colour (green or grey). Each pop
- * kicks the line toward the code side for a moment.
+ * line white-hot and cooling to the pop's colour (green or grey).
  */
 export const BITS = {
   /** A terminal's colours, not the paint's: hacker green (bright, then dimmer) and greys. */
   palette: ["#00ff41", "#00b02d", "#ededed", "#a3a3a3", "#666666"],
   /** Spots along the line that pop; each pops again every `period`. */
-  emitters: { full: 26, lite: 14, static: 26 } as Record<Tier, number>,
+  emitters: { full: 36, lite: 22, static: 36 } as Record<Tier, number>,
   period: [1.6, 3.6] as [number, number],
   /** How long a pop's bits live (s): long enough to drift about as far out as the paint strokes reach. */
   life: [3.5, 7] as [number, number],
   /** Rows a pop can span either side of its centre, and the chance each of those rows gets a packet. */
   spread: 3,
-  rowChance: 0.8,
+  rowChance: 0.9,
   /** Burst speed (design px/s), how quickly it dies away (s), then the slow drift (design px/s). */
   burst: [380, 900] as [number, number],
   burstTime: 0.32,
   drift: [40, 95] as [number, number],
   /** Longest packet (digits); short ones are much more common. */
-  maxLength: 7,
+  maxLength: 11,
   /** How often a floating digit flips (per second). */
   flipRate: 0.6,
   /** Bits leave the line white-hot and cool to their colour over this long (s). */
   cool: 0.35,
-  /** How far a pop kicks the line toward the code side (design px), over how many rows either side. */
-  kick: 12,
-  kickRows: 4,
-} as const;
-
-/** Touching the name. */
-export const TOUCH = {
-  /** Pulling the line: spring stiffness (1/s²), damping while held and after letting go (1/s). */
-  spring: 110,
-  holdDamping: 14,
-  releaseDamping: 5,
-  /** Height of the bend (design px, Gaussian width): wide, so the pulled line stays a gentle, flat curve. */
-  bulge: 380,
-  /** Furthest the line can be pulled from the middle of the screen, either way, as a fraction of the screen width. */
-  reach: 0.3,
-  /** Movement (CSS px) before a press counts as a drag. */
-  dragSlop: 8,
-  /**
-   * The painted name is fluid: moving through it pushes the letters around and
-   * they flow back into shape.
-   */
-  fluid: {
-    /** Simulation cells across the title box. */
-    resolution: 192,
-    /** Push radius (design px) and strength (share of the pointer's speed). */
-    radius: 24,
-    force: 0.18,
-    /** How fast the flow dies down, and how fast the letters flow back into shape (1/s). */
-    settle: 4.5,
-    reform: 3.5,
-    pressureIterations: 16,
-    /** Stop simulating this long after the last push (s), fading the flow out over the last `fadeOut` s (no snap). */
-    idle: 6,
-    fadeOut: 1.5,
-  },
-  /** Binary letters: the cells under the cursor flicker. */
-  hover: {
-    /** Reach around the cursor, in cells across and rows down. */
-    cols: 3.5,
-    rows: 1.6,
-    /** A cell keeps flickering this long (s) after the cursor leaves it. */
-    linger: 0.15,
-  },
 } as const;

@@ -1,8 +1,11 @@
 // The seam's state, as plain numbers (pure, no DOM).
 //
-// The line: a fluid curve. Slow waves run along it, and each paint ribbon pulls
-// it toward the paint while attached. The shader reads it, and it becomes the
-// CSS clip-paths that split the wall and the name, so everything splits on it.
+// The line: straight, tilted like "/", crossing the centre halfway down the
+// name. Everything left of it is paint and right of it is bits, and the shader
+// shows both only through the letters of the name. Both come out square to the
+// line, so they're laid out in the seam's own frame: turned with the line, x
+// across it (negative on the paint side), y down along it, 0 where it crosses
+// the centre.
 //
 // The paint: each ribbon loops through its own cycle: a bead swells out of the
 // line, pushes out sideways with a wave travelling along it, then lets go and
@@ -10,29 +13,28 @@
 // colour, reach and wave. The shader turns the ribbons into one distance field.
 //
 // The bits: spots along the line pop every few seconds. A pop is scheduled here
-// (where, when, where the line was); the shader draws its splash of digits.
+// (where and when); the shader draws its splash of digits.
 
-import type { NameTouch } from "./nameTouch";
-import { BITS, CURVE, SEAM, VIVID, type SplitLayout } from "./splitConfig";
+import { DESIGN } from "./heroConfig";
+import { BITS, SEAM, TILT, VIVID, type SplitLayout } from "./splitConfig";
 
-export const MAX_STREAMS = 16;
-export const MAX_POPS = 64;
+// The shader's uniform arrays: 3 × 32 + 96 vec4s, inside WebGL2's minimum of 224 for a fragment shader.
+export const MAX_STREAMS = 32;
+export const MAX_POPS = 96;
 
-/** Uniform arrays, 4 floats per ribbon (CSS px; x measured outward from the line). */
+/** Uniform arrays, 4 floats per ribbon (CSS px, in the seam's frame; x measured outward from the line). */
 export interface StreamBuffers {
-  /** where the line is at the ribbon's height (x from the centre), centre y, tail, front */
+  /** where the line is (always 0 in the seam's frame), centre y, tail, front */
   a: Float32Array;
   /** body radius, leading-edge radius, wave amplitude, wave number */
   b: Float32Array;
   /** colour index, seed, flow (how far the paint has moved out), wave phase */
   c: Float32Array;
-  /** How hard each ribbon pulls on the line, 0..1 (CPU only). */
-  pull: Float32Array;
 }
 
 export function createStreamBuffers(): StreamBuffers {
   const n = MAX_STREAMS * 4;
-  return { a: new Float32Array(n), b: new Float32Array(n), c: new Float32Array(n), pull: new Float32Array(MAX_STREAMS) };
+  return { a: new Float32Array(n), b: new Float32Array(n), c: new Float32Array(n) };
 }
 
 function hash(n: number): number {
@@ -49,15 +51,60 @@ const smooth = (e0: number, e1: number, x: number) => {
 const easeOutCubic = (t: number) => 1 - (1 - t) ** 3;
 const easeInOutSine = (t: number) => -(Math.cos(Math.PI * t) - 1) / 2;
 
+/** Hero height (CSS px) of a height in design px measured from the name's ink top. */
+function heroY(y: number, layout: SplitLayout): number {
+  return layout.gridY + (y - DESIGN.titleBox.y) * layout.u;
+}
+
+/** The line: the height it crosses the centre at (CSS px), and its tilt as a cosine and sine. */
+export function tilt(layout: SplitLayout): { centreY: number; cos: number; sin: number } {
+  const angle = (TILT.angle * Math.PI) / 180;
+  return { centreY: heroY(TILT.centreY, layout), cos: Math.cos(angle), sin: Math.sin(angle) };
+}
+
+/** Where the line is at hero height y (x from the centre, CSS px): right of the centre above its crossing, left below. */
+export function lineAt(y: number, layout: SplitLayout): number {
+  const { centreY, cos, sin } = tilt(layout);
+  return ((centreY - y) * sin) / cos;
+}
+
+/** A point on the hero (x from the centre, y from the top, CSS px) in the seam's frame. */
+export function toSeam(x: number, y: number, layout: SplitLayout): [number, number] {
+  const { centreY, cos, sin } = tilt(layout);
+  const dy = y - centreY;
+  return [x * cos + dy * sin, -x * sin + dy * cos];
+}
+
+/** Where the line is drawn (y in the seam's frame, CSS px): across the name's ink, plus the overhang at each end. */
+export function lineSpan(layout: SplitLayout): [number, number] {
+  const { centreY, cos } = tilt(layout);
+  const overhang = SEAM.line.overhang * layout.u;
+  return [(heroY(SEAM.span[0], layout) - centreY) / cos - overhang, (heroY(SEAM.span[1], layout) - centreY) / cos + overhang];
+}
 
 /**
- * Writes `count` paint ribbons (all on the left of the seam) at time `t` (s) into `out`.
+ * How far along the line the paint and the bits come out (y in the seam's
+ * frame, CSS px): wherever a square path out of the line crosses the name's
+ * half on that side.
+ */
+export function spans(layout: SplitLayout): { paint: [number, number]; bits: [number, number] } {
+  const half = SEAM.halfWidth * layout.u;
+  const [top, bottom] = [heroY(SEAM.span[0], layout), heroY(SEAM.span[1], layout)];
+  const along = (x0: number, x1: number): [number, number] => {
+    const ys = [x0, x1].flatMap((x) => [top, bottom].map((y) => toSeam(x, y, layout)[1]));
+    return [Math.min(...ys), Math.max(...ys)];
+  };
+  return { paint: along(-half, 0), bits: along(0, half) };
+}
+
+/**
+ * Writes `count` paint ribbons (all on the left of the line) at time `t` (s) into `out`.
  * Returns how many were written.
  */
 export function writeStreams(out: StreamBuffers, t: number, count: number, layout: SplitLayout): number {
   const { u } = layout;
   const n = Math.min(MAX_STREAMS, count);
-  const halfW = layout.seamX;
+  const [top, bottom] = spans(layout).paint;
   for (let i = 0; i < n; i++) {
     const period = lerp(SEAM.period[0], SEAM.period[1], hash(i * 13.7 + 1));
     // Golden-ratio phases: at any moment the ribbons are at different stages.
@@ -68,12 +115,11 @@ export function writeStreams(out: StreamBuffers, t: number, count: number, layou
 
     const R = lerp(SEAM.radius[0], SEAM.radius[1], roll(1)) * u;
     const body = R * lerp(SEAM.body[0], SEAM.body[1], roll(2));
-    // Stratified heights over the whole line (under the name too): each ribbon takes
-    // its own lane, and the lanes rotate every cycle.
+    // Stratified lanes along the line where the name is: each ribbon takes its own, and the lanes rotate every cycle.
     const band = (i * 2 + cycle) % n;
     const bob = Math.sin(t * 0.45 + i * 1.7) * SEAM.bob * R;
-    const y = R + ((band + 0.15 + 0.7 * roll(3)) / n) * Math.max(0, layout.h - 2 * R) + bob;
-    const reach = lerp(SEAM.reach[0], SEAM.reach[1], roll(4)) * halfW;
+    const y = top + ((band + 0.15 + 0.7 * roll(3)) / n) * (bottom - top) + bob;
+    const reach = lerp(SEAM.reach[0], SEAM.reach[1], roll(4)) * u;
     const amp = lerp(SEAM.wave[0], SEAM.wave[1], roll(5)) * R;
     const k = (2 * Math.PI) / (lerp(SEAM.wavelength[0], SEAM.wavelength[1], roll(6)) * u);
     const phase = t * SEAM.waveSpeed * u * k + roll(7) * 6.283;
@@ -82,27 +128,22 @@ export function writeStreams(out: StreamBuffers, t: number, count: number, layou
     let tail = 0;
     let front: number;
     let scale = 1;
-    let pull = 1;
     if (tau < A) {
-      // A bead swells out of the line, drawing it along.
+      // A bead swells out of the line.
       front = 0;
       scale = easeOutCubic(tau / A);
-      pull = scale;
     } else if (tau < B) {
       // The ribbon pushes out, still attached to the line.
       front = reach * easeInOutSine((tau - A) / (B - A));
     } else {
-      // It lets go (the line springs back) and floats on; the tail catches up and the whole thing thins away.
+      // It lets go and floats on; the tail catches up and the whole thing thins away.
       const s = (tau - B) / (1 - B);
       front = reach * (1 + SEAM.float * easeOutCubic(s));
       tail = front * smooth(0, 1, s) ** 0.8;
       scale = 1 - smooth(0.25, 1, s);
-      pull = 1 - smooth(0, 0.35, s);
     }
 
     const j = i * 4;
-    out.pull[i] = pull;
-    // a.x (where the line is at this height) is filled in once the line is known.
     out.a.set([0, y, tail, front], j);
     out.b.set([body * scale, R * scale, amp, k], j);
     out.c.set([Math.min(VIVID.length - 1, Math.floor(roll(8) * VIVID.length)), (i * 7.31 + cycle * 3.17) % 97, front, phase], j);
@@ -110,64 +151,20 @@ export function writeStreams(out: StreamBuffers, t: number, count: number, layou
   return n;
 }
 
-/** The line's offset from the centre (CSS px) at height y, from the samples. */
-export function curveAt(curve: Float32Array, y: number, h: number): number {
-  const f = Math.min(1, Math.max(0, y / h)) * (curve.length - 1);
-  const i = Math.min(curve.length - 2, Math.floor(f));
-  return curve[i] + (curve[i + 1] - curve[i]) * (f - i);
-}
-
-/** The line's own travelling waves at height y, time t (CSS px from the centre). */
-function baseWave(y: number, t: number, u: number): number {
-  let x = 0;
-  for (const [length, speed, weight] of CURVE.waves) x += weight * Math.sin((2 * Math.PI * y) / (length * u) + speed * t + length);
-  return x * CURVE.amp * u;
-}
-
-/** How far the attached paint ribbons pull the line toward the paint at height y. */
-function pullAt(y: number, streams: StreamBuffers, count: number): number {
-  let x = 0;
-  for (let k = 0; k < count; k++) {
-    const pull = streams.pull[k];
-    const r = streams.b[k * 4 + 1];
-    if (pull <= 0 || r <= 0) continue;
-    const dy = (y - streams.a[k * 4 + 1]) / (CURVE.pullSpread * r);
-    x -= pull * CURVE.pull * r * Math.exp(-dy * dy);
-  }
-  return x;
-}
-
-/** A pop's kick on the line over its age: snaps out, then settles back. */
-function kickPulse(age: number): number {
-  return age < 0.12 ? smooth(0, 0.12, age) : Math.exp(-(age - 0.12) / 0.35);
-}
-
 /** Bits that have popped and are still in the air. */
 export interface PopBuffers {
-  /** Per pop: centre row, age (s), seed, origin x (where the line was when it popped, from the centre) */
+  /** Per pop: centre row, age (s), seed, unused */
   p: Float32Array;
-  /** Per pop (CPU only): centre y, age, whether it kicks the line, and a key to remember its origin by */
-  y: Float32Array;
-  age: Float32Array;
-  kicks: Uint8Array;
-  key: Float64Array;
   count: number;
 }
 
 export function createPopBuffers(): PopBuffers {
-  return {
-    p: new Float32Array(MAX_POPS * 4),
-    y: new Float32Array(MAX_POPS),
-    age: new Float32Array(MAX_POPS),
-    kicks: new Uint8Array(MAX_POPS),
-    key: new Float64Array(MAX_POPS),
-    count: 0,
-  };
+  return { p: new Float32Array(MAX_POPS * 4), count: 0 };
 }
 
-/** The pops in the air at time t, from `emitters` spots along the line. */
+/** The pops in the air at time t, from `emitters` spots along the line (rows of the seam's frame, 0 where it crosses the centre, where the name is). */
 export function writePops(out: PopBuffers, t: number, emitters: number, layout: SplitLayout) {
-  const { h, gridY, cellH } = layout;
+  const [top, bottom] = spans(layout).bits;
   let n = 0;
   for (let k = 0; k < emitters && n < MAX_POPS; k++) {
     const period = lerp(BITS.period[0], BITS.period[1], hash(k * 7.7 + 3));
@@ -180,73 +177,22 @@ export function writePops(out: PopBuffers, t: number, emitters: number, layout: 
       const born = (j - phase + 0.5 * roll(0)) * period;
       const age = t - born;
       if (age < 0 || age > BITS.life[1]) continue;
-      const row = Math.floor((roll(1) * h - gridY) / cellH);
+      const row = Math.floor(lerp(top, bottom, roll(1)) / layout.cellH);
       out.p.set([row, age, ((k * 7.31 + j * 3.17) % 97) + roll(2) + 0.01, 0], n * 4);
-      out.y[n] = gridY + (row + 0.5) * cellH;
-      out.age[n] = age;
-      out.kicks[n] = 1;
-      out.key[n] = k * 1e6 + j;
       n++;
     }
   }
   out.count = n;
 }
 
-/**
- * Samples the line at time t: travelling waves, a pull toward each attached
- * paint ribbon, a kick toward the code side wherever bits just popped, and the
- * bend where someone is holding it. Then tells each ribbon where the line is at
- * its height, and each new pop where the line is as it pops (remembered in
- * `origins`, so its bits don't ride the line afterwards).
- */
-export function writeCurve(
-  curve: Float32Array,
-  t: number,
-  layout: SplitLayout,
-  streams: StreamBuffers,
-  count: number,
-  pops: PopBuffers,
-  origins: Map<number, number>,
-  touch?: NameTouch,
-) {
-  const { u, h } = layout;
-  const n = curve.length;
-  const kick = BITS.kick * u;
-  const kickSpread = BITS.kickRows * layout.cellH;
-  for (let i = 0; i < n; i++) {
-    const y = (i / (n - 1)) * h;
-    let x = baseWave(y, t, u) + pullAt(y, streams, count) + (touch?.bulgeAt(y) ?? 0);
-    for (let k = 0; k < pops.count; k++) {
-      if (!pops.kicks[k]) continue;
-      const dy = (y - pops.y[k]) / kickSpread;
-      if (Math.abs(dy) < 3) x += kick * kickPulse(pops.age[k]) * Math.exp(-dy * dy);
-    }
-    curve[i] = x;
-  }
-  for (let k = 0; k < count; k++) streams.a[k * 4] = curveAt(curve, streams.a[k * 4 + 1], h);
-  const seen = new Map<number, number>();
-  for (let k = 0; k < pops.count; k++) {
-    const key = pops.key[k];
-    if (key < 0) continue;
-    const origin = origins.get(key) ?? curveAt(curve, pops.y[k], h);
-    seen.set(key, origin);
-    pops.p[k * 4 + 3] = origin;
-  }
-  origins.clear();
-  seen.forEach((v, k) => origins.set(k, v));
-}
-
-/** Everything one frame of the seam needs: the ribbons, the pops and the line. */
+/** Everything one frame of the seam needs: the ribbons and the pops. */
 export class SeamState {
   streams = createStreamBuffers();
   pops = createPopBuffers();
-  curve = new Float32Array(CURVE.samples);
   count = 0;
-  private origins = new Map<number, number>();
 
-  update(t: number, ribbons: number, emitters: number, layout: SplitLayout, touch?: NameTouch) {
+  update(t: number, ribbons: number, emitters: number, layout: SplitLayout) {
     this.count = writeStreams(this.streams, t, ribbons, layout);
     writePops(this.pops, t, emitters, layout);
-    writeCurve(this.curve, t, layout, this.streams, this.count, this.pops, this.origins, touch);
   }
 }

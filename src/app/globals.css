@@ -178,3 +178,131 @@
     animation: scrollUp 30s linear infinite;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Living origami background (components/ui/living-origami-bg.tsx): glowing
+   paper cranes drifting across the screen, each bobbing as its wings flap. */
+
+@keyframes drift {
+  0% {
+    transform: translateX(-100vw) translateY(var(--y-start)) rotateZ(var(--r-start));
+  }
+  100% {
+    transform: translateX(100vw) translateY(var(--y-end)) rotateZ(var(--r-end));
+  }
+}
+
+@keyframes bob {
+  0%, 100% {
+    transform: translateY(-10px);
+  }
+  50% {
+    transform: translateY(10px);
+  }
+}
+
+@keyframes flap-left {
+  0%, 100% {
+    transform: translateZ(15px) rotateY(-90deg) skewX(20deg) rotateX(10deg);
+  }
+  50% {
+    transform: translateZ(15px) rotateY(-90deg) skewX(20deg) rotateX(-20deg);
+  }
+}
+
+@keyframes flap-right {
+  0%, 100% {
+    transform: translateZ(15px) rotateY(90deg) skewX(-20deg) rotateX(10deg);
+  }
+  50% {
+    transform: translateZ(15px) rotateY(90deg) skewX(-20deg) rotateX(-20deg);
+  }
+}
+
+.hero-section {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  perspective: 1000px;
+}
+
+.drifter-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  animation-name: drift;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  /* The glow; it flattens the crane into this plane, which is fine at this size. */
+  filter: drop-shadow(0 0 6px rgb(125 211 252 / 0.75));
+  perspective: 600px;
+}
+
+.origami-crane {
+  position: relative;
+  width: 120px;
+  height: 80px;
+  margin: -40px 0 0 -60px;
+  transform-style: preserve-3d;
+  /* Seen a little from the side, so the wings (set edge-on by their flap) show. */
+  rotate: 0 1 0 50deg;
+  animation: bob 4s ease-in-out infinite;
+}
+
+.crane-part {
+  position: absolute;
+  background: linear-gradient(135deg, rgb(255 255 255 / 0.95), rgb(165 180 252 / 0.6) 55%, rgb(56 189 248 / 0.4));
+}
+
+.crane-part.body {
+  left: 30px;
+  top: 32px;
+  width: 64px;
+  height: 18px;
+  clip-path: polygon(0 50%, 65% 0, 100% 50%, 65% 100%);
+}
+
+.crane-part.wing-left,
+.crane-part.wing-right {
+  left: 38px;
+  top: 0;
+  width: 48px;
+  height: 42px;
+  clip-path: polygon(0 100%, 100% 100%, 35% 0);
+  transform-origin: 50% 100%;
+  animation: 1.6s ease-in-out infinite;
+}
+
+.crane-part.wing-left {
+  animation-name: flap-left;
+}
+
+.crane-part.wing-right {
+  animation-name: flap-right;
+}
+
+.crane-part.tail {
+  left: 2px;
+  top: 34px;
+  width: 36px;
+  height: 14px;
+  clip-path: polygon(0 0, 100% 50%, 0 100%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .drifter-container,
+  .origami-crane,
+  .crane-part {
+    animation-play-state: paused;
+  }
+}
+
+/* The hero's painting picker: its note fades in, drifting up a little (hero/PaintingPicker.tsx). */
+@keyframes picker-hint {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}

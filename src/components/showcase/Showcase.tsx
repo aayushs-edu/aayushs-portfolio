@@ -1,20 +1,25 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import SplitHero from "../hero/SplitHero";
+import SparklesHero from "../hero/SparklesHero";
 import { useHeroTier } from "../hero/useHeroTier";
 import DetailPanel from "./DetailPanel";
+import AnimationSection from "./animation/AnimationSection";
+import HackathonsSection from "./hackathons/HackathonsSection";
 import HandOff, { type HandOffItem } from "./HandOff";
+import PaintingsSection from "./paintings/PaintingsSection";
 import PaintwiseSection from "./paintwise/PaintwiseSection";
 import css from "./Showcase.module.css";
 import media from "./stations/paintwise/paintwise.generated.json";
+import WorkDivider from "./WorkDivider";
 import WorkList, { workButtonId, type WorkListGroup } from "./WorkList";
-import { GROUP_ORDER, GROUP_TITLES, WORKS, type Work } from "./works";
+import { GROUP_ORDER, GROUP_TITLES, WORKS, type GroupId, type Work } from "./works";
 
 const BY_SLUG = new Map(WORKS.map((work) => [work.slug, work]));
 
-/** Paintwise has its own section; every other group is a grid under it, in page order. */
-const GROUPS: WorkListGroup[] = GROUP_ORDER.filter((id) => id !== "paintwise")
+/** Paintwise, Hackathons, Paintings and Animation have sections of their own; every other group is a grid under them, in page order. */
+const OWN_SECTION = new Set<GroupId>(["paintwise", "hackathons", "paintings", "animation"]);
+const GROUPS: WorkListGroup[] = GROUP_ORDER.filter((id) => !OWN_SECTION.has(id))
   .map((id) => ({ title: GROUP_TITLES[id], works: WORKS.filter((w) => w.group === id) }))
   .filter((g) => g.works.length > 0);
 
@@ -42,47 +47,13 @@ function useScrollLock(locked: boolean) {
 }
 
 /**
- * The one-page site: the split hero, then the work. With the zip (full and
- * lite tiers) the hero is fixed over the top of the page and unzips from
- * below as it scrolls, the page coming up through the gap; once it's gone it
- * hides and stops drawing. Static (reduced motion, no WebGL2): the hero is an
- * ordinary first section. Under it: Paintwise's section, then a grid per
- * group. Every work's full story is one click away (`#work/<slug>`).
+ * The one-page site: the hero (the first section; it scrolls away with the
+ * page), then the work: the sections of their own, then a grid per group.
+ * Every work's full story is one click away (`#work/<slug>`).
  */
 export default function Showcase() {
-  const [tier, demote, detected] = useHeroTier();
-  const zip = tier !== "static";
-
-  // ---- the hero: open once the page scrolls, gone once both halves are off screen --------
-  const goneAt = useRef(Infinity);
-  const [opening, setOpening] = useState(false);
-  const [gone, setGone] = useState(false);
-  const sync = useCallback(() => {
-    const y = window.scrollY;
-    setOpening(y > 0);
-    setGone(y >= goneAt.current);
-  }, []);
-  useEffect(() => {
-    if (!zip) {
-      setOpening(false);
-      setGone(false);
-      return;
-    }
-    sync();
-    window.addEventListener("scroll", sync, { passive: true });
-    window.addEventListener("resize", sync);
-    return () => {
-      window.removeEventListener("scroll", sync);
-      window.removeEventListener("resize", sync);
-    };
-  }, [zip, sync]);
-  const onGoneAt = useCallback(
-    (scroll: number) => {
-      goneAt.current = scroll;
-      sync();
-    },
-    [sync],
-  );
+  // Only "detected" (the client has mounted) is used for now: a #work link waits for it. The sparkles hero has no tiers.
+  const [, , detected] = useHeroTier();
 
   // ---- the detail view ---------------------------------------------------------
   const [openSlug, setOpenSlug] = useState<string | null>(null);
@@ -158,12 +129,14 @@ export default function Showcase() {
 
   return (
     <div className={css.page}>
-      <div className={css.hero} data-zip={zip} data-opening={opening} data-gone={gone}>
-        <SplitHero tier={tier} zip={zip} paused={zip && gone} onGoneAt={onGoneAt} onFail={demote} />
-      </div>
-      {zip && <div className={css.spacer} aria-hidden="true" />}
+      {/* Trial: the sparkles hero. The seam hero is <SplitHero tier={tier} onFail={demote} /> (take tier and demote from useHeroTier). */}
+      <SparklesHero />
       <div className={css.work}>
+        <WorkDivider target="paintwise" />
         <PaintwiseSection storyId={workButtonId("paintwise")} figureId={FIGURE_ID} onStory={() => openWork("paintwise")} onFigure={openFigure} />
+        <HackathonsSection onOpen={openWork} />
+        <PaintingsSection />
+        <AnimationSection />
         <WorkList groups={GROUPS} onOpen={openWork} />
       </div>
       <DetailPanel work={openWorkObj} onClose={closeWork} />

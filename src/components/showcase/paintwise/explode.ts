@@ -166,6 +166,29 @@ function pieces(painting: Pieces, name: string) {
 export const JUG = stack(media, "jug");
 export const PIECES = pieces(media.pieces, "pieces");
 
+/**
+ * The floor under the pieces (canvas widths): a level grid just below the
+ * lowest of them, from behind the farthest (the table's back included) to in
+ * front of the nearest, so their depths read. Not fitted: it fades out at its edges.
+ */
+export const FLOOR = (() => {
+  const PAD = 0.22;
+  const objects = PIECES.objects;
+  const xs = objects.flatMap((o) => [o.poses.masks.x - o.width / 2, o.poses.masks.x + o.width / 2]);
+  const fronts = objects.map((o) => o.poses.masks.z);
+  const backs = objects.map((o) => o.poses.masks.z - (o.slab?.thickness ?? 0));
+  const [x0, x1, z0, z1] = [Math.min(...xs) - PAD, Math.max(...xs) + PAD, Math.min(...backs) - PAD, Math.max(...fronts) + PAD];
+  return {
+    x: (x0 + x1) / 2,
+    y: Math.max(...objects.map((o) => o.poses.masks.y + o.height / 2)) + 0.015,
+    z: (z0 + z1) / 2,
+    width: x1 - x0,
+    depth: z1 - z0,
+    /** One grid square */
+    cell: 0.12,
+  };
+})();
+
 /** What each view's stage holds (the stage depth-sorts, so order only sets the stagger). */
 export const VIEW_ITEMS: Record<View, ExplodeItem[]> = {
   layers: JUG.layers,

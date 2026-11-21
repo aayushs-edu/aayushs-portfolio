@@ -18,7 +18,8 @@ import {
   Star,
   Layers,
   Box,
-  Activity
+  Activity,
+  Github
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -1232,6 +1233,12 @@ export default function PaintwisePage() {
           <a href="mailto:aayushs2008@gmail.com?subject=Paintwise%20AI%20Interest" target="_blank" rel="noopener noreferrer">
             <Sparkles className="mr-2 h-4 w-4" />
             Request Early Access
+          </a>
+              </Button>
+              <Button variant="outline" className="border-white/20 bg-transparent hover:bg-white/10" asChild>
+          <a href="https://github.com/aayushs-edu/paintwise" target="_blank" rel="noopener noreferrer">
+            <Github className="mr-2 h-4 w-4" />
+            View Code on GitHub
           </a>
               </Button>
             </div>

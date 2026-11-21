@@ -1,31 +1,11 @@
-/* The home page: the split hero, then the work. With the zip, the hero is
-   fixed over the top of the page and unzips from below as it scrolls (the
-   spacer holds its place); without it (static), it's an ordinary first section. */
+/* The home page: the hero, then the work. */
 
 .page {
   position: relative;
+  /* Section backgrounds run the full width of the window; nothing scrolls sideways. */
+  overflow-x: clip;
   background: #0d0d0d;
   color: #fff;
-}
-
-.hero[data-zip="true"] {
-  position: fixed;
-  inset: 0 0 auto 0;
-  z-index: 2;
-}
-
-/* Once it starts to unzip, clicks go through the gap to the page. */
-.hero[data-opening="true"] {
-  pointer-events: none;
-}
-
-/* Fully unzipped: both halves are off screen; drop it from the page's layers. */
-.hero[data-gone="true"] {
-  visibility: hidden;
-}
-
-.spacer {
-  height: max(100lvh, 420px);
 }
 
 .work {

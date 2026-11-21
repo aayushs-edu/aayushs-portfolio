@@ -1,0 +1,42 @@
+/* Behind Paintwise, the full width of the page: pixel-art brush strokes that
+   break up into 0s and 1s (PaintToBinary.tsx). */
+
+.backdrop {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  z-index: -1;
+  width: 100vw;
+  transform: translateX(-50%);
+  overflow: hidden;
+  pointer-events: none;
+  /* No edges: it fades out at the top and bottom, and toward the sides. */
+  mask-image: linear-gradient(to bottom, transparent, #000 12%, #000 82%, transparent), linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 12%, #000 82%, transparent), linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
+  mask-composite: intersect;
+  -webkit-mask-composite: source-in;
+}
+
+/* Sized in whole art pixels by PaintToBinary.tsx, scaled up with hard edges. Dim: it's a background. */
+.canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: block;
+  image-rendering: pixelated;
+  opacity: 0.38;
+}
+
+/* The ground under the strokes (PaintToBinary.tsx's GROUND): dimmer than them, each in its own measure. */
+.ground[data-ground="underpainting"] {
+  opacity: 0.16;
+}
+
+.ground[data-ground="binary"] {
+  opacity: 0.1;
+}
+
+.ground[data-ground="weave"] {
+  opacity: 0.13;
+}

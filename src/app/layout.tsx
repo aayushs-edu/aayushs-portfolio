@@ -1,6 +1,6 @@
 // src/app/layout.tsx
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Kalam, Poppins, Sniglet } from "next/font/google";
+import { Geist, Geist_Mono, Instrument_Serif, Kalam, Poppins, Sniglet } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import Footer from "@/components/Footer";
 import "./globals.css";
@@ -39,6 +39,14 @@ const sniglet = Sniglet({
   display: "swap",
 });
 
+const instrumentSerif = Instrument_Serif({
+  weight: ["400"],
+  style: ["normal", "italic"],
+  variable: "--font-instrument-serif",
+  subsets: ["latin"],
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   title: "Aayush Sharma - Art × Code Portfolio",
   description: "Portfolio showcasing art, animation, games, and creative coding",
@@ -52,7 +60,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${kalam.variable} ${poppins.variable} ${sniglet.variable} antialiased dark`}
+        className={`${geistSans.variable} ${geistMono.variable} ${kalam.variable} ${poppins.variable} ${sniglet.variable} ${instrumentSerif.variable} antialiased dark`}
       >
         {children}
         <Analytics />

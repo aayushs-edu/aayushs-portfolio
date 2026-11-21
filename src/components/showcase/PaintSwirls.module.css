@@ -1,0 +1,11 @@
+/* Faint marbled paint behind a stretch of the page, fading out at its top
+   and bottom so it has no edges. */
+.swirls {
+  display: block;
+  pointer-events: none;
+}
+
+.swirls[data-masked="true"] {
+  mask-image: linear-gradient(to bottom, transparent, rgb(0 0 0 / 0.35) 25%, #000 50%, rgb(0 0 0 / 0.35) 78%, transparent);
+  -webkit-mask-image: linear-gradient(to bottom, transparent, rgb(0 0 0 / 0.35) 25%, #000 50%, rgb(0 0 0 / 0.35) 78%, transparent);
+}

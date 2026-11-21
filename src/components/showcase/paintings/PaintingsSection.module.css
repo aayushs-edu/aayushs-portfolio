@@ -1,0 +1,278 @@
+/* Paintings: a heading, then the wall: a plane, wider than the page, that
+   drags about under a vignette. */
+
+.section {
+  padding: 112px 0 48px;
+  color: #fff;
+}
+
+/* The heading, with faint paint swirling behind it and the gap above it (from
+   Paintwise's bottom padding down to the wall). */
+.intro {
+  position: relative;
+}
+
+.swirls {
+  position: absolute;
+  top: -320px;
+  left: 0;
+  z-index: -1;
+  width: 100%;
+  height: calc(100% + 380px);
+}
+
+.head {
+  position: relative;
+  max-width: 1200px;
+  margin: 0 auto 28px;
+  padding: 0 24px;
+}
+
+
+.pitch {
+  max-width: 44ch;
+  margin: 18px 0 0;
+  font-size: 17px;
+  line-height: 1.55;
+  /* As the hackathons' line above: the warm off-white of the titles, softened. */
+  color: rgb(236 228 212 / 0.62);
+}
+
+/* The view: full width; the plane moves under it. */
+.view {
+  position: relative;
+  height: clamp(520px, 88svh, 920px);
+  overflow: hidden;
+  cursor: grab;
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+  background-color: #0d0d0d;
+}
+
+/* The swirls behind the wall, still as it moves (PaintSwirls; WALL_BACKGROUND picks them or the grid). */
+.wallSwirls {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* The grid, pinned to the wall (it moves and scales with it): fine lines, a
+   heavier one every 4 cells, and brighter round the mouse. */
+.grid,
+.grid::after {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  --line: rgb(236 228 212 / 0.035);
+  --major: rgb(236 228 212 / 0.07);
+  background-image:
+    linear-gradient(to right, var(--major) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--major) 1px, transparent 1px),
+    linear-gradient(to right, var(--line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--line) 1px, transparent 1px);
+  background-size:
+    calc(var(--cell, 60px) * 4) calc(var(--cell, 60px) * 4),
+    calc(var(--cell, 60px) * 4) calc(var(--cell, 60px) * 4),
+    var(--cell, 60px) var(--cell, 60px),
+    var(--cell, 60px) var(--cell, 60px);
+  background-position: var(--grid-x, 50%) var(--grid-y, 50%);
+}
+
+.grid::after {
+  content: "";
+  --line: rgb(236 228 212 / 0.12);
+  --major: rgb(236 228 212 / 0.2);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  mask-image: radial-gradient(260px circle at var(--mx, 50%) var(--my, 50%), #000, transparent);
+  -webkit-mask-image: radial-gradient(260px circle at var(--mx, 50%) var(--my, 50%), #000, transparent);
+}
+
+@media (hover: hover) {
+  .view:hover .grid::after {
+    opacity: 1;
+  }
+}
+
+.view[data-dragging="true"] {
+  cursor: grabbing;
+}
+
+.plane {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  transform-origin: 0 0;
+  will-change: transform;
+}
+
+.painting {
+  --fade-scale: 1;
+  --zoom: 1;
+  position: absolute;
+  display: block;
+  padding: 0;
+  border: 0;
+  border-radius: 2px;
+  cursor: inherit;
+  transform: scale(var(--fade-scale));
+  box-shadow:
+    0 0 0 1px rgb(255 255 255 / 0.07),
+    0 22px 48px -12px rgb(0 0 0 / 0.7);
+  transition:
+    scale 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+    filter 0.4s ease,
+    box-shadow 0.3s ease,
+    outline-color 0.3s ease;
+  outline: 2px solid transparent;
+  outline-offset: 8px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .painting {
+    transition: none;
+  }
+}
+
+.painting img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+/* A photo of it being held, on hover (as the /paintings page did). */
+.painting .held {
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+@media (hover: hover) {
+  .view:not([data-dragging="true"]) .painting:hover .held {
+    opacity: 1;
+  }
+
+  .view:not([data-dragging="true"]) .painting:hover {
+    box-shadow:
+      0 0 0 1px rgb(236 228 212 / 0.35),
+      0 28px 60px -12px rgb(0 0 0 / 0.8);
+  }
+}
+
+/* Selected: it grows to fill most of the view, over the rest. */
+.painting[data-selected="true"] {
+  z-index: 1;
+  scale: var(--zoom);
+  cursor: pointer;
+  box-shadow:
+    0 0 0 1px rgb(255 255 255 / 0.1),
+    0 40px 90px -20px rgb(0 0 0 / 0.9);
+}
+
+/* …and the rest dim behind it. */
+.view[data-selected="true"] .painting:not([data-selected="true"]) {
+  filter: brightness(0.35);
+}
+
+.painting:focus-visible {
+  outline-color: #ece4d4;
+}
+
+/* The vignette: the view's edges sink into the page. */
+.vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(#0d0d0d, transparent 14%, transparent 86%, #0d0d0d),
+    radial-gradient(ellipse 72% 70% at 50% 50%, transparent 55%, rgb(13 13 13 / 0.85) 100%);
+}
+
+/* The selected painting's title and year, revealed out of its side (or,
+   in a narrow view, from under it). */
+.info {
+  position: absolute;
+  pointer-events: none;
+}
+
+.info[data-mode="side"] {
+  transform: translateY(-50%);
+}
+
+.infoInner {
+  pointer-events: auto;
+  cursor: auto;
+  user-select: text;
+  -webkit-user-select: text;
+  text-shadow: 0 1px 12px rgb(0 0 0 / 0.6);
+  animation: reveal-side 0.6s 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.info[data-mode="below"] .infoInner {
+  text-align: center;
+  animation-name: reveal-below;
+}
+
+@keyframes reveal-side {
+  from {
+    clip-path: inset(0 100% 0 0);
+    transform: translateX(-24px);
+    opacity: 0;
+  }
+  to {
+    clip-path: inset(0 -20% 0 0);
+    transform: none;
+    opacity: 1;
+  }
+}
+
+@keyframes reveal-below {
+  from {
+    clip-path: inset(0 0 100% 0);
+    transform: translateY(-16px);
+    opacity: 0;
+  }
+  to {
+    clip-path: inset(0 0 -20% 0);
+    transform: none;
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .infoInner {
+    animation: none;
+  }
+}
+
+.infoTitle {
+  margin: 0;
+  font-family: var(--font-poppins), sans-serif;
+  font-weight: 800;
+  font-size: clamp(24px, 2.6vw, 36px);
+  line-height: 1.05;
+  color: #ece4d4;
+}
+
+.infoMeta {
+  margin: 10px 0 0;
+  font: 400 13px/1.4 var(--font-geist-mono), monospace;
+  color: rgb(255 255 255 / 0.6);
+}
+
+@media (max-width: 860px) {
+  .section {
+    padding-top: 88px;
+  }
+
+  .view {
+    height: clamp(460px, 78svh, 760px);
+  }
+}

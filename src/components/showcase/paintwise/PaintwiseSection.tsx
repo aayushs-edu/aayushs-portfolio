@@ -3,7 +3,8 @@
 import Image from "next/image";
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import media from "../stations/paintwise/paintwise.generated.json";
-import { LAYER_COPY, RIGS, STAGE, TAGS, VIEW_ITEMS, type Rig, type View } from "./explode";
+import PaintToBinary from "./PaintToBinary";
+import { FLOOR, LAYER_COPY, RIGS, STAGE, TAGS, VIEW_ITEMS, type Rig, type View } from "./explode";
 import css from "./PaintwiseSection.module.css";
 
 const cqw = (v: number) => `${(v * 100).toFixed(3)}cqw`;
@@ -64,6 +65,22 @@ function ExplodedView({ view }: { view: View }) {
         aria-label={VIEW_TEXT[view].label}
       >
         <span className={css.rig} style={{ transform: rigTransform(apart ? RIGS[view].view : RIGS[view].rest) }}>
+          {view === "masks" && (
+            <span
+              className={css.floor}
+              aria-hidden="true"
+              style={
+                {
+                  left: cqw(-FLOOR.width / 2),
+                  top: cqw(-FLOOR.depth / 2),
+                  width: cqw(FLOOR.width),
+                  height: cqw(FLOOR.depth),
+                  transform: `translate3d(${cqw(FLOOR.x)}, ${cqw(FLOOR.y)}, ${cqw(FLOOR.z)}) rotateX(90deg)`,
+                  "--cell": cqw(FLOOR.cell),
+                } as CSSProperties
+              }
+            />
+          )}
           {VIEW_ITEMS[view].map((item, i) => {
             const p = item.poses[state];
             return (
@@ -126,7 +143,8 @@ export default function PaintwiseSection({ storyId, figureId, onStory, onFigure 
   const columns = `${(1 / STAGE.view.layers.aspect).toFixed(4)}fr ${(1 / STAGE.view.masks.aspect).toFixed(4)}fr`;
 
   return (
-    <section className={css.section} aria-labelledby="paintwise-title">
+    <section id="paintwise" className={css.section} aria-labelledby="paintwise-title">
+      <PaintToBinary />
       <div className={css.top}>
         <div className={css.lead}>
           <div className={css.brand}>
@@ -135,13 +153,13 @@ export default function PaintwiseSection({ storyId, figureId, onStory, onFigure 
               Paintwise
             </h2>
           </div>
-          <p className={css.pitch}>Teaches you to paint a picture the way an artist would, one step at a time.</p>
+          <p className={css.pitch}>AI-powered Art Education</p>
           <p className={css.links}>
             <button id={storyId} type="button" className={css.link} onClick={onStory}>
               The story
             </button>
-            <a className={css.link} href="/paintwise">
-              Read the build log <span aria-hidden="true">→</span>
+            <a className={css.link} href="https://github.com/aayushs-edu/paintwise" target="_blank" rel="noopener noreferrer">
+              View code on GitHub <span aria-hidden="true">↗</span>
             </a>
           </p>
         </div>
@@ -157,7 +175,6 @@ export default function PaintwiseSection({ storyId, figureId, onStory, onFigure 
               style={{ aspectRatio: media.figure.aspect }}
             />
           </button>
-          <figcaption className={css.caption}>Figure 1 · the Paintwise pipeline · click to enlarge</figcaption>
         </figure>
       </div>
 

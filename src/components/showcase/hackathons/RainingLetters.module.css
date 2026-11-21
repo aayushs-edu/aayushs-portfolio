@@ -1,0 +1,13 @@
+/* The falling letters behind the Hackathons, fading out at the section's top
+   and bottom so it has no edges. */
+.rain {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  mask-image: linear-gradient(to bottom, transparent, #000 14%, #000 80%, transparent);
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 14%, #000 80%, transparent);
+}

@@ -1,16 +1,32 @@
-// The name in WebGL: its textures and the fluid the paint flows through. Shares
-// the seam's WebGL2 context.
-//
-// The fluid is a small stable-fluids simulation over the title box (velocity,
-// pressure projection, so the flow swirls rather than smears). Alongside it
-// runs a map from each point to where its paint came from: advected by the
-// flow and relaxed back to "here" every frame, so pushed letters flow back into
-// shape. The seam shader draws the painted name through that map.
+// A small stable-fluids simulation (velocity, pressure projection, so the flow
+// swirls rather than smears). Alongside it runs a map from each point to where
+// its paint came from: advected by the flow and relaxed back to "here" every
+// frame, so pushed paint flows back into shape. It came from the hero's old
+// fluid name; the Paintings heading draws through it (fluidTitle.ts).
 
-import { DESIGN } from "./heroConfig";
-import type { NameTouch, Push } from "./nameTouch";
-import { buildBinaryGrid, paintNameCanvas, type BinaryGrid } from "./nameRaster";
-import { TOUCH, type SplitLayout } from "./splitConfig";
+/** A push on the fluid: where (CSS px) and how fast the pointer moved (CSS px/s). */
+export interface Push {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+}
+
+/** Moving through the paint pushes it around; it flows back into shape. */
+export const FLUID = {
+  /** Simulation cells across the box. */
+  resolution: 192,
+  /** Push radius (design px) and strength (share of the pointer's speed). */
+  radius: 24,
+  force: 0.18,
+  /** How fast the flow dies down, and how fast the paint flows back into shape (1/s). */
+  settle: 4.5,
+  reform: 3.5,
+  pressureIterations: 16,
+  /** Stop simulating this long after the last push (s), fading the flow out over the last `fadeOut` s (no snap). */
+  idle: 6,
+  fadeOut: 1.5,
+} as const;
 
 const QUAD_VS = /* glsl */ `#version 300 es
 out vec2 vUv;
@@ -144,8 +160,8 @@ interface Target {
   fbo: WebGLFramebuffer;
 }
 
-/** A small stable-fluids simulation over the title box. */
-class Fluid {
+/** The simulation over a box of the given aspect. */
+export class Fluid {
   w: number;
   h: number;
   private velocity: [Target, Target];
@@ -159,7 +175,7 @@ class Fluid {
     private vao: WebGLVertexArrayObject,
     aspect: number,
   ) {
-    this.w = TOUCH.fluid.resolution;
+    this.w = FLUID.resolution;
     this.h = Math.max(8, Math.round(this.w / aspect));
     const rg = () => this.target(gl.RG16F, gl.RG);
     const r = () => this.target(gl.R16F, gl.RED);
@@ -206,7 +222,7 @@ class Fluid {
   /** One step: push, project (so it swirls), carry the flow and the paint, settle. */
   step(dt: number, pushes: Push[], box: { x: number; y: number; w: number; h: number }, u: number) {
     const { gl, p } = this;
-    const F = TOUCH.fluid;
+    const F = FLUID;
     const texel = [1 / this.w, 1 / this.h] as const;
     this.begin();
 
@@ -309,135 +325,3 @@ class Fluid {
   }
 }
 
-/** Texture units the seam shader reads the name from. */
-export const NAME_UNITS = { paint: 1, mask: 2, flicker: 3, flow: 4 } as const;
-
-export class NameGL {
-  grid: BinaryGrid | null = null;
-  ready = false;
-  private paintTex: WebGLTexture;
-  private maskTex: WebGLTexture;
-  private flickerTex: WebGLTexture;
-  private vao: WebGLVertexArrayObject;
-  private fluid: Fluid | null = null;
-  private fluidFailed = false;
-  private lastPush = -Infinity;
-  /** How much the flow shows, 0..1: it fades out before the simulation stops. */
-  private flow = 0;
-  private family: string | null = null;
-  private scale = 0;
-
-  constructor(private gl: WebGL2RenderingContext) {
-    this.vao = gl.createVertexArray()!;
-    this.paintTex = this.texture(gl.LINEAR);
-    this.maskTex = this.texture(gl.NEAREST);
-    this.flickerTex = this.texture(gl.NEAREST);
-    // Half-float render targets for the fluid; without them the name stays still.
-    if (!gl.getExtension("EXT_color_buffer_float") && !gl.getExtension("EXT_color_buffer_half_float")) this.fluidFailed = true;
-  }
-
-  /** How much of the flow the shader should apply, 0..1 (0: the name as drawn). */
-  get flowAmount() {
-    return this.fluid ? this.flow : 0;
-  }
-
-  /** Builds (or rebuilds, when the scale changes) the name's textures and the fluid. Returns the binary grid. */
-  setName(family: string, layout: SplitLayout, dpr: number): BinaryGrid | null {
-    const { gl } = this;
-    const scale = layout.u * dpr;
-    if (family === this.family && Math.abs(scale - this.scale) < 1e-3 && this.ready) return this.grid;
-    this.family = family;
-    this.scale = scale;
-
-    const paint = paintNameCanvas(family, scale);
-    const grid = buildBinaryGrid(family);
-    if (!paint || !grid) return null;
-    gl.activeTexture(gl.TEXTURE0 + NAME_UNITS.paint);
-    gl.bindTexture(gl.TEXTURE_2D, this.paintTex);
-    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, paint);
-    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
-
-    // Cells: 0 none, 127 a "0", 255 a "1".
-    const mask = new Uint8Array(grid.cells.length);
-    for (let i = 0; i < mask.length; i++) mask[i] = grid.cells[i] === 0 ? 0 : grid.cells[i] === 1 ? 127 : 255;
-    gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
-    gl.activeTexture(gl.TEXTURE0 + NAME_UNITS.mask);
-    gl.bindTexture(gl.TEXTURE_2D, this.maskTex);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.R8, grid.cols, grid.rows, 0, gl.RED, gl.UNSIGNED_BYTE, mask);
-    gl.activeTexture(gl.TEXTURE0 + NAME_UNITS.flicker);
-    gl.bindTexture(gl.TEXTURE_2D, this.flickerTex);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.R8, grid.cols, grid.rows, 0, gl.RED, gl.UNSIGNED_BYTE, new Uint8Array(grid.cells.length));
-    this.grid = grid;
-
-    if (!this.fluid && !this.fluidFailed) {
-      try {
-        this.fluid = new Fluid(gl, this.vao, DESIGN.titleBox.w / DESIGN.titleBox.h);
-      } catch (error) {
-        if (process.env.NODE_ENV !== "production") console.warn(error);
-        this.fluidFailed = true;
-      }
-    }
-    this.ready = true;
-    return grid;
-  }
-
-  /** Runs the flow for this frame (and uploads flickering cells). Leaves the default framebuffer bound. */
-  update(dt: number, t: number, touch: NameTouch | undefined, layout: SplitLayout) {
-    const { gl } = this;
-    if (touch?.flickerDirty && this.grid && touch.flicker.length === this.grid.cells.length) {
-      gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
-      gl.activeTexture(gl.TEXTURE0 + NAME_UNITS.flicker);
-      gl.bindTexture(gl.TEXTURE_2D, this.flickerTex);
-      gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, this.grid.cols, this.grid.rows, gl.RED, gl.UNSIGNED_BYTE, touch.flicker);
-      touch.flickerDirty = false;
-    }
-    const pushes = touch?.pushes ?? [];
-    if (pushes.length) this.lastPush = t;
-    const { idle, fadeOut } = TOUCH.fluid;
-    this.flow = Math.min(1, Math.max(0, (idle - (t - this.lastPush)) / fadeOut));
-    if (this.fluid && this.flow > 0 && dt > 0) this.fluid.step(dt, pushes, this.box(layout), layout.u);
-    if (touch) touch.pushes.length = 0;
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-  }
-
-  /** Where the title box is on the canvas (CSS px). */
-  box(layout: SplitLayout) {
-    const { titleBox } = DESIGN;
-    return { x: layout.seamX - (DESIGN.cx - titleBox.x) * layout.u, y: layout.gridY, w: titleBox.w * layout.u, h: titleBox.h * layout.u };
-  }
-
-  /** Binds the name's textures to their units. */
-  bindTextures() {
-    const { gl } = this;
-    const pairs: [number, WebGLTexture][] = [
-      [NAME_UNITS.paint, this.paintTex],
-      [NAME_UNITS.mask, this.maskTex],
-      [NAME_UNITS.flicker, this.flickerTex],
-      [NAME_UNITS.flow, this.fluid?.mapTexture ?? this.maskTex],
-    ];
-    for (const [unit, tex] of pairs) {
-      gl.activeTexture(gl.TEXTURE0 + unit);
-      gl.bindTexture(gl.TEXTURE_2D, tex);
-    }
-  }
-
-  destroy() {
-    const { gl } = this;
-    this.fluid?.destroy();
-    for (const t of [this.paintTex, this.maskTex, this.flickerTex]) gl.deleteTexture(t);
-    gl.deleteVertexArray(this.vao);
-  }
-
-  private texture(filter: number): WebGLTexture {
-    const { gl } = this;
-    const tex = gl.createTexture()!;
-    gl.bindTexture(gl.TEXTURE_2D, tex);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filter);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filter);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(4));
-    return tex;
-  }
-}
