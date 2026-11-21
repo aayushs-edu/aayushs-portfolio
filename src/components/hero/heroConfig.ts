@@ -207,7 +207,7 @@ export const BRUSH = {
 
 /** Who this is: the line under the name. */
 export const DESCRIPTION =
-  "I'm a Computer Science student at Georgia Tech who loves building things at the intersection of AI and creativity. I enjoy turning ambitious ideas into real, usable AI-powered products. I'm always looking for opportunities to learn something new and build technology that makes a meaningful impact.";
+  "I'm a Computer Science student and AI researcher at Georgia Tech. My work lies in developing AI that amplifies human skills rather than replacing them. I hope to pioneer human-centered AI that keeps people in control and leaves them more capable than before.";
 
 /** The painted / binary name. */
 export const NAME = {
