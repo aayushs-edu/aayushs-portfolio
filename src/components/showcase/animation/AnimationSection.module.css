@@ -1,15 +1,34 @@
-/* Animation: a heading, then the theatre: a dark band with the programme,
-   the screen (lit from behind by a glow sampled from the picture) and, for
-   Wild West, a rail of props beside it. */
+/* Animation: a heading, then the house: the programme over the screen (lit
+   from behind by a glow sampled from the picture) and, under Wild West, its
+   making: the models on stumps, then the storyboard on a conveyor. The whole
+   section darkens into the house, so the glow fades out on its own rather
+   than against the edge of a band. */
 
 .section {
-  padding: 112px 0 48px;
+  --cream: #ece4d4;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  isolation: isolate;
+  padding: 112px 0 64px;
   color: #fff;
+  background: linear-gradient(to bottom, #0d0d0d, #050505 320px, #050505 calc(100% - 200px), #0d0d0d);
+  overflow-x: clip;
+}
+
+/* Everything sits over the film grain. */
+.section > :not(:first-child) {
+  position: relative;
+  z-index: 1;
+}
+
+.section ::selection {
+  background: rgb(236 228 212 / 0.9);
+  color: #0d0d0d;
 }
 
 .head {
   max-width: 1200px;
-  margin: 0 auto 28px;
+  margin: 0 auto 40px;
   padding: 0 24px;
   transition: opacity 0.8s ease;
 }
@@ -21,125 +40,105 @@
   font-size: clamp(40px, 7vw, 72px);
   line-height: 1;
   letter-spacing: -0.01em;
-  color: #ece4d4;
+  color: var(--cream);
 }
 
+/* One line wherever it fits (about 900px); it wraps only on narrow screens. */
 .pitch {
-  max-width: 44ch;
   margin: 18px 0 0;
+  text-wrap: balance;
   font-size: 17px;
   line-height: 1.55;
-  color: rgb(255 255 255 / 0.72);
+  /* As the sections above: the warm off-white of the titles, softened. */
+  color: rgb(236 228 212 / 0.62);
 }
 
 /* The house lights go down while the full film plays. */
 .section[data-full="true"] .head,
-.section[data-full="true"] .caption,
 .section[data-full="true"] .programme {
   opacity: 0.35;
 }
 
-.theatre {
-  position: relative;
-  padding: 28px 24px 56px;
-  background:
-    radial-gradient(120% 70% at 50% 0%, rgb(0 0 0 / 0.55), transparent 70%),
-    linear-gradient(to bottom, #0d0d0d, #050505 14%, #050505 86%, #0d0d0d);
-  /* Clipped sideways only, so the glow fades out above and below rather than ending in a line. */
-  overflow-x: clip;
+.programmeItem:focus-visible,
+.loopButton:focus-visible,
+.exit:focus-visible,
+.propLabel a:focus-visible {
+  outline: 2px solid var(--cream);
+  outline-offset: 4px;
 }
 
-/* ---- the programme ------------------------------------------------------------------ */
+/* ---- the house: the programme and the screen, centred at the screen's width -------- */
+
+.house {
+  /* The screen fills the house, but never taller than the view leaves room for. */
+  --screen: min(100%, calc(64svh * 16 / 9));
+  padding: 0 24px;
+}
+
+/* ---- the programme: the titles, outlined like the hero's name until picked ---------- */
 
 .programme {
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: center;
-  gap: 6px 28px;
-  max-width: 1440px;
+  align-items: flex-start;
+  gap: 8px 32px;
+  width: var(--screen);
   margin: 0 auto 24px;
+  /* The titles size to the screen's width, so the three always share one line. */
+  container-type: inline-size;
   transition: opacity 0.8s ease;
-}
-
-.marquee {
-  font-family: var(--font-geist-mono), monospace;
-  font-size: 11px;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: rgb(236 228 212 / 0.45);
 }
 
 .programmeItem {
   display: inline-flex;
-  align-items: baseline;
-  gap: 8px;
-  padding: 6px 2px;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 0;
   border: 0;
-  border-bottom: 2px solid transparent;
   background: none;
-  color: rgb(255 255 255 / 0.5);
+  color: inherit;
   cursor: pointer;
-  transition: color 0.2s ease, border-color 0.2s ease;
-}
-
-.programmeItem:hover {
-  color: rgb(255 255 255 / 0.85);
-}
-
-.programmeItem[aria-pressed="true"] {
-  color: #ece4d4;
-  border-bottom-color: #ece4d4;
-}
-
-.programmeItem:focus-visible,
-.pick:focus-visible,
-.loopButton:focus-visible,
-.exit:focus-visible {
-  outline: 2px solid #ece4d4;
-  outline-offset: 3px;
 }
 
 .programmeTitle {
   font-family: var(--font-poppins), sans-serif;
   font-weight: 800;
-  font-size: clamp(18px, 2.2vw, 24px);
+  font-size: clamp(22px, 4.2cqi, 44px);
+  line-height: 1;
+  letter-spacing: -0.01em;
+  color: transparent;
+  -webkit-text-stroke: 1px rgb(236 228 212 / 0.5);
+  transition:
+    color 0.45s var(--ease),
+    -webkit-text-stroke-color 0.45s var(--ease);
+}
+
+.programmeItem:hover .programmeTitle {
+  -webkit-text-stroke-color: rgb(236 228 212 / 0.95);
+}
+
+.programmeItem[aria-pressed="true"] .programmeTitle {
+  color: var(--cream);
+  -webkit-text-stroke-color: var(--cream);
 }
 
 .programmeYear {
-  font-family: var(--font-geist-mono), monospace;
-  font-size: 12px;
-  opacity: 0.6;
+  margin-top: 0.2em;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  color: rgb(236 228 212 / 0.55);
+  transition: color 0.45s var(--ease);
 }
 
-/* ---- the house: the screen, and the rail beside it ---------------------------------- */
-
-.house {
-  --rail: 0px;
-  --gap: 0px;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) var(--rail);
-  column-gap: var(--gap);
-  max-width: 1440px;
-  margin: 0 auto;
-  transition:
-    grid-template-columns 0.6s cubic-bezier(0.2, 0.7, 0.2, 1),
-    column-gap 0.6s cubic-bezier(0.2, 0.7, 0.2, 1);
+.programmeItem[aria-pressed="true"] .programmeYear {
+  color: rgb(236 228 212 / 0.8);
 }
 
-.house[data-props="true"] {
-  --rail: clamp(300px, 30%, 440px);
-  --gap: 28px;
-}
+/* ---- the screen ---------------------------------------------------------------------- */
 
-.screenCol {
-  min-width: 0;
-}
-
-/* The screen fills its column, but never taller than the view leaves room for. */
 .screenWrap {
   position: relative;
-  width: min(100%, calc(70svh * 16 / 9));
+  width: var(--screen);
   margin: 0 auto;
 }
 
@@ -149,7 +148,7 @@
   width: 120%;
   height: 124%;
   filter: blur(64px) saturate(1.5);
-  opacity: 0.5;
+  opacity: 0.45;
   pointer-events: none;
   transition: opacity 0.8s ease;
 }
@@ -186,238 +185,428 @@
   cursor: pointer;
 }
 
+/* "Watch with sound" sits in the foot of the picture, on a scrim like a subtitle. */
 .play {
   position: absolute;
-  left: 20px;
-  bottom: 18px;
-  display: inline-flex;
+  inset: auto 0 0;
+  display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 9px 16px 9px 12px;
-  border-radius: 999px;
-  background: rgb(0 0 0 / 0.55);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  gap: 14px;
+  padding: 72px 28px 24px;
+  background: linear-gradient(to top, rgb(0 0 0 / 0.62), rgb(0 0 0 / 0.28) 55%, transparent);
   color: #fff;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 500;
-  transition: background 0.2s ease, transform 0.2s ease;
+  text-shadow: 0 1px 8px rgb(0 0 0 / 0.5);
+  opacity: 0.9;
+  transition: opacity 0.3s ease;
+}
+
+.playDisc {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  /* The triangle's weight sits left of its box; nudge it to look centred. */
+  padding-left: 3px;
+  border-radius: 50%;
+  background: var(--cream);
+  color: #0d0d0d;
+  box-shadow: 0 6px 20px -4px rgb(0 0 0 / 0.55);
+  transition: transform 0.4s var(--ease);
 }
 
 .loopButton:hover .play {
-  background: rgb(0 0 0 / 0.75);
-  transform: translateY(-1px);
+  opacity: 1;
 }
 
-.playIcon {
-  width: 0;
-  height: 0;
-  border-left: 11px solid currentColor;
-  border-top: 7px solid transparent;
-  border-bottom: 7px solid transparent;
+.loopButton:hover .playDisc {
+  transform: scale(1.08);
 }
 
 .exit {
   position: absolute;
-  top: 12px;
-  right: 12px;
-  width: 34px;
-  height: 34px;
+  top: 14px;
+  right: 14px;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
   border: 0;
   border-radius: 50%;
-  background: rgb(0 0 0 / 0.55);
+  background: rgb(0 0 0 / 0.6);
   color: #fff;
-  font-size: 14px;
   cursor: pointer;
+  transition: background 0.2s ease;
 }
 
 .exit:hover {
-  background: rgb(0 0 0 / 0.8);
+  background: rgb(0 0 0 / 0.85);
 }
 
-.caption {
-  width: min(100%, calc(70svh * 16 / 9));
-  margin: 22px auto 0;
-  transition: opacity 0.8s ease;
+/* The title card: each film opens on its name over black, which fades into the picture. */
+.card {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: #000;
+  pointer-events: none;
+  animation: card-out 1.9s var(--ease) forwards;
 }
 
-.captionLine {
-  margin: 0 0 6px;
-  font-family: var(--font-geist-mono), monospace;
-  font-size: 12px;
-  letter-spacing: 0.04em;
-  color: rgb(236 228 212 / 0.55);
+.cardTitle {
+  font-family: var(--font-poppins), sans-serif;
+  font-weight: 800;
+  font-size: clamp(30px, 5vw, 68px);
+  line-height: 1;
+  letter-spacing: -0.01em;
+  color: var(--cream);
+  animation: card-title 1.9s var(--ease) forwards;
 }
 
-.captionStory {
-  max-width: 62ch;
-  margin: 0;
-  font-size: 15px;
-  line-height: 1.55;
-  color: rgb(255 255 255 / 0.68);
+.cardYear {
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.08em;
+  color: rgb(236 228 212 / 0.6);
+  animation: card-title 1.9s var(--ease) 0.08s backwards;
 }
 
-/* ---- the rail: one stage for a model or a still, and the picks under it -------------- */
+@keyframes card-out {
+  0%,
+  42% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
 
-.rail {
-  min-width: 0;
-  overflow: hidden;
+@keyframes card-title {
+  0% {
+    opacity: 0;
+    filter: blur(8px);
+    transform: translateY(8px);
+  }
+  28% {
+    opacity: 1;
+    filter: blur(0);
+    transform: none;
+  }
+  100% {
+    transform: scale(1.03);
+  }
+}
+
+/* ---- the making of Wild West: folds open under the screen for Wild West only -------- */
+
+.making {
+  display: grid;
+  grid-template-rows: 0fr;
   opacity: 0;
-  transition: opacity 0.4s ease;
+  transition:
+    grid-template-rows 0.6s cubic-bezier(0.2, 0.7, 0.2, 1),
+    opacity 0.4s ease;
 }
 
-.house[data-props="true"] .rail {
+.making[data-open="true"] {
+  grid-template-rows: 1fr;
   opacity: 1;
-  transition-delay: 0.2s;
+  transition-delay: 0s, 0.15s;
 }
 
-/* Fixed to the open rail's width, so it doesn't reflow as the rail folds. */
-.railInner {
-  width: clamp(300px, 30vw, 440px);
-  max-width: 100%;
-}
-
-.railLabel,
-.pickLabel {
-  margin: 0 0 10px;
-  font-family: var(--font-geist-mono), monospace;
-  font-size: 11px;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: rgb(236 228 212 / 0.45);
-}
-
-.pickLabel {
-  margin-top: 18px;
-}
-
-.stage {
-  position: relative;
-  aspect-ratio: 16 / 10;
+.makingInner {
+  min-height: 0;
   overflow: hidden;
-  border-radius: 6px;
-  background: radial-gradient(80% 90% at 50% 35%, #26221d, #0b0a09 75%);
-  box-shadow: 0 0 0 1px rgb(255 255 255 / 0.06);
+}
+
+.makingHead,
+.stumps {
+  width: min(100% - 48px, calc(64svh * 16 / 9));
+  margin-inline: auto;
+}
+
+/* "The Models", set as "My Work" is (WorkDivider): thin and spaced, centred. */
+.makingHead {
+  margin-top: 56px;
+  text-align: center;
+}
+
+.makingTitle {
+  margin: 0;
+  font-family: var(--font-geist-sans), sans-serif;
+  font-weight: 200;
+  font-size: clamp(14px, 1.2vw, 16px);
+  line-height: 30px;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+  color: #fff;
+}
+
+
+/* ---- the models, each standing on a stump ------------------------------------------- */
+
+.stumps {
+  display: grid;
+  /* The saloon's slot (the middle) is wider, for its bigger model; the stumps all match. */
+  grid-template-columns: var(--cols);
+  align-items: end;
+  gap: 24px;
+  margin-top: 8px;
+  margin-bottom: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.prop {
+  min-width: 0;
+}
+
+/* All stages are as tall as the widest one; --aspect (from the slot's span) is the camera fit's too. */
+.propStage {
+  position: relative;
+  aspect-ratio: var(--aspect);
+}
+
+/* The stump stands on the floor (1% up), `--stump-w` of the slot wide: the
+   same size in every slot. Its top is where the camera fit puts the feet. */
+.stump {
+  position: absolute;
+  left: 50%;
+  bottom: 1%;
+  display: block;
+  width: var(--stump-w);
+  height: auto;
+  transform: translateX(-50%);
 }
 
 .viewer {
+  position: absolute;
+  inset: 0;
   display: block;
   width: 100%;
   height: 100%;
   --poster-color: transparent;
   background: transparent;
+  cursor: grab;
+  opacity: 0;
+  transition: opacity 0.9s var(--ease);
 }
 
-.stageImg {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
+.viewer:active {
+  cursor: grabbing;
 }
 
-.stageCaption {
+.viewer[data-fitted="true"] {
+  opacity: 1;
+}
+
+.propLabel {
   display: flex;
-  justify-content: space-between;
+  flex-wrap: wrap;
+  justify-content: center;
   align-items: baseline;
-  gap: 12px;
-  margin-top: 10px;
-  font-size: 13px;
-  color: rgb(255 255 255 / 0.6);
+  gap: 2px 12px;
+  margin: 2px 0 0;
+  font-size: 14px;
+  color: rgb(236 228 212 / 0.6);
 }
 
-.stageCaption strong {
+.propLabel strong {
+  white-space: nowrap;
   font-weight: 600;
-  color: #ece4d4;
+  color: var(--cream);
 }
 
-.stageCaption a {
-  color: rgb(255 255 255 / 0.7);
+.propLabel a {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: rgb(236 228 212 / 0.65);
   text-decoration: none;
   white-space: nowrap;
+  transition: color 0.2s ease;
 }
 
-.stageCaption a:hover {
-  color: #fff;
+.propLabel a:hover {
+  color: var(--cream);
 }
 
-.count {
-  font-family: var(--font-geist-mono), monospace;
-  font-size: 12px;
-}
+/* ---- the storyboard on a film strip, running the width of the section ------------- */
 
-.picks {
-  display: grid;
-  gap: 8px;
-}
-
-.picks[data-kind="model"] {
-  grid-template-columns: repeat(3, 1fr);
-}
-
-.picks[data-kind="still"] {
-  grid-template-columns: repeat(4, 1fr);
-}
-
-.pick {
-  aspect-ratio: 16 / 9;
-  padding: 0;
+.belt {
+  margin-top: 32px;
   overflow: hidden;
-  border: 0;
-  border-radius: 4px;
-  background: #15130f;
-  cursor: pointer;
-  opacity: 0.55;
-  box-shadow: 0 0 0 1px rgb(255 255 255 / 0.06);
-  transition: opacity 0.2s ease, box-shadow 0.2s ease;
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 7%, #000 93%, transparent);
+  mask-image: linear-gradient(to right, transparent, #000 7%, #000 93%, transparent);
 }
 
-.pick img {
+.beltTrack {
+  display: flex;
+  width: max-content;
+}
+
+/* Two copies of the set; sliding by one set's width loops without a seam. */
+.belt[data-moving="true"] .beltTrack {
+  animation: belt 72s linear infinite;
+}
+
+.belt:hover .beltTrack,
+.belt:focus-within .beltTrack {
+  animation-play-state: paused;
+}
+
+@keyframes belt {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* With reduced motion it stands still and scrolls by hand instead. */
+.belt[data-moving="false"] {
+  overflow-x: auto;
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+
+.belt[data-moving="false"] .beltSet + .beltSet {
+  display: none;
+}
+
+.beltSet {
+  display: flex;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* One frame of film: the shot, with five sprocket holes above and below it. Each
+   frame carries its own holes, so the strip repeats exactly with the frames. */
+.frame {
+  --hole: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 22'%3E%3Crect x='6' y='7' width='8' height='8' rx='1.6' fill='%23050505'/%3E%3C/svg%3E");
+  flex: none;
+  box-sizing: border-box;
+  width: clamp(180px, 15vw, 240px);
+  padding: 22px 3px;
+  background-color: #1b1714;
+  background-image: var(--hole), var(--hole);
+  background-repeat: repeat-x;
+  background-position:
+    0 0,
+    0 100%;
+  background-size: 20% 22px;
+}
+
+.frame img {
   display: block;
   width: 100%;
-  height: 100%;
+  aspect-ratio: 16 / 9;
   object-fit: cover;
+  border-radius: 1px;
+  opacity: 0.8;
+  transition: opacity 0.3s ease;
 }
 
-.pick:hover {
-  opacity: 0.85;
-}
-
-.pick[aria-pressed="true"] {
+.frame:hover img {
   opacity: 1;
-  box-shadow: 0 0 0 2px #ece4d4;
 }
 
-/* ---- narrow: the rail goes under the screen ------------------------------------------ */
+/* ---- narrow: the stumps scroll sideways ------------------------------------------- */
 
 @media (max-width: 900px) {
-  .house,
-  .house[data-props="true"] {
-    grid-template-columns: minmax(0, 1fr);
-    row-gap: 32px;
+  .section {
+    padding: 88px 0 72px;
   }
 
-  .house[data-props="false"] .rail {
+  .head {
+    margin-bottom: 40px;
+  }
+
+  .programme {
+    flex-wrap: nowrap;
+    gap: 28px;
+    width: auto;
+    margin: 0 -24px 16px;
+    padding: 0 24px 4px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .programme::-webkit-scrollbar,
+  .stumps::-webkit-scrollbar {
     display: none;
   }
 
-  .railInner {
-    width: 100%;
+  .programmeItem {
+    flex: none;
+  }
+
+  .programmeTitle {
+    font-size: 26px;
   }
 
   .play {
-    left: 12px;
-    bottom: 12px;
-    font-size: 13px;
+    gap: 12px;
+    padding: 36px 16px 14px;
+    font-size: 14px;
+  }
+
+  .playDisc {
+    width: 40px;
+    height: 40px;
+  }
+
+  .makingHead {
+    margin-top: 64px;
+  }
+
+  .stumps {
+    align-items: end;
+    margin-top: 8px;
+    grid-template-columns: none;
+    grid-auto-flow: column;
+    grid-auto-columns: max-content;
+    gap: 8px;
+    width: 100%;
+    padding: 0 24px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: 24px;
+    scrollbar-width: none;
+  }
+
+  .prop {
+    width: calc(46vw * var(--span));
+    scroll-snap-align: start;
+  }
+
+  .belt {
+    margin-top: 40px;
+  }
+}
+
+/* Without a mouse the models only turn on their own, so a swipe scrolls the row. */
+@media (hover: none) {
+  .viewer {
+    pointer-events: none;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .house,
-  .rail,
+  .making,
+  .viewer,
+  .frame img,
   .glow,
   .head,
-  .caption,
-  .programme {
+  .programme,
+  .programmeTitle,
+  .playDisc {
     transition: none;
   }
 }

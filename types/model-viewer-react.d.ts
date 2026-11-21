@@ -18,6 +18,17 @@ declare module "react" {
         "shadow-intensity"?: string;
         exposure?: string;
         "camera-orbit"?: string;
+        "camera-target"?: string;
+        "min-camera-orbit"?: string;
+        "max-camera-orbit"?: string;
+        "field-of-view"?: string;
+        "shadow-softness"?: string;
+        "rotation-per-second"?: string;
+        "auto-rotate-delay"?: string;
+        "touch-action"?: string;
+        "disable-zoom"?: boolean;
+        "disable-pan"?: boolean;
+        "disable-tap"?: boolean;
       };
     }
   }

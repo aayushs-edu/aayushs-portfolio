@@ -1,0 +1,141 @@
+/* Film grain, flicker and scratches behind the Animation section. Kept very dim:
+   it is texture, not a picture. */
+
+.film {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  /* Fades in and out over the section's ends, as its darkening does, so there's
+     no line where the sections above and below meet it. */
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 320px, #000 calc(100% - 320px), transparent);
+  mask-image: linear-gradient(to bottom, transparent, #000 320px, #000 calc(100% - 320px), transparent);
+}
+
+/* Held to the screen while the section passes, so the layers stay screen-sized. */
+.view {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* One grain tile, overscanned by a tile each way, jumping to a new offset every
+   frame; the tile repeats, so any offset within it is seamless. */
+.grain {
+  position: absolute;
+  inset: -180px;
+  background-image: var(--grain);
+  background-size: 180px 180px;
+  opacity: 0.06;
+  animation: grain 0.6s steps(1) infinite;
+}
+
+@keyframes grain {
+  0% {
+    transform: translate(0, 0);
+  }
+  12% {
+    transform: translate(-63px, 41px);
+  }
+  25% {
+    transform: translate(97px, -118px);
+  }
+  37% {
+    transform: translate(-151px, -23px);
+  }
+  50% {
+    transform: translate(34px, 139px);
+  }
+  62% {
+    transform: translate(-102px, 87px);
+  }
+  75% {
+    transform: translate(122px, 12px);
+  }
+  87% {
+    transform: translate(-27px, -161px);
+  }
+}
+
+/* The lamp's flicker: a faint lift of light, at uneven moments. */
+.flicker {
+  position: absolute;
+  inset: 0;
+  background: rgb(236 228 212);
+  opacity: 0;
+  animation: flicker 6.5s steps(1) infinite;
+}
+
+@keyframes flicker {
+  0% {
+    opacity: 0;
+  }
+  8% {
+    opacity: 0.012;
+  }
+  9.5% {
+    opacity: 0;
+  }
+  33% {
+    opacity: 0.008;
+  }
+  34% {
+    opacity: 0;
+  }
+  57% {
+    opacity: 0.016;
+  }
+  58.5% {
+    opacity: 0.005;
+  }
+  60% {
+    opacity: 0;
+  }
+  84% {
+    opacity: 0.01;
+  }
+  85% {
+    opacity: 0;
+  }
+}
+
+.film[data-live="false"] .grain,
+.film[data-live="false"] .flicker {
+  animation-play-state: paused;
+}
+
+.scratch {
+  position: absolute;
+  width: 1px;
+  background: linear-gradient(to bottom, transparent, rgb(236 228 212 / 0.1) 20%, rgb(236 228 212 / 0.1) 80%, transparent);
+  opacity: 0;
+  animation: scratch linear forwards;
+}
+
+@keyframes scratch {
+  0% {
+    opacity: 0;
+    transform: translateX(0);
+  }
+  15% {
+    opacity: 1;
+  }
+  50% {
+    transform: translateX(3px);
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-2px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .grain,
+  .flicker {
+    animation: none;
+  }
+}
