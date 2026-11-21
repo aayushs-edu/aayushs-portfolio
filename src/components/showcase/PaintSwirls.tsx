@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { VIVID } from "../hero/splitConfig";
 import { NAME } from "../hero/heroConfig";
 import css from "./PaintSwirls.module.css";
+
+/** The vivid paints (red, orange, yellow, green, blue, pink), once the seam hero's ribbons'. */
+const VIVID = ["#ff3b2f", "#ff8f1f", "#ffd21f", "#12c48b", "#2f6bff", "#ff2f8e"] as const;
 
 /** Drawn at this share of the CSS size (it's soft anyway), and this often (ms). */
 const RES = 0.5;

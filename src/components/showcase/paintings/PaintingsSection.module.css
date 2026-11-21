@@ -148,7 +148,7 @@
   pointer-events: none;
 }
 
-/* A photo of it being held, on hover (as the /paintings page did). */
+/* A photo of it being held, on hover (as the old /paintings page did). */
 .painting .held {
   opacity: 0;
   transition: opacity 0.5s ease;

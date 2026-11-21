@@ -26,21 +26,7 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
-        // Apply to your animation page specifically
-        source: '/animation',
-        headers: [
-          {
-            key: 'Permissions-Policy',
-            value: 'accelerometer=*, gyroscope=*, magnetometer=*, camera=*, microphone=*, geolocation=*, xr-spatial-tracking=*, gamepad=*, payment=*, usb=*',
-          },
-          {
-            key: 'Feature-Policy',
-            value: 'accelerometer *; gyroscope *; magnetometer *; camera *; microphone *; geolocation *; xr-spatial-tracking *',
-          },
-        ],
-      },
-      {
-        // Apply to all pages (alternative approach)
+        // Every page: sensors and XR for the embeds
         source: '/(.*)',
         headers: [
           {

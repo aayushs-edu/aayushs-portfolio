@@ -23,6 +23,9 @@ export const GROUP_TITLES: Record<GroupId, string> = {
 /** The page's order: Paintwise first, then the art half, then the code half. */
 export const GROUP_ORDER: GroupId[] = ["paintwise", "hackathons", "paintings", "games", "animation"];
 
+/** The id of the button that opens a work's story: focus returns to it when the story closes. */
+export const workButtonId = (slug: string) => `work-open-${slug}`;
+
 export type WorkKind = "painting" | "project" | "game" | "animation" | "model" | "hackathon";
 export type WorkSide = "art" | "code" | "both";
 
@@ -80,7 +83,7 @@ interface Extra {
   links: WorkLink[];
 }
 
-const ALL_PAINTINGS: WorkLink = { label: "All paintings", href: "/paintings" };
+const ALL_PAINTINGS: WorkLink = { label: "All paintings", href: "/#paintings" };
 const itch = (slug: string): WorkLink => ({ label: "Play on itch.io", href: `https://aayushs-edu.itch.io/${slug}` });
 
 /** Paintings: the descriptions from public/paintings/manifest.json. */
@@ -127,10 +130,8 @@ const PROJECTS: Record<string, Extra> = {
     story: [
       "If you ever wanted to learn how to draw, YouTube was the place to go. But following along with those videos was not actually teaching you anything, and good art teachers are not always available or affordable.",
       "Paintwise is a model that generates the steps to draw a piece the way a real artist would, from primitive shapes to final forms, and gives feedback at each step on proportions, perspective and lighting.",
-      "The build log follows the hard parts: segmentation that sees too much, deciding what to paint first, and making AI critique feel human.",
     ],
     links: [
-      { label: "Read the build log", href: "/paintwise" },
       { label: "GitHub", href: "https://github.com/aayushs-edu/paintwise" },
     ],
   },
@@ -176,7 +177,7 @@ const PROJECTS: Record<string, Extra> = {
   stockapp: {
     group: "hackathons",
     story: ["A tool for a family in India managing a portfolio of over $1M."],
-    links: [{ label: "More projects", href: "/hackathons" }],
+    links: [{ label: "More projects", href: "/#hackathons" }],
   },
   "bounce-back": {
     group: "games",
@@ -261,7 +262,7 @@ const EARLY: Work[] = paintingsMedia.early.map((p) => ({
   media: { image: p.image, depth: p.depth, aspect: p.aspect, avgColor: p.avgColor, ...(HELD[p.slug] ? { held: HELD[p.slug] } : {}) },
 }));
 
-/** From the /paintings page's "Where it all started". */
+/** From the old /paintings page's "Where it all started". */
 const ORIGIN: Work = {
   slug: "where-it-all-started",
   kind: "painting",
@@ -278,7 +279,7 @@ const ORIGIN: Work = {
   media: { image: paintingsMedia.origin.image, aspect: paintingsMedia.origin.aspect, avgColor: paintingsMedia.origin.avgColor },
 };
 
-const ALL_ANIMATION: WorkLink = { label: "All animation", href: "/animation" };
+const ALL_ANIMATION: WorkLink = { label: "All animation", href: "/#animation" };
 const MAYA = "Autodesk Maya · Arnold · Premiere Pro";
 
 /** The films (drafts from what each film shows: rewrite freely). */

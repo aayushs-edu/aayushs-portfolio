@@ -1,9 +1,7 @@
-// Checks for the home page's pure modules and its generated media. Run with `npm run showcase:check`.
+// Checks for the home page's pure modules (Paintwise's exploded still life, the paintings wall, the works) and its generated media. Run with `npm run showcase:check`.
 
 import fs from "node:fs";
 import path from "node:path";
-import { createPopBuffers, createStreamBuffers, lineAt, lineSpan, MAX_POPS, spans, toSeam, writePops, writeStreams } from "../../src/components/hero/seamField";
-import { BITS, SEAM, TILT, type SplitLayout } from "../../src/components/hero/splitConfig";
 import { corners, EXPLODE_STATES, fillOf, fitItems, JUG, PIECE_DEPTH, PIECES, RIGS, STAGE, TAGS, toStage, project, VIEW_ITEMS, VIEWS } from "../../src/components/showcase/paintwise/explode";
 import { fadeAt, layoutWall, panBounds, PORTFOLIO_COLUMNS } from "../../src/components/showcase/paintings/wall";
 import { GROUP_ORDER, WORKS } from "../../src/components/showcase/works";
@@ -49,82 +47,6 @@ interface PaintwiseMediaShape extends StillLifeShape {
   pieces: { canvas: { width: number; height: number }; original: string; objects: { id: string; src: string; box: number[]; depth: number }[] };
   stillLifes: { src: string; aspect: number }[];
   figure: { src: string; aspect: number };
-}
-
-// ---------------------------------------------------------------------------
-// The hero: the seam inside the name, on a tilted line
-
-for (const [w, h, seamX, u] of [
-  [1440, 900, 720, 0.62],
-  [390, 844, 195, 0.32],
-] as [number, number, number, number][]) {
-  const layout: SplitLayout = { w, h, u, seamX, gridY: 120, cellW: 8.4 * u, cellH: 16.1 * u };
-  const label = `seam ${w}×${h}`;
-  const [top, bottom] = [layout.gridY + (SEAM.span[0] + 40) * u, layout.gridY + (SEAM.span[1] + 40) * u];
-  const { paint, bits } = spans(layout);
-
-  check(`${label}: the line is straight, crosses the centre halfway down the name, and leans like "/"`, () => {
-    const centreY = layout.gridY + (TILT.centreY - -40) * u;
-    const slope = Math.tan((TILT.angle * Math.PI) / 180);
-    assert(near(lineAt(centreY, layout), 0, 1e-6), `off the centre by ${lineAt(centreY, layout)}`);
-    assert(top < centreY && centreY < bottom, "the crossing isn't inside the name");
-    for (const dy of [-200, -50, 30, 180]) {
-      assert(near(lineAt(centreY + dy, layout), -dy * slope, 1e-6), `not straight at ${dy}`);
-    }
-    assert(lineAt(top, layout) > 0 && lineAt(bottom, layout) < 0, "the top doesn't lean right");
-  });
-
-  check(`${label}: the seam's frame is turned with the line: x across it (paint side negative), y along it`, () => {
-    for (const y of [top, (top + bottom) / 2, bottom]) {
-      const [qx] = toSeam(lineAt(y, layout), y, layout);
-      assert(near(qx, 0, 1e-6), `the line is at x ${qx} in the frame`);
-      assert(toSeam(lineAt(y, layout) - 10, y, layout)[0] < 0 && toSeam(lineAt(y, layout) + 10, y, layout)[0] > 0, "the sides are the wrong way round");
-    }
-    // Square out of the line, paint heads left and up (y down), bits right and down.
-    const [, y0] = toSeam(0, 300, layout);
-    const [, y1] = toSeam(-100, 300, layout);
-    assert(y1 > y0, "a step left isn't a step down the frame (so square out of it isn't left and up)");
-    assert(paint[0] < paint[1] && bits[0] < bits[1], "empty spans");
-    assert(paint[1] > bits[1] && paint[0] > bits[0], "the paint's lanes should sit further down the frame than the bits'");
-  });
-
-  check(`${label}: the line runs past the name's ink at both ends, by the overhang`, () => {
-    const [start, end] = lineSpan(layout);
-    const [, inkTop] = toSeam(lineAt(top, layout), top, layout);
-    const [, inkBottom] = toSeam(lineAt(bottom, layout), bottom, layout);
-    const overhang = SEAM.line.overhang * u;
-    assert(near(inkTop - start, overhang, 1e-3) && near(end - inkBottom, overhang, 1e-3), `${start}–${end} against the ink's ${inkTop}–${inkBottom}`);
-  });
-
-  check(`${label}: ribbons come out of the line, only where the name is`, () => {
-    const streams = createStreamBuffers();
-    const slack = SEAM.bob * SEAM.radius[1] * u + 1e-3;
-    const furthest = SEAM.reach[1] * (1 + SEAM.float) * u + 1e-3;
-    for (let t = 0; t < 40; t += 0.37) {
-      const n = writeStreams(streams, t, SEAM.ribbons.full, layout);
-      for (let i = 0; i < n; i++) {
-        const [x, y, tail, front] = streams.a.subarray(i * 4, i * 4 + 4);
-        assert(y >= paint[0] - slack && y <= paint[1] + slack, `ribbon ${i} at ${y.toFixed(1)}, outside ${paint[0].toFixed(1)}–${paint[1].toFixed(1)} (t ${t.toFixed(2)})`);
-        assert(x === 0, `ribbon ${i} isn't rooted on the line`);
-        assert(tail <= front + 1e-3 && front <= furthest, `ribbon ${i}: tail ${tail}, front ${front}`);
-        assert(streams.b[i * 4] >= 0 && streams.b[i * 4 + 1] >= 0, `ribbon ${i} has a negative radius`);
-      }
-    }
-  });
-
-  check(`${label}: bits pop only on rows that cross the name, and never too many`, () => {
-    const pops = createPopBuffers();
-    const rows = bits.map((y) => Math.floor(y / layout.cellH));
-    for (let t = 0; t < 40; t += 0.29) {
-      writePops(pops, t, BITS.emitters.full, layout);
-      assert(pops.count > 0 && pops.count <= MAX_POPS, `${pops.count} pops at ${t.toFixed(2)}`);
-      for (let k = 0; k < pops.count; k++) {
-        const [row, age] = pops.p.subarray(k * 4, k * 4 + 2);
-        assert(row >= rows[0] && row <= rows[1], `row ${row}, outside ${rows[0]}–${rows[1]}`);
-        assert(age >= 0 && age <= BITS.life[1], `age ${age}`);
-      }
-    }
-  });
 }
 
 // ---------------------------------------------------------------------------

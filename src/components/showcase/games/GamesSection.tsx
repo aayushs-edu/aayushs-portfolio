@@ -11,8 +11,7 @@ import Handheld from "./Handheld";
  * Games: the game-jam games, each playable in place (its itch.io build) or,
  * for one that only downloads, watched, in a big handheld with the
  * cartridges fanned out above it. The arcade-button title sits over a sunlit
- * Earth horizon (EarthBackdrop). The old drifting controller inputs
- * (InputDrift) are kept, unused.
+ * Earth horizon (EarthBackdrop).
  */
 export default function GamesSection({ onOpen }: { onOpen: (slug: string) => void }) {
   const [selected, setSelected] = useState(0);

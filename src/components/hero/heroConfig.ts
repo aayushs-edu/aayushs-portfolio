@@ -308,7 +308,7 @@ export interface GalleryItem {
   year?: string;
   /** Medium for art, stack for code */
   detail: string;
-  /** Placard link: /paintings for art, the project's href for code */
+  /** Placard link: the paintings section for art, the project's href for code */
   href: string;
   external: boolean;
   width: number;
@@ -373,7 +373,7 @@ function buildItems(mode: Mode): GalleryItem[] {
     if (!gen) {
       throw new Error(`Hero: "${mode}/${item.slug}" is missing from gallery.generated.json. Run \`npm run hero:assets\`.`);
     }
-    const href = mode === "art" ? "/paintings" : (item.href ?? "/");
+    const href = mode === "art" ? "/#paintings" : (item.href ?? "/");
     return {
       mode,
       slug: item.slug,

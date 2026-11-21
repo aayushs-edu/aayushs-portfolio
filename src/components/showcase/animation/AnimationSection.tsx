@@ -10,7 +10,7 @@ import HandDrawnTitle from "./HandDrawnTitle";
 
 const FILMS = media.films.map((f) => ({ ...f, work: WORKS.find((w) => w.slug === f.slug)! }));
 const MODELS = media.models.map((m) => ({ ...m, work: WORKS.find((w) => w.slug === m.slug)! }));
-/** The storyboard stills, all from Wild West, named as the /animation page names them. */
+/** The storyboard stills, all from Wild West, named as the old /animation page named them. */
 const STILL_TITLES = ["Opening Shot", "Character Introduction", "Environment Design", "Action Sequence", "Action Sequence", "Action Sequence", "Cowboy Shot", "Final Blow"];
 const STILLS = media.stills.map((s, i) => ({ ...s, title: STILL_TITLES[i] ?? `Still ${i + 1}` }));
 /** Only Wild West has props (its models and stills). */

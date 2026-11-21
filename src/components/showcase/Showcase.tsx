@@ -2,10 +2,9 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import SparklesHero from "../hero/SparklesHero";
-import { useHeroTier } from "../hero/useHeroTier";
+import AnimationSection from "./animation/AnimationSection";
 import DetailPanel from "./DetailPanel";
 import GamesSection from "./games/GamesSection";
-import AnimationSection from "./animation/AnimationSection";
 import HackathonsSection from "./hackathons/HackathonsSection";
 import HandOff, { type HandOffItem } from "./HandOff";
 import PaintingsSection from "./paintings/PaintingsSection";
@@ -13,16 +12,9 @@ import PaintwiseSection from "./paintwise/PaintwiseSection";
 import css from "./Showcase.module.css";
 import media from "./stations/paintwise/paintwise.generated.json";
 import WorkDivider from "./WorkDivider";
-import WorkList, { workButtonId, type WorkListGroup } from "./WorkList";
-import { GROUP_ORDER, GROUP_TITLES, WORKS, type GroupId, type Work } from "./works";
+import { workButtonId, WORKS, type Work } from "./works";
 
 const BY_SLUG = new Map(WORKS.map((work) => [work.slug, work]));
-
-/** Every group has a section of its own now; any group without one would be a grid under them, in page order. */
-const OWN_SECTION = new Set<GroupId>(["paintwise", "hackathons", "paintings", "animation", "games"]);
-const GROUPS: WorkListGroup[] = GROUP_ORDER.filter((id) => !OWN_SECTION.has(id))
-  .map((id) => ({ title: GROUP_TITLES[id], works: WORKS.filter((w) => w.group === id) }))
-  .filter((g) => g.works.length > 0);
 
 const FIGURE_ID = "paintwise-figure";
 
@@ -49,12 +41,13 @@ function useScrollLock(locked: boolean) {
 
 /**
  * The one-page site: the hero (the first section; it scrolls away with the
- * page), then the work: the sections of their own, then a grid per group.
- * Every work's full story is one click away (`#work/<slug>`).
+ * page), then the work, a section per group. Every work's full story is one
+ * click away (`#work/<slug>`).
  */
 export default function Showcase() {
-  // Only "detected" (the client has mounted) is used for now: a #work link waits for it. The sparkles hero has no tiers.
-  const [, , detected] = useHeroTier();
+  // A #work link opens its work once the client has mounted.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   // ---- the detail view ---------------------------------------------------------
   const [openSlug, setOpenSlug] = useState<string | null>(null);
@@ -93,13 +86,13 @@ export default function Showcase() {
   // A #work/<slug> link opens that work.
   const linked = useRef(false);
   useEffect(() => {
-    if (!detected || linked.current) return;
+    if (!mounted || linked.current) return;
     linked.current = true;
     const slug = slugFromHash();
     if (!slug) return;
     returnTo.current = slug;
     setOpenSlug(slug);
-  }, [detected]);
+  }, [mounted]);
 
   // Closing returns focus to the work.
   const wasOpen = useRef(false);
@@ -130,7 +123,6 @@ export default function Showcase() {
 
   return (
     <div className={css.page}>
-      {/* Trial: the sparkles hero. The seam hero is <SplitHero tier={tier} onFail={demote} /> (take tier and demote from useHeroTier). */}
       <SparklesHero />
       <div className={css.work}>
         <WorkDivider target="paintwise" />
@@ -139,7 +131,6 @@ export default function Showcase() {
         <PaintingsSection />
         <GamesSection onOpen={openWork} />
         <AnimationSection />
-        {GROUPS.length > 0 && <WorkList groups={GROUPS} onOpen={openWork} />}
       </div>
       <DetailPanel work={openWorkObj} onClose={closeWork} />
       <HandOff item={handOff} onClose={closeFigure} />

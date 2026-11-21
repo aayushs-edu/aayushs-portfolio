@@ -7,7 +7,7 @@ import {
   useState,
   type CSSProperties,
 } from "react";
-import { workButtonId } from "../WorkList";
+import { workButtonId } from "../works";
 import { WORKS } from "../works";
 import {
   clampPan,

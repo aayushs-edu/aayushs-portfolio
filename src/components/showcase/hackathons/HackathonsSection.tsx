@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type PointerEvent, type Ref } from "react";
 import { ArrowUpRight, ChevronLeft, ChevronRight, Github, Play, X } from "lucide-react";
-import { workButtonId } from "../WorkList";
+import { workButtonId } from "../works";
 import { WORKS, type Work } from "../works";
 import RainingLetters from "./RainingLetters";
 import ScrambleTitle from "./ScrambleTitle";

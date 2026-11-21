@@ -47,7 +47,7 @@ export const WALL = {
   fade: { from: 0.6, to: 1.5, minScale: 0.86 },
 } as const;
 
-/** The portfolio's columns, top to bottom, as the /paintings page hung them. */
+/** The portfolio's columns, top to bottom, as the old /paintings page hung them. */
 export const PORTFOLIO_COLUMNS: string[][] = [
   ["snorkeling-hawaii", "snowboarding"],
   ["soccer-penalty", "childhood-toys", "taj-mahal"],
