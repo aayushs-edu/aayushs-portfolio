@@ -64,5 +64,6 @@ The page under the hero was redesigned on 2026-11-03: the 3D room was dropped fo
 ### Config notes
 
 - `next.config.ts` sends `Cache-Control: public, max-age=31536000, immutable` on all routes, but only in production. Before that fix, browsers cached dev chunks too, so a browser that visited before then may still show old JS: hard-reload (Cmd+Shift+R).
+- **Link previews:** `src/app/opengraph-image.jpg` and `twitter-image.jpg` (+ `.alt.txt`) are a 1200×630 screenshot of the hero with the turtle painting (Snorkeling Hawaii) finished. Next turns them into the `og:image` / `twitter:image` tags, and on Vercel it fills in the production URL itself. Without them, iMessage picked the first `<video>` on the page (VRShop's loop) as the preview.
 - Don't run `next build` while `next dev` is running: they share `.next` and the dev server breaks until it is restarted.
 - `types/` holds ambient declarations for `<model-viewer>` (Animation's models; `model-viewer-react.d.ts` declares it on `React.JSX`) and three.js (included via `typeRoots`). `three` is no longer a direct dependency; npm still installs it as `@google/model-viewer`'s peer, but nothing imports it.
