@@ -33,7 +33,7 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: "Aayush Sharma - Art × Code Portfolio",
+  title: "Aayush Sharma",
   description: "Portfolio showcasing art, animation, games, and creative coding",
 };
 
