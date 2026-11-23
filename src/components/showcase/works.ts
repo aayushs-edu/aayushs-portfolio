@@ -286,7 +286,7 @@ const MAYA = "Autodesk Maya · Arnold · Premiere Pro";
 const FILM_TEXT: Record<string, { title: string; year: string; story: string[] }> = {
   "wild-west": {
     title: "Wild West",
-    year: "2024",
+    year: "2025",
     story: ["A Wild West short: inside the saloon with its regulars, then out in the dusty street. Modelled, rigged and animated in Autodesk Maya, rendered with Arnold."],
   },
   "soccer-star": {

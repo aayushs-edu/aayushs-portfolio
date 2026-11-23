@@ -1,6 +1,6 @@
 // src/app/layout.tsx
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Kalam, Poppins } from "next/font/google";
+import { Geist, Geist_Mono, Kalam, Pixelify_Sans, Poppins, Silkscreen } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import Footer from "@/components/Footer";
 import "./globals.css";
@@ -32,6 +32,23 @@ const poppins = Poppins({
   display: "swap",
 });
 
+/** The Games section's pixel faces: Pixelify Sans for its titles and names, Silkscreen for its small labels. Below the fold, so not preloaded. */
+const pixelify = Pixelify_Sans({
+  weight: ["400", "700"],
+  variable: "--font-pixel",
+  subsets: ["latin"],
+  display: "swap",
+  preload: false,
+});
+
+const silkscreen = Silkscreen({
+  weight: ["400", "700"],
+  variable: "--font-pixel-small",
+  subsets: ["latin"],
+  display: "swap",
+  preload: false,
+});
+
 export const metadata: Metadata = {
   title: "Aayush Sharma",
   description: "Portfolio showcasing art, animation, games, and creative coding",
@@ -45,7 +62,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${kalam.variable} ${poppins.variable} antialiased dark`}
+        className={`${geistSans.variable} ${geistMono.variable} ${kalam.variable} ${poppins.variable} ${pixelify.variable} ${silkscreen.variable} antialiased dark`}
       >
         {children}
         <Analytics />

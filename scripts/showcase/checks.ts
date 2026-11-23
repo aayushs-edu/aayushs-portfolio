@@ -280,6 +280,19 @@ check("works: every work is in a group on the page, and slugs are unique", () =>
 
 // ---------------------------------------------------------------------------
 
+check("image sizes: every image listed has its smaller copies on disk, and every image still exists", () => {
+  const file = path.join(process.cwd(), "src/lib/image-sizes.generated.json");
+  assert(fs.existsSync(file), "src/lib/image-sizes.generated.json is missing (run node scripts/showcase/image-sizes.mjs)");
+  const sizes = JSON.parse(fs.readFileSync(file, "utf8")) as Record<string, { w: number; sizes: number[] }>;
+  for (const [src, { sizes: widths }] of Object.entries(sizes)) {
+    const disk = path.join(process.cwd(), "public", src);
+    assert(fs.existsSync(disk), `${src} is listed but gone (rerun image-sizes.mjs)`);
+    for (const w of widths) assert(fs.existsSync(disk.replace(/\.webp$/, `.w${w}.webp`)), `${src}: no ${w}px copy (rerun image-sizes.mjs)`);
+  }
+});
+
+// ---------------------------------------------------------------------------
+
 if (failures.length) {
   console.error(failures.join("\n"));
   console.error(`showcase:check: ${failures.length} failed, ${passed} passed`);

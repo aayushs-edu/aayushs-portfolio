@@ -1,4 +1,4 @@
-/* Games: a heading, then the handheld, over a sunlit Earth horizon. */
+/* Games, all pixel art: a heading, then the handheld, over a sunlit Earth horizon. */
 
 .section {
   position: relative;
@@ -27,18 +27,16 @@
 
 .title {
   margin: 0;
-  font-family: var(--font-poppins), sans-serif;
-  font-weight: 800;
-  font-size: clamp(40px, 7vw, 72px);
+  font-size: clamp(48px, 8vw, 88px);
   line-height: 1;
-  letter-spacing: -0.01em;
 }
 
 .pitch {
-  margin: 18px 0 0;
-  font-size: 17px;
-  line-height: 1.55;
-  color: rgb(236 228 212 / 0.62);
+  margin: 14px 0 0;
+  font-family: var(--font-pixel), monospace;
+  font-size: 20px;
+  line-height: 1.4;
+  color: rgb(236 228 212 / 0.66);
 }
 
 @media (max-width: 900px) {

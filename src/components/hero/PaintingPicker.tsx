@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Palette } from "lucide-react";
+import { responsive } from "@/lib/images";
 import { cn } from "@/lib/utils";
 
 interface PaintingPickerProps {
@@ -118,6 +119,7 @@ export default function PaintingPicker({
                   {/* eslint-disable-next-line @next/next/no-img-element -- the gallery's own pre-sized images */}
                   <img
                     src={p.src}
+                    {...responsive(p.src, "48px")}
                     alt=""
                     className="h-full w-full object-cover"
                     decoding="async"

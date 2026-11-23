@@ -7,6 +7,7 @@ import {
   useState,
   type CSSProperties,
 } from "react";
+import { responsive } from "@/lib/images";
 import { workButtonId } from "../works";
 import { WORKS } from "../works";
 import {
@@ -22,6 +23,8 @@ import PaintTitle from "./PaintTitle";
 import css from "./PaintingsSection.module.css";
 
 const PAINTINGS = WORKS.filter((w) => w.group === "paintings");
+/** How wide a painting shows on the wall, for its srcset. */
+const WALL_SIZES = "(min-width: 1600px) 360px, 300px";
 const BY_SLUG = new Map(PAINTINGS.map((w) => [w.slug, w]));
 const PLACED = layoutWall(
   PAINTINGS.map((w) => ({
@@ -375,6 +378,8 @@ export default function PaintingsSection() {
               {/* eslint-disable-next-line @next/next/no-img-element -- hashed, pre-sized assets from public/hero and public/showcase */}
               <img
                 src={w.media.image}
+                // A copy near its size on the wall; the full image once it's picked (the wall zooms in on it).
+                {...(selected === p.slug ? {} : responsive(w.media.image, WALL_SIZES))}
                 alt=""
                 draggable={false}
                 loading="lazy"
@@ -385,6 +390,7 @@ export default function PaintingsSection() {
                 <img
                   className={css.held}
                   src={w.media.held.src}
+                  {...(selected === p.slug ? {} : responsive(w.media.held.src, WALL_SIZES))}
                   alt=""
                   draggable={false}
                   loading="lazy"

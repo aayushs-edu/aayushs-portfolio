@@ -105,6 +105,11 @@
   animation-play-state: paused;
 }
 
+/* Lite mode (src/lib/perf.ts): the grain holds still; it repaints the whole screen as it dances. */
+:global(html[data-perf="lite"]) .grain {
+  animation: none;
+}
+
 .scratch {
   position: absolute;
   width: 1px;

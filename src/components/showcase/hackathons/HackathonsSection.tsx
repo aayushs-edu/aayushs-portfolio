@@ -54,7 +54,7 @@ const ENTRIES: Entry[] = [
     accent: "#ff7a1a",
     blurb: "Stories from marginalized communities, an Inequality Atlas, a themed forum, and LuminaLens, which drafts policy ideas with AI.",
     logo: { src: `${DIR}/lumina-logo.webp`, width: 647, height: 278, ground: "linear-gradient(180deg, #ffd3b8 0%, #ffe8da 55%, #fff8f2 100%)" },
-    demo: { kind: "site", url: "https://luminadev.netlify.app", still: `${DIR}/lumina.webp` },
+    demo: { kind: "site", url: "https://luminadev.netlify.app", still: `${DIR}/lumina-2.webp` },
   },
   {
     slug: "exovision",

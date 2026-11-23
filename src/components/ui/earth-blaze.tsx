@@ -29,9 +29,25 @@ export interface EarthBlazeProps {
   textureUrl?: string;
   /** Omit to follow the operating system preference. */
   reducedMotion?: boolean;
+  /** The most pixels the canvas draws (it's stretched to fill its box). Default 3,000,000. */
+  maxPixels?: number;
+  /** While nothing moves, a frame at most this often (ms). Default 32. */
+  idleFrameMs?: number;
+  /**
+   * Any frame at most this often (ms), moving or not. Default 0 (every frame).
+   * 12 holds it to 60 a second on 120 Hz screens and leaves 60 Hz alone.
+   */
+  minFrameMs?: number;
+  /**
+   * Pixel art: one canvas pixel per this many CSS px, upscaled with hard
+   * edges (overrides maxPixels). 0 (default) draws smooth.
+   */
+  pixelSize?: number;
+  /** With pixelSize: the colour levels (per channel, in gamma space) the scene is dithered down to. Default 7. */
+  colorLevels?: number;
 }
 
-type Options = Required<Pick<EarthBlazeProps, "starCount" | "galaxyBrightness" | "surfaceBrightness" | "illumination" | "auroraPreview" | "auroraEnabled" | "interactive" | "textureUrl">> & Pick<EarthBlazeProps, "reducedMotion"> & { auroraColor: Color; backgroundColor: Color };
+type Options = Required<Pick<EarthBlazeProps, "starCount" | "galaxyBrightness" | "surfaceBrightness" | "illumination" | "auroraPreview" | "auroraEnabled" | "interactive" | "textureUrl" | "maxPixels" | "idleFrameMs" | "minFrameMs" | "pixelSize" | "colorLevels">> & Pick<EarthBlazeProps, "reducedMotion"> & { auroraColor: Color; backgroundColor: Color };
 type Color = [number, number, number, number];
 type Uniforms = Record<string, WebGLUniformLocation | null>;
 type Geometry = { center: [number, number]; radius: number; low: number; high: number; rest: number };
@@ -48,7 +64,7 @@ function color(value?: string): Color {
 export function EarthBlaze({
   className, style, children, starCount = 1800, galaxyBrightness = 1,
   surfaceBrightness = 1, auroraColor, backgroundColor, illumination = 1, auroraPreview = false, auroraEnabled = true, interactive = true,
-  textureUrl = EARTH_TEXTURE, reducedMotion,
+  textureUrl = EARTH_TEXTURE, reducedMotion, maxPixels = 3000000, idleFrameMs = 32, minFrameMs = 0, pixelSize = 0, colorLevels = 7,
 }: EarthBlazeProps) {
   const canvas = React.useRef<HTMLCanvasElement>(null);
   const fallback = React.useRef<HTMLDivElement>(null);
@@ -57,7 +73,9 @@ export function EarthBlaze({
   const options = { starCount: Math.round(finite(starCount, 1800, 5400)),
     galaxyBrightness: finite(galaxyBrightness, 1, 3), surfaceBrightness: finite(surfaceBrightness, 1, 3),
     illumination: finite(illumination, 1, 3), auroraColor: color(auroraColor), backgroundColor: color(backgroundColor),
-    auroraPreview, auroraEnabled, interactive, textureUrl, reducedMotion };
+    auroraPreview, auroraEnabled, interactive, textureUrl, reducedMotion,
+    maxPixels: Math.max(10000, finite(maxPixels, 3000000, 3000000)), idleFrameMs: finite(idleFrameMs, 32, 1000), minFrameMs: finite(minFrameMs, 0, 1000),
+    pixelSize: finite(pixelSize, 0, 32), colorLevels: Math.max(2, finite(colorLevels, 7, 64)) };
   const latest = React.useRef(options);
   latest.current = options;
   React.useEffect(() => {
@@ -69,7 +87,7 @@ export function EarthBlaze({
   // The props, not the options object rebuilt each render, decide when to update.
   React.useEffect(() => { renderer.current?.update(options); },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [starCount, galaxyBrightness, surfaceBrightness, auroraColor, backgroundColor, illumination, auroraPreview, auroraEnabled, interactive, textureUrl, reducedMotion]);
+    [starCount, galaxyBrightness, surfaceBrightness, auroraColor, backgroundColor, illumination, auroraPreview, auroraEnabled, interactive, textureUrl, reducedMotion, maxPixels, idleFrameMs, minFrameMs, pixelSize, colorLevels]);
 
   return (
     <div data-earth-blaze="" className={className} style={{ position: "relative", isolation: "isolate", overflow: "hidden", width: "100%", aspectRatio: "16 / 10", background: "#000", ...style }}>
@@ -96,6 +114,7 @@ export function EarthBlaze({
   `;
   const fragment = `
     precision highp float;
+    uniform float levels;
     uniform vec2 resolution;
     uniform vec2 center;
     uniform float radius;
@@ -214,7 +233,17 @@ export function EarthBlaze({
       // One static sub-byte dither prevents bands without making black space noisy.
       float light = max(color.r, max(color.g, color.b));
       color += (grain(gl_FragCoord.xy) - .5) / 255. * smoothstep(.001, .015, light);
-      gl_FragColor = vec4(clamp(color, 0., 1.), 1.);
+      color = clamp(color, 0., 1.);
+      // Pixel art: down to a few levels in gamma space (the scene is dark), with a 4x4 ordered dither.
+      if (levels > 0.) {
+        vec2 a = floor(gl_FragCoord.xy);
+        vec2 b = floor(a * .5);
+        float bayer = fract(dot(b, vec2(.5, b.y * .75))) * .25 + fract(dot(a, vec2(.5, a.y * .75)));
+        color = sqrt(color);
+        color = floor(color * levels + bayer) / levels;
+        color *= color;
+      }
+      gl_FragColor = vec4(color, 1.);
     }
   `;
 
@@ -255,6 +284,7 @@ export function EarthBlaze({
 
   const starVertex = `
     precision highp float;
+    uniform float levels;
     attribute vec4 star;
     attribute float tail;
     uniform vec2 resolution;
@@ -271,6 +301,7 @@ export function EarthBlaze({
     varying float alpha;
     varying float sharp;
     varying vec2 location;
+    varying float size;
     mat2 rotate(float a) { return mat2(cos(a), -sin(a), sin(a), cos(a)); }
     void main() {
       vec2 p = star.xy * vec2(resolution.x / resolution.y, 1.);
@@ -288,6 +319,9 @@ export function EarthBlaze({
       gl_Position = vec4(p.x / (resolution.x / resolution.y) * 2. - 1., 1. - p.y * 2., 0., 1.);
       sharp = step(.988, star.w);
       gl_PointSize = mix(star.z, 20. + star.w * 8., sharp) * max(1., resolution.y / 900.);
+      // Pixel art: a dot of a pixel or two; the bright ones a smaller sparkle.
+      if (levels > 0.) gl_PointSize = sharp > .5 ? floor(5. + star.w * 3.) : max(1., floor(star.z * .55));
+      size = gl_PointSize;
       float twinkle = .82 + .18 * sin(clock * (.45 + star.w) + star.w * 123.);
       alpha = (.24 + star.w * .58 + sharp * .55) * twinkle;
       alpha *= tail < .5 ? 1. : charge * (1. - tail / 7.) * .19 * (1. - still);
@@ -298,15 +332,25 @@ export function EarthBlaze({
   `;
   const starFragment = `
     precision highp float;
+    uniform float levels;
     uniform vec2 center;
     uniform float radius;
     varying vec3 tint;
     varying float alpha;
     varying float sharp;
     varying vec2 location;
+    varying float size;
     void main() {
       float sky = smoothstep(.001, .004, length(location - center) - radius);
       vec2 p = gl_PointCoord - .5;
+      if (levels > 0.) {
+        // On the pixel grid: an ordinary star is solid; a bright one is a plus whose arms fade in steps.
+        vec2 q = abs(p) * size;
+        float arm = step(min(q.x, q.y), .5) * (1. - max(q.x, q.y) / (size * .5));
+        float v = mix(1., ceil(arm * 3.) / 3., sharp);
+        gl_FragColor = vec4(tint * v, step(.01, v) * min(1., alpha * .6) * step(.5, sky));
+        return;
+      }
       float r = length(p);
       float ordinary = exp(-r * r * 23.);
       float core = exp(-r * r * 2100.);
@@ -392,7 +436,7 @@ function createRenderer(canvas: HTMLCanvasElement, fallback: HTMLDivElement, ini
     clearResources(); state.ready = false;
     program = link(vertex, fragment);
     position = gl.getAttribLocation(program, "position");
-    uniforms = locations(program, ["resolution", "center", "radius", "angle", "reveal", "viewAngle", "earth", "cosmos", "clock", "charge", "pulse", "pulseAngle", "still", "drift", "galaxyBrightness", "surfaceBrightness", "auroraColor", "backgroundColor", "illumination", "auroraPreview"]);
+    uniforms = locations(program, ["resolution", "center", "radius", "angle", "reveal", "viewAngle", "earth", "cosmos", "clock", "charge", "pulse", "pulseAngle", "still", "drift", "galaxyBrightness", "surfaceBrightness", "auroraColor", "backgroundColor", "illumination", "auroraPreview", "levels"]);
     buffer = makeBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
@@ -413,7 +457,7 @@ function createRenderer(canvas: HTMLCanvasElement, fallback: HTMLDivElement, ini
     texture = makeTexture(); resetTexture();
     stars = link(starVertex, starFragment);
     starPosition = gl.getAttribLocation(stars, "star"); starTail = gl.getAttribLocation(stars, "tail");
-    starUniforms = locations(stars, ["resolution", "center", "radius", "angle", "clock", "charge", "pulse", "pulseAngle", "still", "drift"]);
+    starUniforms = locations(stars, ["resolution", "center", "radius", "angle", "clock", "charge", "pulse", "pulseAngle", "still", "drift", "levels"]);
     starBuffer = makeBuffer(); updateStars(); state.ready = true;
     canvas.hidden = false; canvas.style.visibility = "visible";
     if (image?.complete && image.naturalWidth) uploadTexture(image);
@@ -460,12 +504,22 @@ function createRenderer(canvas: HTMLCanvasElement, fallback: HTMLDivElement, ini
   }
   function resize() {
     if (state.lost || disposed) return;
-    const box = canvas.getBoundingClientRect();
+    // In pixel mode the canvas sizes itself to whole pixels, so the box it fills is its parent's.
+    const box = (options.pixelSize > 0 ? canvas.parentElement ?? canvas : canvas).getBoundingClientRect();
     if (!box.width || !box.height) { stop(); return; }
     const aspect = box.width / box.height;
     const maxSize = gl.getParameter(gl.MAX_RENDERBUFFER_SIZE);
-    const dpr = Math.min(devicePixelRatio || 1, 2, Math.sqrt(3000000 / (box.width * box.height)), maxSize / box.width, maxSize / box.height);
-    canvas.width = Math.max(1, Math.round(box.width * dpr)); canvas.height = Math.max(1, Math.round(box.height * dpr));
+    if (options.pixelSize > 0) {
+      // Whole pixels: the canvas is a whole number of them, drawn each exactly pixelSize CSS px (the box clips the rest).
+      const ps = options.pixelSize;
+      canvas.width = Math.max(1, Math.ceil(box.width / ps)); canvas.height = Math.max(1, Math.ceil(box.height / ps));
+      canvas.style.width = `${canvas.width * ps}px`; canvas.style.height = `${canvas.height * ps}px`;
+      canvas.style.imageRendering = "pixelated";
+    } else {
+      const dpr = Math.min(devicePixelRatio || 1, 2, Math.sqrt(options.maxPixels / (box.width * box.height)), maxSize / box.width, maxSize / box.height);
+      canvas.width = Math.max(1, Math.round(box.width * dpr)); canvas.height = Math.max(1, Math.round(box.height * dpr));
+      canvas.style.width = canvas.style.height = canvas.style.imageRendering = "";
+    }
     const p = [.15 * aspect, .91], q = [.88 * aspect, .015];
     const vx = q[0] - p[0], vy = q[1] - p[1], length = Math.hypot(vx, vy);
     const radius = Math.max(1.4, aspect), offset = Math.sqrt(radius * radius - length * length / 4);
@@ -490,13 +544,15 @@ function createRenderer(canvas: HTMLCanvasElement, fallback: HTMLDivElement, ini
     gl.uniform1f(u.radius, g.radius); gl.uniform1f(u.angle, state.angle);
     gl.uniform1f(u.clock, still() ? 0 : state.clock); gl.uniform1f(u.charge, state.charge);
     gl.uniform1f(u.pulse, still() ? -1 : state.pulse); gl.uniform1f(u.still, still() ? 1 : 0);
+    gl.uniform1f(u.levels, options.pixelSize > 0 ? options.colorLevels : 0);
     gl.uniform1f(u.pulseAngle, state.pulseAngle); gl.uniform2f(u.drift, still() ? 0 : state.drift[0], still() ? 0 : state.drift[1]);
   }
   function draw(now: number) {
     state.frame = 0;
     if (disposed || state.lost || !visible || document.hidden || !geometry) return;
     const moving = Math.abs(state.target - state.angle) > .0001 || Math.abs(state.targetReveal - state.reveal) > .001;
-    if (!moving && !state.holding && state.charge < .001 && state.pulse < 0 && state.last && now - state.last < 32 && !still()) { requestFrame(); return; }
+    if (!moving && !state.holding && state.charge < .001 && state.pulse < 0 && state.last && now - state.last < options.idleFrameMs && !still()) { requestFrame(); return; }
+    if (state.last && now - state.last < options.minFrameMs && !still()) { requestFrame(); return; }
     const dt = Math.min((now - (state.last || now - 16)) / 1000, .05);
     state.last = now; state.clock += dt;
     const movement = still() ? 1 : 1 - Math.exp(-dt / .24);
@@ -595,7 +651,7 @@ function createRenderer(canvas: HTMLCanvasElement, fallback: HTMLDivElement, ini
     visible = entries[0]?.isIntersecting ?? false;
     if (visible) { state.last = 0; requestFrame(); } else { state.holding = false; stop(); }
   });
-  resizeObserver.observe(canvas); intersection.observe(canvas);
+  resizeObserver.observe(canvas); if (canvas.parentElement) resizeObserver.observe(canvas.parentElement); intersection.observe(canvas);
   listen(window, "resize", resize);
   try { setup(); resize(); loadTexture(); } catch { fail(); }
   return {
@@ -606,6 +662,7 @@ function createRenderer(canvas: HTMLCanvasElement, fallback: HTMLDivElement, ini
       if (previous.reducedMotion !== options.reducedMotion) state.pulse = -1;
       if (previous.starCount !== options.starCount && state.ready && !state.lost) updateStars();
       if (previous.textureUrl !== options.textureUrl) loadTexture();
+      if (previous.maxPixels !== options.maxPixels || previous.pixelSize !== options.pixelSize) resize();
       state.last = 0; requestFrame();
     },
     dispose() {

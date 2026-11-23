@@ -326,8 +326,9 @@
   overflow: hidden;
 }
 
+/* The row (and the canvas over it) is only as wide as the stumps. */
 .makingHead,
-.stumps {
+.stumpRow {
   width: min(100% - 48px, calc(64svh * 16 / 9));
   margin-inline: auto;
 }
@@ -386,25 +387,43 @@
   transform: translateX(-50%);
 }
 
-.viewer {
+/* One canvas over the whole row draws every model into its slot (stumpScene.ts); it fades in once they're ready. */
+.stumpRow {
+  position: relative;
+}
+
+.stumps {
+  width: 100%;
+}
+
+.models {
   position: absolute;
   inset: 0;
-  display: block;
   width: 100%;
   height: 100%;
-  --poster-color: transparent;
-  background: transparent;
-  cursor: grab;
+  pointer-events: none;
   opacity: 0;
   transition: opacity 0.9s var(--ease);
 }
 
-.viewer:active {
+.models[data-ready="true"] {
+  opacity: 1;
+}
+
+/* The slot takes the drags (the canvas over it lets them through); the page still scrolls on touch. */
+.propStage {
+  cursor: grab;
+  touch-action: pan-y;
+  border-radius: 8px;
+}
+
+.propStage:active {
   cursor: grabbing;
 }
 
-.viewer[data-fitted="true"] {
-  opacity: 1;
+.propStage:focus-visible {
+  outline: 2px solid #ece4d4;
+  outline-offset: 4px;
 }
 
 .propLabel {
@@ -566,6 +585,10 @@
     margin-top: 64px;
   }
 
+  .stumpRow {
+    width: 100%;
+  }
+
   .stumps {
     align-items: end;
     margin-top: 8px;
@@ -593,14 +616,15 @@
 
 /* Without a mouse the models only turn on their own, so a swipe scrolls the row. */
 @media (hover: none) {
-  .viewer {
-    pointer-events: none;
+  .propStage {
+    touch-action: auto;
+    cursor: auto;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .making,
-  .viewer,
+  .models,
   .frame img,
   .glow,
   .head,

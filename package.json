@@ -9,12 +9,12 @@
     "lint": "next lint",
     "optimize:images": "node scripts/convert-images-to-webp.js",
     "analyze": "cross-env ANALYZE=true next build",
-    "hero:assets": "python3 scripts/hero/depth.py && node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/hero/build-hero-assets.mjs",
-    "showcase:assets": "python3 scripts/showcase/build-assets.py",
+    "hero:assets": "python3 scripts/hero/depth.py && node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/hero/build-hero-assets.mjs && npm run -s images:sizes",
+    "showcase:assets": "python3 scripts/showcase/build-assets.py && npm run -s images:sizes",
+    "images:sizes": "node scripts/showcase/image-sizes.mjs",
     "showcase:check": "node scripts/showcase/check.mjs"
   },
   "dependencies": {
-    "@google/model-viewer": "^4.1.0",
     "@next/third-parties": "15.1.6",
     "@vercel/analytics": "^1.6.1",
     "clsx": "^2.1.1",
@@ -23,7 +23,8 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "sharp": "^0.34.4",
-    "tailwind-merge": "^3.3.1"
+    "tailwind-merge": "^3.3.1",
+    "three": "^0.172.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
@@ -32,6 +33,7 @@
     "@types/node": "^20",
     "@types/react": "19.2.8",
     "@types/react-dom": "19.2.3",
+    "@types/three": "^0.172.0",
     "eslint": "^9",
     "eslint-config-next": "^15.1.6",
     "shiki": "^4.5.0",

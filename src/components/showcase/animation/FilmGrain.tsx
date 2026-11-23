@@ -8,7 +8,8 @@ import css from "./FilmGrain.module.css";
  * grain that dances, a flicker now and then, and once in a while a thin
  * scratch down the frame. It is held to the view (sticky) so its layer stays
  * the size of the screen, and it rests while the section is out of view.
- * With reduced motion the grain stands still and nothing flickers.
+ * With reduced motion the grain stands still and nothing flickers; in lite
+ * mode (src/lib/perf.ts) the grain stands still.
  */
 const TILE = 180;
 

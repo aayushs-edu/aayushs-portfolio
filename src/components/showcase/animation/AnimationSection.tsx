@@ -2,6 +2,9 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowUpRight, Play, X } from "lucide-react";
+import { responsive, sized } from "@/lib/images";
+import { usePerfLite } from "@/lib/perf";
+import type { StumpScene } from "./stumpScene";
 import media from "../stations/animation/animation.generated.json";
 import { WORKS } from "../works";
 import css from "./AnimationSection.module.css";
@@ -30,8 +33,6 @@ const GLOW_MS = 120;
  * camera is fitted to the model's bounding box so the feet land on the
  * stump's top and the footprint fills `fill` of that top.
  */
-const FOV = 30;
-const PITCH = 78;
 const STUMP_W = 0.7;
 const STAGE_TALL = 0.66;
 const PROP_ORDER = ["main-character", "saloon", "banana-gun"];
@@ -58,49 +59,6 @@ const PROPS = [...MODELS]
       stumpTop: stumpW * 0.8,
     };
   });
-type StumpFit = { feet: number; stumpTop: number; fill: number; aspect: number };
-
-type Vec = { x: number; y: number; z: number };
-type ModelViewerElement = HTMLElement & {
-  getDimensions(): Vec;
-  getBoundingBoxCenter(): Vec;
-  getFieldOfView(): number;
-  jumpCameraToGoal(): void;
-  cameraTarget: string;
-  cameraOrbit: string;
-  minCameraOrbit: string;
-  maxCameraOrbit: string;
-};
-
-/**
- * The camera for a model on its stump: the distance is the largest that
- * footprint, height and turning room ask for. `fovDeg` is the vertical field
- * of view model-viewer really uses (it widens FOV in viewers narrower than the
- * model).
- */
-function fitCamera(size: Vec, center: Vec, { feet, stumpTop, fill, aspect }: StumpFit, fovDeg: number) {
-  const t = Math.tan(((fovDeg / 2) * Math.PI) / 180);
-  const r = Math.hypot(size.x, size.z) / 2;
-  // At distance d a metre spans 1/(2·d·t) of the viewer's height.
-  const dFoot = r / (t * fill * stumpTop * aspect);
-  const dTall = size.y / (2 * t * 0.92 * feet);
-  const dTurn = r / (2 * t * 0.47 * aspect);
-  const d = Math.max(dFoot, dTall, dTurn);
-  // Aim above the feet, so they sit below the centre, at `feet`.
-  const aimY = center.y - size.y / 2 + (feet - 0.5) * 2 * d * t;
-  return { target: `${center.x}m ${aimY}m ${center.z}m`, orbit: `0deg ${PITCH}deg ${d}m`, d };
-}
-
-/** Loads <model-viewer> once, with the Draco decoder served from the site. */
-let modelViewer: Promise<unknown> | null = null;
-function loadModelViewer() {
-  if (!modelViewer) {
-    const w = window as unknown as { ModelViewerElement?: { dracoDecoderLocation?: string } };
-    w.ModelViewerElement = { ...w.ModelViewerElement, dracoDecoderLocation: "/draco/" };
-    modelViewer = import("@google/model-viewer");
-  }
-  return modelViewer;
-}
 
 /**
  * Animation: a theatre, under faint film grain and flicker (FilmGrain), its
@@ -117,13 +75,20 @@ export default function AnimationSection() {
   const screenRef = useRef<HTMLDivElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const glowRef = useRef<HTMLCanvasElement | null>(null);
+  const modelsRef = useRef<HTMLCanvasElement | null>(null);
+  const slotRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const sceneRef = useRef<StumpScene | null>(null);
+  const lite = usePerfLite();
+  const liteRef = useRef(lite);
+  liteRef.current = lite;
 
   const [filmIndex, setFilmIndex] = useState(0);
   const [full, setFull] = useState(false);
   const [inView, setInView] = useState(false);
   const [reduced, setReduced] = useState(false);
   const [near, setNear] = useState(false);
-  const [viewerReady, setViewerReady] = useState(false);
+  const [modelsLoading, setModelsLoading] = useState(false);
+  const [modelsReady, setModelsReady] = useState(false);
   /** Bumped to run the title card: when the screen first comes into view, then on each switch. */
   const [card, setCard] = useState(0);
 
@@ -154,16 +119,34 @@ export default function AnimationSection() {
     };
   }, []);
 
+  // The models load (and warm up) once Wild West's section nears, into one canvas over their stumps.
   useEffect(() => {
-    if (!near || !hasProps || viewerReady) return;
+    if (near && hasProps) setModelsLoading(true);
+  }, [near, hasProps]);
+
+  useEffect(() => {
+    const canvas = modelsRef.current;
+    if (!modelsLoading || !canvas) return;
     let live = true;
-    loadModelViewer()
-      .then(() => live && setViewerReady(true))
+    const specs = PROPS.map((m, i) => ({ glb: m.glb, fit: m, slot: slotRefs.current[i]! }));
+    import("./stumpScene")
+      .then(({ createStumpScene }) => createStumpScene(canvas, specs, { turning: !liteRef.current, onReady: () => live && setModelsReady(true) }))
+      .then((scene) => {
+        if (live) sceneRef.current = scene;
+        else scene.dispose();
+      })
       .catch(() => {});
     return () => {
       live = false;
+      sceneRef.current?.dispose();
+      sceneRef.current = null;
     };
-  }, [near, hasProps, viewerReady]);
+  }, [modelsLoading]);
+
+  // In lite mode the models stand still (a drag still turns them).
+  useEffect(() => {
+    sceneRef.current?.setTurning(!lite);
+  }, [lite]);
 
   useEffect(() => {
     if (inView) setCard((c) => c || 1);
@@ -195,7 +178,7 @@ export default function AnimationSection() {
   }, []);
 
   useEffect(() => {
-    drawPoster(film.poster);
+    drawPoster(sized(film.poster, 320));
     if (reduced || !inView) return;
     const id = window.setInterval(() => {
       const video = videoRef.current;
@@ -279,12 +262,21 @@ export default function AnimationSection() {
             <h3 className={css.makingTitle}>The Models</h3>
           </div>
 
+          <div className={css.stumpRow}>
           <ul className={css.stumps} style={{ "--cols": PROPS.map((m) => `minmax(0, ${m.span}fr)`).join(" ") } as React.CSSProperties}>
-            {PROPS.map((m) => (
+            {PROPS.map((m, i) => (
               <li key={m.slug} className={css.prop} style={{ "--span": m.span, "--aspect": m.aspect, "--stump-w": `${m.stumpW * 100}%` } as React.CSSProperties}>
-                <div className={css.propStage}>
+                {/* The slot its model is drawn into (by the canvas over the row); drag it, or use the arrow keys, to turn it. */}
+                <div
+                  ref={(el) => {
+                    slotRefs.current[i] = el;
+                  }}
+                  className={css.propStage}
+                  role="img"
+                  tabIndex={0}
+                  aria-label={`${m.work.title}, a 3D model from Wild West. Drag, or use the arrow keys, to turn it.`}
+                >
                   <Stump />
-                  {viewerReady && <StumpModel src={m.glb} alt={`${m.work.title}, a 3D model from Wild West`} fit={m} />}
                 </div>
                 <p className={css.propLabel}>
                   <strong>{m.work.title}</strong>
@@ -296,6 +288,8 @@ export default function AnimationSection() {
               </li>
             ))}
           </ul>
+          <canvas ref={modelsRef} className={css.models} data-ready={modelsReady} aria-hidden="true" />
+          </div>
 
           <div className={css.belt} data-moving={!reduced}>
             <div className={css.beltTrack}>
@@ -304,7 +298,7 @@ export default function AnimationSection() {
                   {STILLS.map((s, i) => (
                     <li key={s.src} className={css.frame}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={s.src} alt={copy === 0 ? `Shot ${i + 1}: ${s.title}` : ""} loading="lazy" />
+                      <img src={s.src} {...responsive(s.src, "240px")} alt={copy === 0 ? `Shot ${i + 1}: ${s.title}` : ""} loading="lazy" decoding="async" />
                     </li>
                   ))}
                 </ol>
@@ -317,72 +311,6 @@ export default function AnimationSection() {
   );
 }
 
-/** A model on its stump: invisible until loaded and fitted, then it fades in, turning slowly. */
-function StumpModel({ src, alt, fit: { feet, stumpTop, fill, aspect } }: { src: string; alt: string; fit: StumpFit }) {
-  const ref = useRef<HTMLElement | null>(null);
-  const [fitted, setFitted] = useState(false);
-
-  useEffect(() => {
-    const el = ref.current as ModelViewerElement | null;
-    if (!el) return;
-    let live = true;
-    const frame = () => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
-    const apply = (fovDeg: number) => {
-      const { target, orbit, d } = fitCamera(el.getDimensions(), el.getBoundingBoxCenter(), { feet, stumpTop, fill, aspect }, fovDeg);
-      // Only turning: the pitch and distance are held, so it stays standing on the stump.
-      el.minCameraOrbit = `auto ${PITCH}deg ${d}m`;
-      el.maxCameraOrbit = `auto ${PITCH}deg ${d}m`;
-      el.cameraTarget = target;
-      el.cameraOrbit = orbit;
-      el.jumpCameraToGoal();
-    };
-    // Fit at the nominal FOV, then refit at the one model-viewer settles on (twice: the aim moves its framing).
-    const fit = async () => {
-      let fov = FOV;
-      apply(fov);
-      for (let pass = 0; pass < 2; pass++) {
-        await frame();
-        if (!live) return;
-        const used = el.getFieldOfView();
-        if (Math.abs(used - fov) < 0.05) break;
-        fov = used;
-        apply(fov);
-      }
-      setFitted(true);
-    };
-    el.addEventListener("load", fit);
-    return () => {
-      live = false;
-      el.removeEventListener("load", fit);
-    };
-  }, [feet, stumpTop, fill, aspect]);
-
-  return (
-    <model-viewer
-      ref={ref}
-      className={css.viewer}
-      data-fitted={fitted ? "true" : "false"}
-      src={src}
-      alt={alt}
-      camera-controls
-      auto-rotate
-      auto-rotate-delay="0"
-      rotation-per-second="18deg"
-      field-of-view={`${FOV}deg`}
-      disable-zoom
-      disable-pan
-      disable-tap
-      touch-action="pan-y"
-      interaction-prompt="none"
-      shadow-intensity="1.1"
-      shadow-softness="0.7"
-      exposure="1.05"
-    >
-      {/* No loading bar: the model fades in once it's fitted. */}
-      <div slot="progress-bar" />
-    </model-viewer>
-  );
-}
 
 /**
  * A tree stump, drawn: bark sides with grooves and roots, the cut top with its

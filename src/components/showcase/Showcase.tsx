@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { startPerf } from "@/lib/perf";
 import SparklesHero from "../hero/SparklesHero";
 import AnimationSection from "./animation/AnimationSection";
 import DetailPanel from "./DetailPanel";
@@ -48,6 +49,9 @@ export default function Showcase() {
   // A #work link opens its work once the client has mounted.
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
+
+  // Watch whether this machine keeps up; on one that doesn't, the heaviest effects ease off (src/lib/perf.ts).
+  useEffect(() => startPerf(), []);
 
   // ---- the detail view ---------------------------------------------------------
   const [openSlug, setOpenSlug] = useState<string | null>(null);
@@ -129,7 +133,7 @@ export default function Showcase() {
         <PaintwiseSection storyId={workButtonId("paintwise")} figureId={FIGURE_ID} onStory={() => openWork("paintwise")} onFigure={openFigure} />
         <HackathonsSection onOpen={openWork} />
         <PaintingsSection />
-        <GamesSection onOpen={openWork} />
+        <GamesSection />
         <AnimationSection />
       </div>
       <DetailPanel work={openWorkObj} onClose={closeWork} />

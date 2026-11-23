@@ -1,0 +1,412 @@
+{
+ "/hero/art/childhood-toys/color.040f2098.webp": {
+  "w": 1024,
+  "sizes": [
+   320,
+   640
+  ]
+ },
+ "/hero/art/red-dead-redemption/color.12871ffa.webp": {
+  "w": 759,
+  "sizes": [
+   320
+  ]
+ },
+ "/hero/art/safari-kid/color.3420c957.webp": {
+  "w": 1024,
+  "sizes": [
+   320,
+   640
+  ]
+ },
+ "/hero/art/snorkeling-hawaii/color.454d1f8b.webp": {
+  "w": 1024,
+  "sizes": [
+   320,
+   640
+  ]
+ },
+ "/hero/art/snowboarding/color.0d24ff3a.webp": {
+  "w": 1024,
+  "sizes": [
+   320,
+   640
+  ]
+ },
+ "/hero/art/soccer-penalty/color.70a520bb.webp": {
+  "w": 1024,
+  "sizes": [
+   320,
+   640
+  ]
+ },
+ "/hero/art/taj-mahal/color.6db235fd.webp": {
+  "w": 1024,
+  "sizes": [
+   320,
+   640
+  ]
+ },
+ "/hero/code/biscuit-bandit/color.2a9a9d89.webp": {
+  "w": 499,
+  "sizes": [
+   320
+  ]
+ },
+ "/hero/code/bounce-back/color.e58abec5.webp": {
+  "w": 1024,
+  "sizes": [
+   320,
+   640
+  ]
+ },
+ "/hero/code/exovision/color.e32d4c28.webp": {
+  "w": 653,
+  "sizes": [
+   320
+  ]
+ },
+ "/hero/code/lumina/color.94b0061d.webp": {
+  "w": 508,
+  "sizes": [
+   320
+  ]
+ },
+ "/hero/code/medai/color.7daf9671.webp": {
+  "w": 796,
+  "sizes": [
+   320
+  ]
+ },
+ "/hero/code/stockapp/color.ff1dc376.webp": {
+  "w": 1024,
+  "sizes": [
+   320,
+   640
+  ]
+ },
+ "/images/biscuit-bandit-cover.webp": {
+  "w": 499,
+  "sizes": [
+   320
+  ]
+ },
+ "/images/bounce-back-cover.webp": {
+  "w": 1152,
+  "sizes": [
+   320,
+   640
+  ]
+ },
+ "/images/exosky-cover.webp": {
+  "w": 653,
+  "sizes": [
+   320
+  ]
+ },
+ "/images/skyball-cover.webp": {
+  "w": 495,
+  "sizes": [
+   320
+  ]
+ },
+ "/images/view0.webp": {
+  "w": 1280,
+  "sizes": [
+   320,
+   640,
+   960
+  ]
+ },
+ "/images/view1.webp": {
+  "w": 1920,
+  "sizes": [
+   320,
+   640,
+   960,
+   1440
+  ]
+ },
+ "/images/view2.webp": {
+  "w": 1920,
+  "sizes": [
+   320,
+   640,
+   960,
+   1440
+  ]
+ },
+ "/images/view3.webp": {
+  "w": 1920,
+  "sizes": [
+   320,
+   640,
+   960,
+   1440
+  ]
+ },
+ "/images/view4.webp": {
+  "w": 1920,
+  "sizes": [
+   320,
+   640,
+   960,
+   1440
+  ]
+ },
+ "/images/view5.webp": {
+  "w": 1920,
+  "sizes": [
+   320,
+   640,
+   960,
+   1440
+  ]
+ },
+ "/images/view6.webp": {
+  "w": 1920,
+  "sizes": [
+   320,
+   640,
+   960,
+   1440
+  ]
+ },
+ "/images/view7.webp": {
+  "w": 1920,
+  "sizes": [
+   320,
+   640,
+   960,
+   1440
+  ]
+ },
+ "/showcase/animation/films/sanctuary.608e91ea.webp": {
+  "w": 1280,
+  "sizes": [
+   320,
+   640,
+   960
+  ]
+ },
+ "/showcase/animation/films/soccer-star.10719051.webp": {
+  "w": 1280,
+  "sizes": [
+   320,
+   640,
+   960
+  ]
+ },
+ "/showcase/animation/films/wild-west.d83b9a1f.webp": {
+  "w": 1280,
+  "sizes": [
+   320,
+   640,
+   960
+  ]
+ },
+ "/showcase/paintings/asthma.92bc8d1b.webp": {
+  "w": 1277,
+  "sizes": [
+   320,
+   640,
+   960
+  ]
+ },
+ "/showcase/paintings/autumn-lake.2ba0390c.webp": {
+  "w": 1600,
+  "sizes": [
+   320,
+   640,
+   960
+  ]
+ },
+ "/showcase/paintings/country-path.73ce2b98.webp": {
+  "w": 1600,
+  "sizes": [
+   320,
+   640,
+   960
+  ]
+ },
+ "/showcase/paintings/covid.a1a09bf3.webp": {
+  "w": 1600,
+  "sizes": [
+   320,
+   640,
+   960
+  ]
+ },
+ "/showcase/paintings/forest-cottage.abd41e36.webp": {
+  "w": 1600,
+  "sizes": [
+   320,
+   640,
+   960
+  ]
+ },
+ "/showcase/paintings/golden-songbird.9f43c6ba.webp": {
+  "w": 1257,
+  "sizes": [
+   320,
+   640,
+   960
+  ]
+ },
+ "/showcase/paintings/held/asthma.d90d8672.webp": {
+  "w": 1050,
+  "sizes": [
+   320,
+   640
+  ]
+ },
+ "/showcase/paintings/held/covid.dafafbbb.webp": {
+  "w": 1050,
+  "sizes": [
+   320,
+   640
+  ]
+ },
+ "/showcase/paintings/held/red-dead-redemption.af8fa27b.webp": {
+  "w": 1067,
+  "sizes": [
+   320,
+   640
+  ]
+ },
+ "/showcase/paintings/hillside-house.cc73888c.webp": {
+  "w": 1600,
+  "sizes": [
+   320,
+   640,
+   960
+  ]
+ },
+ "/showcase/paintings/lone-boat.278f3a53.webp": {
+  "w": 1600,
+  "sizes": [
+   320,
+   640,
+   960
+  ]
+ },
+ "/showcase/paintings/river-bend.ea3e3456.webp": {
+  "w": 1600,
+  "sizes": [
+   320,
+   640,
+   960
+  ]
+ },
+ "/showcase/paintings/snowy-cabin.4207d1de.webp": {
+  "w": 1600,
+  "sizes": [
+   320,
+   640,
+   960
+  ]
+ },
+ "/showcase/paintwise/figure.e17b3d20.webp": {
+  "w": 4000,
+  "sizes": [
+   320,
+   640,
+   960,
+   1440
+  ]
+ },
+ "/showcase/paintwise/layers/blockin.b99e4e38.webp": {
+  "w": 1140,
+  "sizes": [
+   320,
+   640
+  ]
+ },
+ "/showcase/paintwise/layers/depth.cf46d42e.webp": {
+  "w": 760,
+  "sizes": [
+   320
+  ]
+ },
+ "/showcase/paintwise/layers/edges.8ff447fd.webp": {
+  "w": 760,
+  "sizes": [
+   320
+  ]
+ },
+ "/showcase/paintwise/layers/masks.2d8f95a1.webp": {
+  "w": 1140,
+  "sizes": [
+   320,
+   640
+  ]
+ },
+ "/showcase/paintwise/layers/original.849659e0.webp": {
+  "w": 760,
+  "sizes": [
+   320
+  ]
+ },
+ "/showcase/paintwise/layers/sketch.23dc8508.webp": {
+  "w": 760,
+  "sizes": [
+   320
+  ]
+ },
+ "/showcase/paintwise/objects/o04.d072fcac.webp": {
+  "w": 1140,
+  "sizes": [
+   320,
+   640
+  ]
+ },
+ "/showcase/paintwise/objects/o17.024d6925.webp": {
+  "w": 801,
+  "sizes": [
+   320,
+   640
+  ]
+ },
+ "/showcase/paintwise/objects/o24.8dc9df0d.webp": {
+  "w": 588,
+  "sizes": [
+   320
+  ]
+ },
+ "/showcase/paintwise/objects/o26.2a0b4253.webp": {
+  "w": 549,
+  "sizes": [
+   320
+  ]
+ },
+ "/showcase/paintwise/objects/o27.521e2ad9.webp": {
+  "w": 561,
+  "sizes": [
+   320
+  ]
+ },
+ "/showcase/paintwise/pieces/back.bec72569.webp": {
+  "w": 760,
+  "sizes": [
+   320
+  ]
+ },
+ "/showcase/paintwise/pieces/original.b9da7b48.webp": {
+  "w": 760,
+  "sizes": [
+   320
+  ]
+ },
+ "/showcase/paintwise/pieces/p02-top.88b5672b.webp": {
+  "w": 712,
+  "sizes": [
+   320
+  ]
+ },
+ "/showcase/paintwise/pieces/p02.81edba5b.webp": {
+  "w": 712,
+  "sizes": [
+   320
+  ]
+ }
+}

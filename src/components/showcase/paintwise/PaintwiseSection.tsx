@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { responsive } from "@/lib/images";
 import media from "../stations/paintwise/paintwise.generated.json";
 import PaintToBinary from "./PaintToBinary";
 import { FLOOR, LAYER_COPY, RIGS, STAGE, TAGS, VIEW_ITEMS, type Rig, type View } from "./explode";
@@ -103,7 +104,7 @@ function ExplodedView({ view }: { view: View }) {
                 }
               >
                 {/* eslint-disable-next-line @next/next/no-img-element -- hashed, pre-sized layers from public/showcase */}
-                <img src={item.src} alt="" loading="lazy" decoding="async" draggable={false} />
+                <img src={item.src} {...responsive(item.src, "(max-width: 860px) 45vw, 240px")} alt="" loading="lazy" decoding="async" draggable={false} />
                 {item.slab && ["top", "bottom", "left", "right"].map((face) => <span key={face} className={css.face} data-face={face} />)}
               </span>
             );
@@ -169,6 +170,7 @@ export default function PaintwiseSection({ storyId, figureId, onStory, onFigure 
             <img
               ref={figureRef}
               src={media.figure.src}
+              {...responsive(media.figure.src, "(max-width: 860px) 100vw, 680px")}
               alt="Figure 1: the Paintwise pipeline, from scene understanding to critique"
               loading="lazy"
               decoding="async"

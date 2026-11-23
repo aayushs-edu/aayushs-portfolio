@@ -4,10 +4,9 @@ import css from "./GameInfo.module.css";
 
 /**
  * A game's words, shared by the three layouts: its title, tagline, year and
- * jam (with any award), its story, and links out (itch.io, and its full
- * story in the detail view). Each layout frames it its own way.
+ * jam (with any award), its story, and its itch.io link.
  */
-export default function GameInfo({ game, onStory, paragraphs = 1, className }: { game: Game; onStory: (slug: string) => void; paragraphs?: number; className?: string }) {
+export default function GameInfo({ game, paragraphs = 1, className }: { game: Game; paragraphs?: number; className?: string }) {
   const { work } = game;
   return (
     <div className={`${css.info} ${className ?? ""}`}>
@@ -29,9 +28,6 @@ export default function GameInfo({ game, onStory, paragraphs = 1, className }: {
           itch.io
           <ArrowUpRight size={14} strokeWidth={2} aria-hidden="true" />
         </a>
-        <button type="button" onClick={() => onStory(game.slug)}>
-          Full story
-        </button>
       </p>
     </div>
   );

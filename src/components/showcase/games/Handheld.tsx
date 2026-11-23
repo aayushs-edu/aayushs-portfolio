@@ -1,11 +1,11 @@
 "use client";
 
 import { type CSSProperties } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import GameInfo from "./GameInfo";
 import GameScreen from "./GameScreen";
 import { screenAspect, type Game } from "./games";
 import css from "./Handheld.module.css";
+import PixelArt from "./PixelArt";
 import { useSwap } from "./useSwap";
 
 interface HandheldProps {
@@ -15,26 +15,30 @@ interface HandheldProps {
   playing: boolean;
   onPlay: () => void;
   onStop: () => void;
-  onStory: (slug: string) => void;
 }
 
 /**
  * The handheld. One big handheld (an original design) holds the
  * game: its cartridge sits in the slot on top, and the others fan out above
- * it, to the left. Its controls work: the d-pad's left and right and SELECT switch games,
- * A and START play, B stops. A switch pops the cartridge out and drops the
- * next one in, and the screen boots with the game's title. Its power light
- * takes the game's colour. Over it, the cartridges fan out on the left and
- * the game's words (its manual) sit on the right.
+ * it, to the left. It's pixel art, like the whole section: stepped corners,
+ * flat colours in hard bands, a pixel outline, pixel-font labels, the covers
+ * in pixels; only the game itself is drawn smooth. Its shell is the same charcoal for every game, and its screen takes
+ * the game's own shape at a fixed height. Its controls work: L and R, the
+ * d-pad's left and right, and SELECT switch games; A and START play; B stops.
+ * A switch pops the cartridge out and drops the next one in, and the screen
+ * boots with the game's title. Over it, the cartridges fan out on the left
+ * and the game's words (its manual) sit on the right.
  */
-export default function Handheld({ games, selected, onSelect, playing, onPlay, onStop, onStory }: HandheldProps) {
+export default function Handheld({ games, selected, onSelect, playing, onPlay, onStop }: HandheldProps) {
   const { shown, phase } = useSwap(selected, 420, 1000);
   const game = games[shown];
   const mid = (games.length - 1) / 2;
 
   const prompt = (
     <button type="button" className={css.prompt} onClick={onPlay}>
-      Press <span className={css.promptKey}>A</span> to {game.build ? "play" : "watch"}
+      <span className={css.promptChip}>
+        Press <span className={css.promptKey}>A</span> to {game.build ? "play" : "watch"}
+      </span>
     </button>
   );
 
@@ -60,7 +64,7 @@ export default function Handheld({ games, selected, onSelect, playing, onPlay, o
         <div className={css.manual}>
           {games.map((g, i) => (
             <div key={g.slug} className={css.page} data-on={i === shown} aria-hidden={i !== shown} inert={i !== shown}>
-              <GameInfo game={g} onStory={onStory} paragraphs={2} />
+              <GameInfo game={g} paragraphs={2} />
             </div>
           ))}
         </div>
@@ -70,29 +74,58 @@ export default function Handheld({ games, selected, onSelect, playing, onPlay, o
         <div className={css.slotCart} aria-hidden="true">
           <Cartridge src={game.work.media.image} title={game.work.title} />
         </div>
+        <button type="button" className={css.shoulder} data-side="l" onClick={() => onSelect(selected - 1)} aria-label="L: previous game">
+          L
+        </button>
+        <button type="button" className={css.shoulder} data-side="r" onClick={() => onSelect(selected + 1)} aria-label="R: next game">
+          R
+        </button>
+
+        <div className={css.case}>
+        {/* A pixel outline and a hard drop shadow, as layers of their own: the game's screen is never under a filter. */}
+        <span className={css.caseDrop} aria-hidden="true" />
+        <span className={css.caseEdge} aria-hidden="true" />
         <div className={css.body}>
           <div className={css.left}>
             <div className={css.dpad}>
               <span className={css.arm} data-dir="v" aria-hidden="true" />
               <span className={css.arm} data-dir="h" aria-hidden="true" />
-              <button type="button" className={css.dir} data-dir="left" onClick={() => onSelect(selected - 1)} aria-label="Previous game">
-                <ChevronLeft size={14} strokeWidth={2.5} aria-hidden="true" />
-              </button>
-              <button type="button" className={css.dir} data-dir="right" onClick={() => onSelect(selected + 1)} aria-label="Next game">
-                <ChevronRight size={14} strokeWidth={2.5} aria-hidden="true" />
-              </button>
+              <span className={css.notch} data-dir="up" aria-hidden="true" />
+              <span className={css.notch} data-dir="down" aria-hidden="true" />
+              <button type="button" className={css.dir} data-dir="left" onClick={() => onSelect(selected - 1)} aria-label="Previous game" />
+              <button type="button" className={css.dir} data-dir="right" onClick={() => onSelect(selected + 1)} aria-label="Next game" />
+            </div>
+            <span className={css.grille} aria-hidden="true" />
+          </div>
+
+          {/* The bezel hugs the game's own shape at a fixed height: no bars, and the handheld never changes height. */}
+          <div className={css.bezel} style={{ "--aspect": screenAspect(game) } as CSSProperties}>
+            <div className={css.glass}>
+              <GameScreen game={game} playing={playing} onPlay={onPlay} prompt={prompt} className={css.screen} />
+              <div className={css.boot} aria-hidden="true">
+                <span className={css.bootTitle}>{game.work.title}</span>
+              </div>
+              <span className={css.shine} aria-hidden="true" />
+            </div>
+            <div className={css.strip} aria-hidden="true">
+              <span className={css.power}>
+                <span className={css.led} />
+                Power
+              </span>
+              <span className={css.brand}>
+                AS <span>Pocket</span>
+              </span>
             </div>
           </div>
 
-          <div className={css.face}>
-            <div className={css.bezel}>
-              <span className={css.led} aria-hidden="true" />
-              <div className={css.glass}>
-                <GameScreen game={game} playing={playing} onPlay={onPlay} prompt={prompt} className={css.screen} style={{ aspectRatio: screenAspect(game) }} />
-                <div className={css.boot} aria-hidden="true">
-                  <span className={css.bootTitle}>{game.work.title}</span>
-                </div>
-              </div>
+          <div className={css.right}>
+            <div className={css.faceButtons}>
+              <button type="button" className={css.round} data-key="b" onClick={onStop} disabled={!playing} aria-label="B: stop">
+                B
+              </button>
+              <button type="button" className={css.round} data-key="a" onClick={onPlay} disabled={playing} aria-label={game.build ? "A: play" : "A: watch"}>
+                A
+              </button>
             </div>
             <div className={css.pills}>
               <button type="button" className={css.pill} onClick={() => onSelect(selected + 1)}>
@@ -105,34 +138,19 @@ export default function Handheld({ games, selected, onSelect, playing, onPlay, o
               </button>
             </div>
           </div>
-
-          <div className={css.right}>
-            <div className={css.faceButtons}>
-              <button type="button" className={css.round} data-key="b" onClick={onStop} disabled={!playing} aria-label="B: stop">
-                <span className={css.roundCap} aria-hidden="true" />
-                <span className={css.roundLabel}>B</span>
-              </button>
-              <button type="button" className={css.round} data-key="a" onClick={onPlay} disabled={playing} aria-label={game.build ? "A: play" : "A: watch"}>
-                <span className={css.roundCap} aria-hidden="true" />
-                <span className={css.roundLabel}>A</span>
-              </button>
-            </div>
-            <span className={css.grille} aria-hidden="true" />
-          </div>
+        </div>
         </div>
       </div>
-
     </div>
   );
 }
 
-/** A cartridge: a notched shell, the cover art on its label, grip ridges at the foot. */
+/** A cartridge: a notched shell, the cover art on its label in pixels, grip ridges at the foot. */
 function Cartridge({ src, title }: { src: string; title: string }) {
   return (
     <span className={css.shell}>
       <span className={css.label}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={src} alt="" loading="lazy" />
+        <PixelArt src={src} cols={46} rows={37} className={css.labelArt} />
         <span className={css.labelTitle}>{title}</span>
       </span>
       <span className={css.ridges} aria-hidden="true" />
