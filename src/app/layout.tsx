@@ -32,13 +32,12 @@ const poppins = Poppins({
   display: "swap",
 });
 
-/** The Games section's pixel faces: Pixelify Sans for its titles and names, Silkscreen for its small labels. Below the fold, so not preloaded. */
+/** The Games section's pixel faces: Pixelify Sans for its titles and names, Silkscreen for its small labels. Preloaded (they're small), so a fast scroll never sees Games' text switch fonts. */
 const pixelify = Pixelify_Sans({
   weight: ["400", "700"],
   variable: "--font-pixel",
   subsets: ["latin"],
   display: "swap",
-  preload: false,
 });
 
 const silkscreen = Silkscreen({
@@ -46,7 +45,6 @@ const silkscreen = Silkscreen({
   variable: "--font-pixel-small",
   subsets: ["latin"],
   display: "swap",
-  preload: false,
 });
 
 export const metadata: Metadata = {

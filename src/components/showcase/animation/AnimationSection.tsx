@@ -10,6 +10,7 @@ import { WORKS } from "../works";
 import css from "./AnimationSection.module.css";
 import FilmGrain from "./FilmGrain";
 import HandDrawnTitle from "./HandDrawnTitle";
+import { prefetchModels } from "./modelPrefetch";
 
 const FILMS = media.films.map((f) => ({ ...f, work: WORKS.find((w) => w.slug === f.slug)! }));
 const MODELS = media.models.map((m) => ({ ...m, work: WORKS.find((w) => w.slug === m.slug)! }));
@@ -103,21 +104,40 @@ export default function AnimationSection() {
     return () => motion.removeEventListener("change", sync);
   }, []);
 
-  // The loop plays only while the screen is in view; the models load as the section nears.
+  // The loop plays only while the screen is in view; the models warm up once their row is within a screen and a half.
   useEffect(() => {
     const screen = screenRef.current;
     const section = sectionRef.current;
     if (!screen || !section) return;
     // A busy page can deliver several entries at once (say, the first "out" and a fast scroll's "in"): the last is current.
     const seen = new IntersectionObserver((es) => setInView(es[es.length - 1].isIntersecting), { threshold: 0.25 });
-    const nearing = new IntersectionObserver((es) => es[es.length - 1].isIntersecting && setNear(true), { rootMargin: "800px 0px" });
+    const nearing = new IntersectionObserver((es) => es[es.length - 1].isIntersecting && setNear(true), { rootMargin: "150% 0px" });
     seen.observe(screen);
-    nearing.observe(section);
+    // The models' own row, not the section's top.
+    nearing.observe(modelsRef.current ?? section);
     return () => {
       seen.disconnect();
       nearing.disconnect();
     };
   }, []);
+
+  // Their files download in the background once the page is idle after loading.
+  useEffect(() => {
+    if (!hasProps) return;
+    const saveData = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData;
+    if (saveData) return;
+    let id = 0;
+    const go = () => {
+      id = typeof requestIdleCallback === "function" ? requestIdleCallback(() => prefetchModels(PROPS.map((m) => m.glb)), { timeout: 5000 }) : window.setTimeout(() => prefetchModels(PROPS.map((m) => m.glb)), 3000);
+    };
+    if (document.readyState === "complete") go();
+    else window.addEventListener("load", go, { once: true });
+    return () => {
+      window.removeEventListener("load", go);
+      if (typeof cancelIdleCallback === "function") cancelIdleCallback(id);
+      clearTimeout(id);
+    };
+  }, [hasProps]);
 
   // The models load (and warm up) once Wild West's section nears, into one canvas over their stumps.
   useEffect(() => {

@@ -5,13 +5,59 @@
   isolation: isolate;
   padding: 96px 0 80px;
   color: #fff;
-  overflow-x: clip;
+  /* Both ways: the map and its glints are taller than the section. */
+  overflow: clip;
+}
+
+/* The overworld map: one small image, scaled up with hard edges, scrolling with the page. A plain
+   background on purpose: no canvas, no sticky, nothing the GPU has to keep as a layer, so the
+   content over it is painted with the page (a canvas here made the browser lift the whole section
+   into layers, and fast scrolls showed it half painted). Faded in and out at the section's ends
+   by bands of the page's ground laid over it. */
+.map {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: var(--map) center top / var(--map-w) var(--map-h) no-repeat;
+  image-rendering: pixelated;
+}
+
+.map::before,
+.map::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 320px;
+}
+
+.map::before {
+  top: 0;
+  background: linear-gradient(#0d0d0d, rgb(13 13 13 / 0));
+}
+
+.map::after {
+  bottom: 0;
+  background: linear-gradient(rgb(13 13 13 / 0), #0d0d0d);
 }
 
 /* Everything sits over the backdrop. */
 .section > :not(:first-child) {
   position: relative;
   z-index: 1;
+}
+
+/* The water's glints (MapGlints): a canvas laid exactly over the map, but above the content, so it
+   never makes the content GPU layers. It draws only where nothing covers the water. */
+.section > .glints {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  z-index: 3;
+  translate: -50% 0;
+  pointer-events: none;
+  image-rendering: pixelated;
 }
 
 .section ::selection {

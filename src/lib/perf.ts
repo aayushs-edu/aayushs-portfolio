@@ -5,8 +5,8 @@ import { useSyncExternalStore } from "react";
 /**
  * The page's performance level: "full" everywhere it can keep up, "lite" on
  * machines that can't (weak GPU or CPU, little memory). In lite the heaviest
- * effects ease off (the models stop turning on their own, Earth Blaze draws
- * fewer pixels, the film grain holds still) so the page stays smooth.
+ * effects ease off (the models stop turning on their own, the film grain holds
+ * still) so the page stays smooth.
  *
  * It starts from what the browser says about the machine, then watches the
  * frame rate: if frames stay slow for a couple of seconds, it drops to lite.

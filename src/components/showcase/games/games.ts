@@ -37,7 +37,7 @@ const RAW: Omit<Game, "work">[] = [
     award: "Top 10",
     build: { src: "https://itch.io/embed-upload/15923378?color=000000", width: 960, height: 600 },
     shots: ["/images/skyball-1.webp", "/images/skyball-2.webp", "/images/skyball-cover.webp"],
-    accent: "#1ad0f2",
+    accent: "#3bc4e0",
     input: "Mouse recommended",
   },
   {
@@ -47,7 +47,7 @@ const RAW: Omit<Game, "work">[] = [
     award: "Top 20%",
     build: { src: "https://itch.io/embed-upload/14547530?color=000000", width: 960, height: 600, fill: true },
     shots: ["/images/bounce-back-1.webp", "/images/bounce-back-2.webp", "/images/bounce-back-3.webp"],
-    accent: "#f0643c",
+    accent: "#eb9854",
   },
   {
     slug: "reign-or-ruin",
@@ -56,7 +56,7 @@ const RAW: Omit<Game, "work">[] = [
     award: "$50 prize · special mention",
     build: { src: "https://itch.io/embed-upload/14596305?color=000000", width: 1920, height: 1080 },
     shots: ["/images/reign-or-ruin-1.webp", "/images/reign-or-ruin-2.webp", "/images/reign-or-ruin-3.webp"],
-    accent: "#d0582c",
+    accent: "#d56e49",
   },
   {
     slug: "biscuit-bandit",
@@ -64,7 +64,7 @@ const RAW: Omit<Game, "work">[] = [
     jam: "Brackeys Game Jam 2025.2",
     build: { src: "https://itch.io/embed-upload/14825022?color=000000", width: 960, height: 600 },
     shots: ["/images/biscuit-bandit-cover.webp"],
-    accent: "#e2a63c",
+    accent: "#deaf56",
   },
   {
     slug: "murphys-rocket",
@@ -72,7 +72,7 @@ const RAW: Omit<Game, "work">[] = [
     jam: "Brackeys Game Jam 2025.1",
     video: "JSxPAp4jn3Y",
     shots: ["/images/murphys-rocket-1.webp", "/images/murphys-rocket-2.webp", "/images/murphys-rocket-3.webp", "/images/murphys-rocket-4.webp"],
-    accent: "#8fa6bd",
+    accent: "#89afd6",
   },
 ];
 

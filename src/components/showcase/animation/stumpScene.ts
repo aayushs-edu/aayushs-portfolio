@@ -16,6 +16,7 @@ import {
 } from "three";
 import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { modelBytes } from "./modelPrefetch";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 
 /**
@@ -28,8 +29,12 @@ import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment
  * three.js stays out of the page's main bundle. As soon as they've loaded,
  * before the row scrolls into view, each model is warmed up in turn (parsed,
  * its shaders compiled, drawn once so its textures are on the GPU), a step at
- * a time while the browser is idle: so neither the scroll on the way nor the
- * models' first sight stalls.
+ * a time, each only once the page has stopped scrolling and the browser is
+ * idle (calm(); no waiting once the row is on screen). Its files are fetched
+ * ahead (modelPrefetch.ts). A step can hold the main thread for a while (on a weak GPU
+ * over a second), and while it does the browser can't paint what scrolls in:
+ * fast scrolls showed the Games handheld half drawn. If you're still
+ * scrolling when you arrive, the models fade in a moment later instead.
  */
 
 /** How a model stands in its slot (see AnimationSection's PROPS). */
@@ -90,6 +95,28 @@ function shadowTexture() {
 /** The next moment the browser is idle (or soon, where it can't say). */
 const idle = () => new Promise<void>((done) => ("requestIdleCallback" in window ? requestIdleCallback(() => done(), { timeout: 1000 }) : setTimeout(done, 40)));
 
+/**
+ * While the models are off screen, how long the page must have been still before a heavy step runs
+ * (ms): a step can't be interrupted (the GPU calls in it wait), so it shouldn't start mid-scroll.
+ * Once they're on screen there's no waiting: you're there, looking for them.
+ */
+const QUIET_MS = 500;
+// Count from when this module loads (it may load mid-scroll), not from 0, which let the first step
+// run at once.
+let lastScroll = typeof performance !== "undefined" ? performance.now() : 0;
+if (typeof window !== "undefined") document.addEventListener("scroll", () => (lastScroll = performance.now()), { capture: true, passive: true });
+
+/** The next idle moment after the page has stopped scrolling for QUIET_MS; or just the next idle moment once `onScreen`. */
+async function calm(onScreen: () => boolean) {
+  for (;;) {
+    if (onScreen()) return idle();
+    const wait = QUIET_MS - (performance.now() - lastScroll);
+    if (wait > 0) await new Promise((done) => setTimeout(done, wait));
+    await idle();
+    if (performance.now() - lastScroll >= QUIET_MS) return;
+  }
+}
+
 type Prop = {
   slot: HTMLElement;
   scene: Scene;
@@ -111,6 +138,15 @@ export async function createStumpScene(
   { turning, onReady }: { turning: boolean; onReady: () => void },
 ): Promise<StumpScene> {
   const dpr = () => Math.min(window.devicePixelRatio || 1, MAX_DPR);
+  // The files first (usually prefetched already): downloading never holds up the page.
+  const files = specs.map(({ glb }) => modelBytes(glb));
+  const onScreen = () => {
+    const r = canvas.getBoundingClientRect();
+    return r.bottom > 0 && r.top < window.innerHeight;
+  };
+  const ready = () => calm(onScreen);
+  // Making the WebGL context is itself a heavy step.
+  await ready();
   const renderer = new WebGLRenderer({
     canvas,
     alpha: true,
@@ -122,7 +158,10 @@ export async function createStumpScene(
   renderer.toneMapping = NeutralToneMapping;
   renderer.toneMappingExposure = EXPOSURE;
   renderer.autoClear = false;
+  // No reading back each shader's log after it compiles: that forces the compile to finish there and then.
+  renderer.debug.checkShaderErrors = false;
 
+  await ready();
   const pmrem = new PMREMGenerator(renderer);
   const environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
   pmrem.dispose();
@@ -171,21 +210,27 @@ export async function createStumpScene(
   };
 
   // Fetched together; parsed one at a time, each when the browser is idle.
-  const files = specs.map(({ glb }) => fetch(glb).then((r) => r.arrayBuffer()));
   const props: Prop[] = [];
   for (const [i, { fit, slot }] of specs.entries()) {
     const data = await files[i];
-    await idle();
+    await ready();
     props.push(stage((await loader.parseAsync(data, "")).scene, fit, slot));
   }
   draco.dispose();
 
   // ---- drawing ---------------------------------------------------------------------
 
+  // Only when the size really changed: setSize reallocates the drawing buffer and waits on the GPU.
+  let sized = "";
   const resize = () => {
     const box = canvas.getBoundingClientRect();
+    const w = Math.max(1, Math.round(box.width));
+    const h = Math.max(1, Math.round(box.height));
+    const key = `${w}x${h}@${dpr()}`;
+    if (key === sized) return;
+    sized = key;
     renderer.setPixelRatio(dpr());
-    renderer.setSize(Math.max(1, Math.round(box.width)), Math.max(1, Math.round(box.height)), false);
+    renderer.setSize(w, h, false);
     dirty = true;
     request();
   };
@@ -299,13 +344,14 @@ export async function createStumpScene(
   });
   seen.observe(canvas);
 
-  // Warm up before it's seen, a model at a time while idle: compile its shaders, then draw it once (its textures go up).
-  resize();
+  // Warm up before it's seen, a model at a time while calm: compile its shaders, then draw it once (its textures go up).
+  await ready();
+  if (!disposed) resize();
   for (const p of props) {
-    await idle();
+    await ready();
     if (disposed) break;
     await renderer.compileAsync(p.scene, p.camera);
-    await idle();
+    await ready();
     if (disposed) break;
     drawProps([p]);
   }

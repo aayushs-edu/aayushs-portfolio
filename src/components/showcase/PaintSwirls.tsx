@@ -85,27 +85,37 @@ const UNIT_OF_HEIGHT = 1 / 1.4;
  * whatever it sits under). It draws only while on screen; with reduced motion
  * it's one still frame; without WebGL2 there's nothing (it's decoration).
  * `masked` fades it out at its top and bottom; `unit` is CSS px to a swirl.
+ *
+ * `frozen` paints one still frame as the background image of a plain element,
+ * drawn on a canvas that's never in the page. Use it under content: a canvas
+ * in the page is a GPU layer, so everything drawn over it becomes layers too
+ * (under the paintings wall that was every painting and the vignette, and fast
+ * scrolls showed them arriving as black rectangles).
  */
 export default function PaintSwirls({
   className,
   masked = true,
   strength = STRENGTH,
   unit,
+  frozen = false,
 }: {
   className?: string;
   masked?: boolean;
   strength?: number;
   unit?: number;
+  frozen?: boolean;
 }) {
-  const ref = useRef<HTMLCanvasElement | null>(null);
+  const ref = useRef<HTMLCanvasElement | HTMLDivElement | null>(null);
 
   useEffect(() => {
-    const canvas = ref.current;
-    if (!canvas) return;
+    const box = ref.current;
+    if (!box) return;
+    const canvas = frozen ? document.createElement("canvas") : (box as HTMLCanvasElement);
     const gl = canvas.getContext("webgl2", {
       alpha: true,
       premultipliedAlpha: true,
       antialias: false,
+      preserveDrawingBuffer: frozen,
     });
     if (!gl) return;
     const compile = (type: number, src: string) => {
@@ -134,7 +144,7 @@ export default function PaintSwirls({
     const uTime = gl.getUniformLocation(program, "uTime");
     const uUnit = gl.getUniformLocation(program, "uUnit");
 
-    const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const still = frozen || window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const start = performance.now();
     let raf = 0;
     let last = 0;
@@ -153,36 +163,49 @@ export default function PaintSwirls({
       last = now;
       draw(now);
     };
+    // Frozen: the frame becomes the element's background image.
+    let url = "";
+    let live = true;
+    const show = () =>
+      canvas.toBlob((blob) => {
+        if (!live || !blob) return;
+        URL.revokeObjectURL(url);
+        url = URL.createObjectURL(blob);
+        box.style.backgroundImage = `url(${url})`;
+      });
+    let size = "";
     const resize = () => {
-      const { width, height } = canvas.getBoundingClientRect();
-      canvas.width = Math.max(1, Math.round(width * RES));
-      canvas.height = Math.max(1, Math.round(height * RES));
+      const { width, height } = box.getBoundingClientRect();
+      const w = Math.max(1, Math.round(width * RES));
+      const h = Math.max(1, Math.round(height * RES));
+      if (`${w}x${h}` === size) return;
+      size = `${w}x${h}`;
+      canvas.width = w;
+      canvas.height = h;
       draw(performance.now());
+      if (frozen) show();
     };
     const sizer = new ResizeObserver(resize);
-    sizer.observe(canvas);
+    sizer.observe(box);
     resize();
     const seen = new IntersectionObserver(([e]) => {
       visible = e.isIntersecting;
       if (visible && !raf && !still) raf = requestAnimationFrame(frame);
     });
-    seen.observe(canvas);
+    seen.observe(box);
 
     return () => {
+      live = false;
       cancelAnimationFrame(raf);
       sizer.disconnect();
       seen.disconnect();
       gl.deleteProgram(program);
       gl.deleteVertexArray(vao);
+      URL.revokeObjectURL(url);
+      if (frozen) gl.getExtension("WEBGL_lose_context")?.loseContext();
     };
-  }, [strength, unit]);
+  }, [strength, unit, frozen]);
 
-  return (
-    <canvas
-      ref={ref}
-      className={`${css.swirls} ${className ?? ""}`}
-      data-masked={masked}
-      aria-hidden="true"
-    />
-  );
+  const shared = { className: `${css.swirls} ${className ?? ""}`, "data-masked": masked, "aria-hidden": true } as const;
+  return frozen ? <div ref={ref as React.RefObject<HTMLDivElement>} data-frozen="true" {...shared} /> : <canvas ref={ref as React.RefObject<HTMLCanvasElement>} {...shared} />;
 }

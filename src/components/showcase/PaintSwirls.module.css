@@ -9,3 +9,8 @@
   mask-image: linear-gradient(to bottom, transparent, rgb(0 0 0 / 0.35) 25%, #000 50%, rgb(0 0 0 / 0.35) 78%, transparent);
   -webkit-mask-image: linear-gradient(to bottom, transparent, rgb(0 0 0 / 0.35) 25%, #000 50%, rgb(0 0 0 / 0.35) 78%, transparent);
 }
+
+/* Frozen: one still frame, stretched over the element (it's soft anyway). */
+.swirls[data-frozen="true"] {
+  background-size: 100% 100%;
+}

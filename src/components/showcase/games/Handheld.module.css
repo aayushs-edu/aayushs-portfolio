@@ -238,8 +238,9 @@
 .device {
   /* The plastic: one dark charcoal whatever the game, in three flat shades. */
   --tint: #2a2c33;
-  /* The A button and the power light: the same on every game (the Paintwise purple, like the favicon). */
-  --key: #8a6cff;
+  /* The A button and the power light: the same on every game. A warm coral, the complement of the
+     cool map behind (and of the same family as the games' colours). */
+  --key: #dc5e59;
   --tint-hi: color-mix(in oklab, var(--tint), #fff 14%);
   --tint-lo: color-mix(in oklab, var(--tint), #000 36%);
   /* Sizes the screen is worked out from. */
@@ -646,16 +647,22 @@
   text-transform: uppercase;
 }
 
-/* Between cartridges the screen goes dark, then boots with the title. */
+/* Between cartridges the screen goes dark, then boots with the title. Out of the page the rest of
+   the time (an invisible overlay is still painted, and over the blinking prompt it was a GPU layer). */
 .boot {
   position: absolute;
   inset: 0;
   z-index: 2;
-  display: grid;
+  display: none;
   place-items: center;
   background: color-mix(in oklab, var(--accent) 16%, #050505);
   opacity: 0;
   pointer-events: none;
+}
+
+.device[data-phase="out"] .boot,
+.device[data-phase="in"] .boot {
+  display: grid;
 }
 
 .device[data-phase="out"] .boot {

@@ -5,7 +5,7 @@ import css from "./PixelTitle.module.css";
 
 /**
  * The Games title as pixel art: a pixel face standing on a stepped block
- * shadow in the coral of the background's glow (fixed, whatever the game). The
+ * shadow in grass green (fixed, whatever the game). The
  * first time it comes into view its letters drop in one by one, smoothly
  * (the art is pixels, the motion isn't); a letter hops up while the pointer is on it. With
  * reduced motion it just stands there.

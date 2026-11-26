@@ -45,7 +45,7 @@ export default function Handheld({ games, selected, onSelect, playing, onPlay, o
   return (
     <div className={css.layout} style={{ "--accent": game.accent } as CSSProperties}>
       <div className={css.top}>
-        <div className={css.carts} role="group" aria-label="Games">
+        <div className={css.carts} role="group" aria-label="Games" data-cover>
           {games.map((g, i) => (
             <button
               key={g.slug}
@@ -61,7 +61,7 @@ export default function Handheld({ games, selected, onSelect, playing, onPlay, o
           ))}
         </div>
         {/* Every game's words in one cell, the shown one visible: the row is always the tallest's height. */}
-        <div className={css.manual}>
+        <div className={css.manual} data-cover>
           {games.map((g, i) => (
             <div key={g.slug} className={css.page} data-on={i === shown} aria-hidden={i !== shown} inert={i !== shown}>
               <GameInfo game={g} paragraphs={2} />
@@ -70,7 +70,7 @@ export default function Handheld({ games, selected, onSelect, playing, onPlay, o
         </div>
       </div>
 
-      <div className={css.device} data-phase={phase} data-playing={playing}>
+      <div className={css.device} data-phase={phase} data-playing={playing} data-cover>
         <div className={css.slotCart} aria-hidden="true">
           <Cartridge src={game.work.media.image} title={game.work.title} />
         </div>

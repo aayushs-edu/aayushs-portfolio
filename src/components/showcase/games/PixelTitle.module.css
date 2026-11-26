@@ -1,11 +1,11 @@
 /* Pixel letters on a stepped block shadow: cream faces, then two hard steps
-   down and right in the coral of the background's sunlit horizon (the same
-   for every game), then a dark one. Every offset is a whole pixel of the
+   down and right in grass green (from the overworld behind; the same for
+   every game), then a dark one. Every offset is a whole pixel of the
    title's grid (--px). */
 
 .title {
   --px: clamp(4px, 0.55vw, 6px);
-  --glow: #e8684a;
+  --glow: #59b47d;
   --shade: color-mix(in oklab, var(--glow) 70%, #000);
   --deep: color-mix(in oklab, var(--glow) 28%, #000);
   font-family: var(--font-pixel), monospace;
@@ -19,6 +19,9 @@
 
 .letter {
   display: inline-block;
+  /* Every letter positioned, so they all paint in order whether or not one is moved: a hovered
+     letter (moved with translate) otherwise paints last, its shadow over the next letter. */
+  position: relative;
   color: #ece4d4;
   text-shadow:
     var(--px) var(--px) 0 var(--shade),
@@ -27,13 +30,15 @@
   transition: translate 0.12s ease-out;
 }
 
-/* Before it's been seen, the letters wait above; then they drop in turn. */
+/* Before it's been seen, the letters wait above; then they drop in turn. Filled backwards only (not
+   both): once a letter has landed its animation ends, rather than holding its last frame forever,
+   which kept every letter a GPU layer and made the browser lift the whole handheld into layers. */
 .title[data-shown="false"] .letter {
   opacity: 0;
 }
 
 .title[data-shown="true"] .letter {
-  animation: drop 0.36s ease-out calc(var(--i) * 90ms) both;
+  animation: drop 0.36s ease-out calc(var(--i) * 90ms) backwards;
 }
 
 @keyframes drop {

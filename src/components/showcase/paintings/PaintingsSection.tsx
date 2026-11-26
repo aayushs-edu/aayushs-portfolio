@@ -76,6 +76,7 @@ export default function PaintingsSection() {
   const size = useRef({ w: 0, h: 0, s: 1 });
   const raf = useRef(0);
   const reduced = useRef(false);
+  const settle = useRef(0);
 
   const render = useCallback(() => {
     const view = viewRef.current;
@@ -85,7 +86,12 @@ export default function PaintingsSection() {
     const { w, h, s } = size.current;
     const ox = w / 2 - pan.current.x * s;
     const oy = h / 2 - pan.current.y * s;
-    plane.style.transform = `translate3d(${ox.toFixed(2)}px, ${oy.toFixed(2)}px, 0) scale(${s.toFixed(4)})`;
+    // A 2D transform, a GPU layer only while it moves (dragged or zooming): a wall that's always a
+    // layer made every painting and the vignette layers too, which fast scrolls showed as black rectangles.
+    plane.style.transform = `translate(${ox.toFixed(2)}px, ${oy.toFixed(2)}px) scale(${s.toFixed(4)})`;
+    plane.style.willChange = "transform";
+    window.clearTimeout(settle.current);
+    settle.current = window.setTimeout(() => (plane.style.willChange = ""), 300);
     // The grid is pinned to the wall: it moves and scales with it.
     if (grid) {
       grid.style.setProperty("--grid-x", `${ox.toFixed(1)}px`);
@@ -339,6 +345,7 @@ export default function PaintingsSection() {
             masked={false}
             unit={SWIRL_UNIT}
             strength={SWIRL_STRENGTH}
+            frozen
           />
         ) : (
           <div ref={gridRef} className={css.grid} aria-hidden="true" />

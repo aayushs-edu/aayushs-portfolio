@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { startPerf } from "@/lib/perf";
+import { warmImages } from "@/lib/warmImages";
 import SparklesHero from "../hero/SparklesHero";
 import AnimationSection from "./animation/AnimationSection";
 import DetailPanel from "./DetailPanel";
@@ -52,6 +53,8 @@ export default function Showcase() {
 
   // Watch whether this machine keeps up; on one that doesn't, the heaviest effects ease off (src/lib/perf.ts).
   useEffect(() => startPerf(), []);
+  // Fetch the lazy images ahead of the scroll once the page is idle.
+  useEffect(() => warmImages(), []);
 
   // ---- the detail view ---------------------------------------------------------
   const [openSlug, setOpenSlug] = useState<string | null>(null);
