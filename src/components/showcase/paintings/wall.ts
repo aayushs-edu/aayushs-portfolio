@@ -37,8 +37,12 @@ export const WALL = {
   ring: { rx: 660, ry: 560, power: 4, jitter: 20 },
   /** How far past the outermost painting the middle of the view may go */
   margin: 60,
-  /** The world the view fits at scale 1: the portfolio plus a glimpse of the ring */
-  fit: { w: 1180, h: 900 },
+  /**
+   * The world the view fits at scale 1: the portfolio plus a glimpse of the ring. Taller than the
+   * portfolio needs, matching the view's height (120svh, taller than the window), so the extra
+   * height shows more of the ring above and below at the same scale rather than enlarging the wall.
+   */
+  fit: { w: 1180, h: 1227 },
   /**
    * The fade, over the distance from the middle of the view to a painting's
    * centre, as a fraction of the view's half-size (an ellipse): whole inside

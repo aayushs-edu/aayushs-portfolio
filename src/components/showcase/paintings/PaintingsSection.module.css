@@ -41,7 +41,7 @@
 /* The view: full width; the plane moves under it. */
 .view {
   position: relative;
-  height: clamp(520px, 88svh, 920px);
+  height: clamp(600px, 120svh, 1240px);
   overflow: hidden;
   cursor: grab;
   touch-action: pan-y;
@@ -272,6 +272,6 @@
   }
 
   .view {
-    height: clamp(460px, 78svh, 760px);
+    height: clamp(540px, 98svh, 960px);
   }
 }
