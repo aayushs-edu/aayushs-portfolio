@@ -1,0 +1,14 @@
+{
+  "canopy": {
+    "src": "/showcase/games/bg-canopy.2a29cf5b.webp",
+    "width": 768,
+    "height": 360,
+    "pixel": 4
+  },
+  "pines": {
+    "src": "/showcase/games/bg-pines.44414b80.webp",
+    "width": 768,
+    "height": 360,
+    "pixel": 4
+  }
+}
